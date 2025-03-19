@@ -33,7 +33,7 @@ const AdminSettingPage = lazy(() => import("./admin/Page/AdminSettingPage"));
 const UserDetails = lazy(() => import("./admin/Page/UserDetails"));
 
 function App() {
-  axios.defaults.baseURL = "http://localhost:3000/";
+  axios.defaults.baseURL = "https://intern-expense-manager.onrender.com/";
 
   return (
     <>
