@@ -4,7 +4,6 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const mongoose = require('mongoose');
 const cors = require('cors');
-const morgan = require("morgan");
 
 app.use(cors({
   origin: "http://localhost:5173", // Allow requests from any origin (you can restrict it later)
@@ -13,7 +12,6 @@ app.use(cors({
 }));
 
 app.use(express.json({ limit: '50mb' }));
-app.use(morgan("dev")); // Log requests
 
 mongoose.connect(process.env.MONGO_URI, {
 });
