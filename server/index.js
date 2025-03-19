@@ -7,7 +7,7 @@ const cors = require('cors');
 const morgan = require("morgan");
 
 app.use(cors({
-  origin: "https://financetrack-blond.vercel.app", // Allow requests from any origin (you can restrict it later)
+  origin: "https://financetrack-autdtpnrs-darshank2403s-projects.vercel.app/", // Allow requests from any origin (you can restrict it later)
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
 }));
