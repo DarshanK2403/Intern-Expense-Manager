@@ -27,13 +27,11 @@ const SignupPage = () => {
 
   const password = watch("password", "");
   const onSubmit = async (data) => {
-    console.log(data)
     const response = await axios.post("/signup", data);
-    console.log(response.data.message);
+    console.log(response.data);
     try {
-      if (response.data.message === "signin success") {
+      if (response.data.message === "Signup successful") {
         toast.success("Signup Success");
-        // console.log(response.data.user._id);
         navigate("/signin");
       } else {
         toast.error("Signup Failed");
@@ -47,6 +45,7 @@ const SignupPage = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-100">
       {/* Abstract Background Elements */}
+      <ToastContainer></ToastContainer>
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-0 w-64 h-64 bg-blue-200 rounded-full opacity-20 -translate-x-1/2 -translate-y-1/2"></div>
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-blue-300 rounded-full opacity-20 translate-x-1/3 translate-y-1/3"></div>
