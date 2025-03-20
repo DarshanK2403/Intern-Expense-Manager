@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   Home,
@@ -11,14 +11,18 @@ import {
   ChevronRight,
   Banknote,
 } from "lucide-react";
+import axios from "axios";
 
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(true);
   const location = useLocation();
+  const [user, setUser] = useState([]);
+  const userId = localStorage.getItem("id");
+  const [isAdmin, setAdmin] = useState(false);
 
   // Function to check if a route is active
   const isActive = (path) => {
-    return location.pathname === path;
+    return location.pathname.startsWith(path);
   };
 
   const menuItems = [
@@ -28,6 +32,24 @@ const Sidebar = () => {
     { icon: BarChart, label: "Reports", path: "/reports" },
     { icon: Settings, label: "Settings", path: "/settings" },
   ];
+
+  useEffect(() => {
+    const getUser = async () => {
+      try {
+        if (userId) {
+          const res = await axios.get(`/userdata/${userId}`);
+          // console.log(res);
+          setUser(res.data);
+          if (res.data.role.name === "admin") {
+            setAdmin(true);
+          }
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    getUser();
+  }, [userId]);
 
   return (
     <aside
@@ -90,8 +112,11 @@ const Sidebar = () => {
           </div>
           {isOpen && (
             <div className="ml-3">
-              <p className="text-sm font-medium">John Smith</p>
-              <p className="text-xs text-gray-500">Administrator</p>
+              <p className="text-sm font-medium">
+                {user.firstName} {user.lastName}
+              </p>
+              {isAdmin ? (<p className={'text-xs text-gray-500'}>Administrator</p>): ""}
+              
             </div>
           )}
         </div>

@@ -15,7 +15,6 @@ const createExpense = async (req, res) => {
     try {
       let expenseData = { ...req.body };
 
-      // ✅ Upload file to Cloudinary if present
       if (req.file) {
         const cloudinaryResponse = await cloudinaryUtil.uploadFiletoCloudinary(
           req.file.buffer,
@@ -27,7 +26,6 @@ const createExpense = async (req, res) => {
       // ✅ Create new expense
       const newExpense = new ExpenseModel(expenseData);
       await newExpense.save();
-
       res.status(201).json({
         message: "Expense added successfully",
         expense: newExpense,

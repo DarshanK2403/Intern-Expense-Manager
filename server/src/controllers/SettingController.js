@@ -14,7 +14,7 @@ const CreateCategory = async (req, res) => {
       res.send("alredy exist");
     } else {
       const newCategory = await CategoryModel.create(data);
-      res.status(201).json(newCategory);
+      res.status(201).json({message: "Created", data: newCategory});
     }
   } catch (error) {
     res.status(500).json({ message: error.message });

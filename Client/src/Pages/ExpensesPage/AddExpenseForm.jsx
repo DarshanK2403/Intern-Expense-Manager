@@ -11,6 +11,7 @@ import {
   AiOutlineBank,
 } from "react-icons/ai";
 import { useNavigate } from "react-router-dom";
+import Input from "../../Components/Input";
 
 const AddExpenseForm = () => {
   const {
@@ -31,12 +32,12 @@ const AddExpenseForm = () => {
   const handleFileChange = (event) => {
     const file = event.target.files[0] || null;
     if (!file) return;
-  
+
     setIsUploading(true);
-  
+
     const fileURL = URL.createObjectURL(file);
     setFilePreview(fileURL);
-  
+
     if (file.type.startsWith("image/")) {
       setFileType("image");
     } else if (file.type === "application/pdf") {
@@ -44,22 +45,22 @@ const AddExpenseForm = () => {
     } else {
       setFileType("other");
     }
-  
+
     setValue("receiptFile", file); // Store file for form submission
     setIsUploading(false);
   };
-  
+
   // Remove uploaded file
   const handleRemoveFile = () => {
     setFilePreview(null);
     setFileType(null);
     setValue("receiptFile", null);
   };
-  
+
   // Handle Form Submit
   const onSubmit = async (data) => {
     const userId = localStorage.getItem("id");
-  
+
     // Create FormData
     const formData = new FormData();
     formData.append("userId", userId);
@@ -71,31 +72,28 @@ const AddExpenseForm = () => {
     formData.append("account", data.account);
     formData.append("paymentMethod", data.paymentMethod);
     formData.append("vendor", data.vendor);
-  
+
     if (data.receiptFile) {
-      formData.append("receipt", data.receiptFile); // Attach file only if selected
+      formData.append("receipt", data.receiptFile);
     }
-  
+
     try {
       const response = await axios.post("/add-expense", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-  
+
       navigate("/expenses");
     } catch (error) {
-      console.error("Error uploading expense:", error.response?.data || error.message);
+      console.error(
+        "Error uploading expense:",
+        error.response?.data || error.message
+      );
     }
   };
-  
-  
-  // const handleRemoveFile = () => {
-  //   setFilePreview(null);
-  //   setFileType(null);
-  //   setValue("receipt", null);
-  // };
-    const closeForm = () => {
-      navigate("/expenses");
-    };
+
+  const closeForm = () => {
+    navigate(-1);
+  };
 
   const saveandclose = () => {};
 
@@ -197,64 +195,28 @@ const AddExpenseForm = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Title */}
                 <div>
-                  <label
-                    htmlFor="title"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Title
-                  </label>
-                  <input
+                  <Input
                     id="title"
-                    type="text"
-                    className={`w-full px-3 py-2 border ${
-                      errors.title ? "border-red-300" : "border-gray-300"
-                    } 
-                            rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-                    placeholder="Lunch at Restaurant"
-                    {...register("title", { required: "Title is required" })}
+                    label="Title"
+                    placeholder="Expense Title"
+                    register={register}
+                    error={errors.title?.message}
+                    validation={{ required: "Title is required" }}
                   />
-                  {errors.title && (
-                    <span className="text-red-500 text-xs mt-1 block">
-                      {errors.title.message}
-                    </span>
-                  )}
                 </div>
 
                 {/* Amount */}
                 <div>
-                  <label
-                    htmlFor="amount"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Amount
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <AiOutlineDollar className="text-gray-500" />
-                    </div>
-                    <input
-                      id="amount"
-                      type="number"
-                      step="0.01"
-                      className={`w-full pl-10 pr-3 py-2 border ${
-                        errors.amount ? "border-red-300" : "border-gray-300"
-                      } 
-                              rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-                      placeholder="0.00"
-                      {...register("amount", {
-                        required: "Amount is required",
-                        min: {
-                          value: 0.01,
-                          message: "Amount must be greater than 0",
-                        },
-                      })}
-                    />
-                  </div>
-                  {errors.amount && (
-                    <span className="text-red-500 text-xs mt-1 block">
-                      {errors.amount.message}
-                    </span>
-                  )}
+                  <Input
+                    id="amount"
+                    label="Amount"
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    register={register}
+                    error={errors.amount?.message}
+                    validation={{ required: "Amount is required" }}
+                  />
                 </div>
               </div>
 
@@ -278,35 +240,15 @@ const AddExpenseForm = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Expense Date */}
                 <div>
-                  <label
-                    htmlFor="expenseDate"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Expense Date
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <AiOutlineCalendar className="text-gray-500" />
-                    </div>
-                    <input
-                      id="expenseDate"
-                      type="date"
-                      className={`w-full pl-10 pr-3 py-2 border ${
-                        errors.expenseDate
-                          ? "border-red-300"
-                          : "border-gray-300"
-                      } 
-                              rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-                      {...register("expenseDate", {
-                        required: "Date is required",
-                      })}
-                    />
-                  </div>
-                  {errors.expenseDate && (
-                    <span className="text-red-500 text-xs mt-1 block">
-                      {errors.expenseDate.message}
-                    </span>
-                  )}
+                  <Input
+                    id="expenseDate"
+                    label="Expense Date"
+                    type="date"
+                    register={register}
+                    icon={AiOutlineCalendar}
+                    error={errors.expenseDate?.message}
+                    validation={{ required: "Expense Date is required" }}
+                  />
                 </div>
 
                 {/* Category */}
@@ -466,27 +408,15 @@ const AddExpenseForm = () => {
 
               {/* Vendor */}
               <div>
-                <label
-                  htmlFor="vendor"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Vendor
-                </label>
-                <input
+                <Input
                   id="vendor"
+                  label="Vendor"
                   type="text"
-                  className={`w-full px-3 py-2 border ${
-                    errors.vendor ? "border-red-300" : "border-gray-300"
-                  } 
-                          rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-                  placeholder="Vendor name"
-                  {...register("vendor", { required: "Vendor is required" })}
+                  placeholder="Vendor Name"
+                  register={register}
+                  error={errors.vendor?.message}
+                  validation={{ required: "Vendor is required" }}
                 />
-                {errors.vendor && (
-                  <span className="text-red-500 text-xs mt-1 block">
-                    {errors.vendor.message}
-                  </span>
-                )}
               </div>
 
               {/* Action Buttons */}

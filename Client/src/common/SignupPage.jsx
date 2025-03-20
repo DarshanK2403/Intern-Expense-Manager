@@ -1,13 +1,13 @@
 /* eslint-disable no-unused-vars */
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import axios, { Axios } from "axios";
+import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import { ArrowLeft, DollarSign, Eye, EyeOff, UserPlus } from "lucide-react";
 
 const SignupPage = () => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState("");
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
@@ -16,30 +16,25 @@ const SignupPage = () => {
     register,
     handleSubmit,
     watch,
+    setError,
     formState: { errors },
-  } = useForm({
-    defaultValues: {
-      email: "",
-      password: "",
-      // rememberMe: false,
-    },
-  });
+  } = useForm();
 
   const password = watch("password", "");
   const onSubmit = async (data) => {
-    const response = await axios.post("/signup", data);
-    console.log(response.data);
+    setLoading(true);
     try {
-      if (response.data.message === "Signup successful") {
-        toast.success("Signup Success");
-        navigate("/signin");
-      } else {
-        toast.error("Signup Failed");
-        return;
-      }
+      const response = await axios.post("/signup", data);
+      console.log(response.data);
+      setLoading(false);
     } catch (error) {
-      toast.error("Somthing went Wrong");
+      if (error.response && error.response.data.errors) {
+        error.response.data.errors.forEach((err) => {
+          setError(err.param, { message: err.message }); // Set field-specific error
+        });
+      }
     }
+    setLoading(false);
   };
 
   return (
@@ -286,47 +281,18 @@ const SignupPage = () => {
             </div>
           </div>
 
-          {/* Terms and Conditions */}
-          {/* <div className="flex items-start">
-            <div className="flex items-center h-5">
-              <input
-                id="terms"
-                type="checkbox"
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                {...register("terms", {
-                  required: "You must agree to the terms and conditions",
-                })}
-              />
-            </div>
-            <div className="ml-3 text-sm">
-              <label htmlFor="terms" className="font-medium text-gray-700">
-                I agree to the{" "}
-                <a href="#" className="text-blue-600 hover:text-blue-500">
-                  Terms of Service
-                </a>{" "}
-                and{" "}
-                <a href="#" className="text-blue-600 hover:text-blue-500">
-                  Privacy Policy
-                </a>
-              </label>
-              {errors.terms && (
-                <p className="mt-1 text-sm text-red-600">
-                  {errors.terms.message}
-                </p>
-              )}
-            </div>
-          </div> */}
-
           {/* Submit Button */}
           <div>
             <button
               type="submit"
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+              className={`group relative w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none transition-colors ${
+                loading ? "bg-blue-800" : ""
+              }`}
             >
               <span className="absolute left-0 inset-y-0 flex items-center pl-3">
-                <UserPlus className="h-5 w-5 text-blue-500 group-hover:text-blue-400" />
+                <UserPlus className="h-5 w-5 text-white-500 group-hover:text-blue-400" />
               </span>
-              Create Account
+              {loading ? "Creating..." : "Create Account"}
             </button>
           </div>
 

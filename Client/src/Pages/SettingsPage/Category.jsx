@@ -2,31 +2,36 @@
 import axios from "axios";
 import { Edit, Plus, Trash2 } from "lucide-react";
 import React, { useEffect, useState, useCallback } from "react";
-import { useForm } from "react-hook-form";
-import { toast, ToastContainer } from 'react-toastify';
+import { get, useForm } from "react-hook-form";
+import { Link } from "react-router-dom";
+import { toast, ToastContainer } from "react-toastify";
+import Subnav from "../../Components/Subnav";
+import Input from "../../Components/Input";
 
 const Category = () => {
   const [categorys, setCategorys] = useState([]);
   const userId = localStorage.getItem("id");
+  const [loading, setLoading] = useState(false)
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors },
+  } = useForm();
 
-  const { setValue } = useForm();
-
-  // ✅ Memoize `getCategory` so it doesn't change on re-renders
   const getCategory = useCallback(async () => {
     try {
       const res = await axios.get(`/get-category/${userId}`);
       setCategorys(res.data.data);
-      console.log(res.data.data);
     } catch (error) {
       console.log(error);
     }
-  }, [userId]); // ✅ Add dependencies to `useCallback`
+  }, [userId]);
 
   useEffect(() => {
     const getUserdata = async () => {
       try {
         const res = await axios.get(`/userdata/${userId}`);
-
         for (const key in res.data) {
           setValue(key, res.data[key] || "");
         }
@@ -37,39 +42,94 @@ const Category = () => {
 
     if (userId) {
       getUserdata();
-      getCategory(); // ✅ Now it won't trigger the ESLint warning
+      getCategory();
     }
-  }, [userId, setValue, getCategory]); // ✅ Add `getCategory` to dependencies
+  }, [userId, setValue, getCategory]);
 
   const deleteCategory = async (id) => {
     try {
       await axios.delete(`/delete-category/${id}`);
-      toast.success("Deleted Successfully");
-      getCategory(); // ✅ Refresh category list after deletion
+      toast.success("💣 Deleted Successfully");
+      getCategory();
     } catch (error) {
       console.log(error);
     }
   };
 
+  const submitHandler = async (data) => {
+    const categoryData = {
+      ...data,
+      userId: userId,
+    };
+    try {
+      const res = await axios.post(`/create-category/${userId}`, categoryData);
+      // console.log(res.data.message);
+      if (res.data.message == "Created") {
+        toast.success("Category Added");
+        getCategory();
+      } else {
+        toast.error("Something gose wrong");
+      }
+    } catch (error) {
+      toast.error("Server Error");
+      console.error(
+        "Error uploading expense:",
+        error.response?.data || error.message
+      );
+    }
+  };
   return (
-    <div className="space-y-6 m-5 w-[70%] mx-auto">
+    <div className="m-5 w-[70%] mx-auto">
       <ToastContainer />
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-gray-800">
-          Category Management
-        </h2>
-        <button className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center">
-          <Plus className="h-4 w-4 mr-1" /> Add Category
-        </button>
+      <Subnav>Category Management</Subnav>
+
+      <div className="mt-4">
+        <form onSubmit={handleSubmit(submitHandler)}>
+          <div className="grid lg:grid-cols-2 grid-cols-1 col-span-2 gap-x-4 items-center">
+            {/* Category Name */}
+            <Input
+              id="category_name"
+              label="Category Name"
+              type="text"
+              placeholder="Category Name"
+              register={register}
+              error={errors.category_name?.message}
+              validation={{ required: "Category Name is required" }}
+            />
+
+            {/* Category Description */}
+            <Input
+              id="category_description"
+              label="Description"
+              type="text"
+              placeholder="Category Description"
+              register={register}
+            />
+
+            {/* Submit Button */}
+            <div className="items-center gap-2 mb-2">
+              <input
+                type="submit"
+                value="Add Category"
+                className="flex  bg-blue-600 text-white py-2 px-4 rounded-md mt-2 hover:bg-blue-700 hover:cursor-pointer transition-colors"
+              />
+            </div>
+          </div>
+        </form>
       </div>
 
       <div className="bg-white rounded-lg shadow">
-        <div className="p-6">
-          <ul className="divide-y divide-gray-200">
+        <table className="w-full">
+          <tbody className="divide-y divide-gray-200">
             {categorys.map((category) => (
-              <li key={category._id} className="flex items-center justify-between py-4">
-                {category.category_name}
-                <div className="flex items-center">
+              <tr key={category._id} className="py-4 mx-4 items-center">
+                <td className="items-start py-4 px-4">
+                  {category.category_name}
+                </td>
+                <td className="text-gray-400 py-4 px-4">
+                  {category.category_description}
+                </td>
+                <td className="py-4 px-4 text-end">
                   <button className="p-1 text-gray-400 hover:text-gray-600 mr-2">
                     <Edit className="h-4 w-4" />
                   </button>
@@ -79,11 +139,11 @@ const Category = () => {
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
-                </div>
-              </li>
+                </td>
+              </tr>
             ))}
-          </ul>
-        </div>
+          </tbody>
+        </table>
       </div>
     </div>
   );

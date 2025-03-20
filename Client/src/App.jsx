@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import "./App.css";
 import axios from "axios";
 const SigninPage = lazy(() => import("./common/SigninPage"));
@@ -13,6 +13,7 @@ const AddExpenseForm = lazy(() =>
 );
 const ExpenseLayout = lazy(() => import("./Layouts/ExpenseLayout"));
 import { PrivateRoute, AdminRoute } from "./hooks/PrivateRoute";
+import AddIncome from "./Pages/IncomePage/AddIncome";
 const Home = lazy(() => import("./common/Home"));
 const ReportLayout = lazy(() => import("./Layouts/ReportLayout"));
 const SettingLayout = lazy(() => import("./Layouts/SettingLayout"));
@@ -33,7 +34,7 @@ const AdminSettingPage = lazy(() => import("./admin/Page/AdminSettingPage"));
 const UserDetails = lazy(() => import("./admin/Page/UserDetails"));
 
 function App() {
-  axios.defaults.baseURL = "https://intern-expense-manager.onrender.com/";
+  axios.defaults.baseURL = "http://localhost:3000/";
 
   return (
     <>
@@ -58,7 +59,8 @@ function App() {
 
               {/* Settings Route */}
               <Route path="/settings" element={<SettingLayout />}>
-                <Route index element={<Profile />} />
+                <Route index element={<Navigate to="profile" replace />} />
+                <Route path="profile" element={<Profile />} />
                 <Route path="category" element={<Category />} />
                 <Route path="account" element={<Account />} />
                 <Route path="payment" element={<Payment />} />
@@ -72,6 +74,7 @@ function App() {
 
               <Route path="/income" element={<IncomeLayout />}>
                 <Route index element={<IncomePage />} />
+                <Route path="add" element={<AddIncome />} />
               </Route>
               {/* Expense Route */}
             </Route>

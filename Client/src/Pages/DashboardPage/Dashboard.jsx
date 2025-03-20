@@ -49,7 +49,9 @@ const Dashboard = () => {
       </div>
       <div className="bg-white p-6 shadow rounded-lg mt-6">
         <div className="flex justify-between">
-          <h3 className="text-gray-600 text-lg mb-4">Recent Transactions</h3>
+          <h3 className="text-gray-700 mb-4 text-xl font-semibold">
+            Recent Transactions
+          </h3>
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setIsOpen(!isOpen)}
@@ -63,45 +65,39 @@ const Dashboard = () => {
             {isOpen && (
               <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
                 <ul className="py-1">
-                  <li className="px-1">
-                    <input
-                      type="checkbox"
-                      checked={showDates}
-                      onChange={() => setShowDates(!showDates)}
-                      name="date"
-                      id="date"
-                    />
-                    <span>Expense Date</span>
-                  </li>
+                  <li className="px-1">Soon..</li>
                 </ul>
               </div>
             )}
           </div>
         </div>
-        <table className="w-full">
-          <thead className="w-full">
-            <tr className="w-full grid grid-cols-3 gap-x-4">
-              <th className="text-start">Title</th>
-              <th className="text-end">Amount</th>
-              <th className="text-end">Expense Date</th>
-            </tr>
-          </thead>
-          <tbody className="w-full">
-            {latestExpense.length > 0 ? (
-              latestExpense.map((expense) => (
-                <tr key={expense._id} className="border-b border-gray-400 w-full grid grid-cols-3 gap-x-4">
+        {latestExpense.length > 0 ? (
+          <table className="w-full">
+            <thead className="w-full">
+              <tr className="w-full grid grid-cols-3 gap-x-4">
+                <th className="text-start">Title</th>
+                <th className="text-end">Amount</th>
+                <th className="text-end">Expense Date</th>
+              </tr>
+            </thead>
+            <tbody className="w-full">
+              {latestExpense.map((expense) => (
+                <tr
+                  key={expense._id}
+                  className="border-b border-gray-400 w-full grid grid-cols-3 gap-x-4"
+                >
                   <td className="py-2">{expense.title}</td>
                   <td className="py-2 text-end ">{expense.amount}</td>
                   <td className="py-2 text-end">
                     {format(new Date(expense.expenseDate), "dd/MM/yyyy")}
                   </td>
                 </tr>
-              ))
-            ) : (
-              <div>Data not found</div>
-            )}
-          </tbody>
-        </table>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <p className="text-red-500">Not Have Any Recent Transactions</p>
+        )}
       </div>
     </div>
   );

@@ -29,8 +29,8 @@ const Income = new Schema({
     type: String,
     trim: true,
   },
-  attachment: {
-    type: String, // If you allow users to upload receipts (store as Base64 or file path)
+  receipt: {
+    type: String,
   },
 
 },

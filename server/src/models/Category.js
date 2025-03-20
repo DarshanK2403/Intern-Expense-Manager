@@ -11,7 +11,7 @@ const CategorySchema = new Schema(
     category_name: {
       type: String,
       required: true,
-      Unique: true,
+      unique: true,
     },
     category_description: {
       type: String,

@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import React, { useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
@@ -32,7 +32,7 @@ const SigninPage = () => {
       const response = await axios.post("/signin", data);
       if (response.data.message === "Login Success") {
         localStorage.setItem("id", response.data.user._id);
-        console.log(response.data.user.role.name);
+        // console.log(response.data);
         if (response.data.user.role.name === "user") {
           navigate("/dashboard");
           toast.success("Login Success");

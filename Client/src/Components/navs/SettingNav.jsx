@@ -6,11 +6,11 @@ const SettingNav = () => {
   const location = useLocation();
 
   const isActive = (path) => {
-    return location.pathname === path;
+    return location.pathname.startsWith(path);
   };
 
   const menuSetting = [
-    { icon: User, label: "Profile Settings", path: "/settings" },
+    { icon: User, label: "Profile Settings", path: "/settings/profile" },
     { icon: TagIcon, label: "Category Management", path: "/settings/category" },
     { icon: User, label: "Account Management", path: "/settings/account" },
     { icon: CreditCard, label: "Payment Methods", path: "/settings/payment" },
@@ -29,10 +29,10 @@ const SettingNav = () => {
           <li className="list-none" key={menu.path}>
             <Link
               to={menu.path}
-              className="flex items-center rounded-md px-4 py-3 transition-colors"
+              className={`flex items-center rounded-md hover:cursor-pointer px-4 m-2 py-3 transition-colors ${active ? "bg-blue-100 text-blue-600" : ""}`}
             >
-              <Icon className="h-5 w-5 mr-3" />
-              <label htmlFor="">{menu.label}</label>
+              <Icon className="h-5 w-5 mr-3"/>
+              <label className="hover:cursor-pointer">{menu.label}</label>
             </Link>
           </li>
         );
