@@ -33,11 +33,17 @@ app.use(RoleRoute);
 const ExpenseRoute = require('./src/routes/ExpenseRoute');
 app.use('/',ExpenseRoute);
 
+const IncomeRouter = require("./src/routes/IncomeRoute");
+app.use('/', IncomeRouter);
+
 const SettingsRouter = require('./src/routes/SettingsRoute');
 app.use('/', SettingsRouter)
 
 const AdminRouter = require('./src/routes/AdminRoute')
 app.use('/admin', AdminRouter);
+
+const DashboardRoute = require("./src/routes/DashboardRoute");
+app.use('/', DashboardRoute);
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);

@@ -5,13 +5,14 @@ import { useForm } from "react-hook-form";
 import {
   AiOutlineUpload,
   AiOutlineDelete,
-  AiOutlineDollar,
   AiOutlineCalendar,
-  AiOutlineTag,
   AiOutlineBank,
 } from "react-icons/ai";
 import { useNavigate } from "react-router-dom";
 import Input from "../../Components/Input";
+import Subnav from "../../Components/Subnav";
+import SelectInput from "../../Components/Select";
+import { toast } from "react-toastify";
 
 const AddExpenseForm = () => {
   const {
@@ -22,11 +23,15 @@ const AddExpenseForm = () => {
     setValue,
   } = useForm();
 
+  const userId = localStorage.getItem("id");
   const receipt = watch("receipt");
   const [filePreview, setFilePreview] = useState(null);
   const [fileType, setFileType] = useState(null);
   const navigate = useNavigate();
   const [isUploading, setIsUploading] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [categoryData, setCategoryData] = useState({});
+  const [expenseCategories, setexpenseCategories] = useState();
 
   // Handle File Change
   const handleFileChange = (event) => {
@@ -59,8 +64,6 @@ const AddExpenseForm = () => {
 
   // Handle Form Submit
   const onSubmit = async (data) => {
-    const userId = localStorage.getItem("id");
-
     // Create FormData
     const formData = new FormData();
     formData.append("userId", userId);
@@ -78,11 +81,12 @@ const AddExpenseForm = () => {
     }
 
     try {
+      setLoading(true);
       const response = await axios.post("/add-expense", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-
       navigate("/expenses");
+      setLoading(false);
     } catch (error) {
       console.error(
         "Error uploading expense:",
@@ -94,36 +98,46 @@ const AddExpenseForm = () => {
   const closeForm = () => {
     navigate(-1);
   };
-
   const saveandclose = () => {};
-
   const saveandnew = () => {};
-  return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <h1 className="text-2xl font-bold text-gray-800 mb-1">Add Expense</h1>
-        <p className="text-gray-500 mb-0">
-          Track your spending by adding a new expense
-        </p>
-      </div>
 
+  useEffect(() => {
+    const fetchExpenseCategories = async () => {
+      const userId = localStorage.getItem("id");
+      try {
+        const res = await axios.get(`/get-expense-category/${userId}`);
+        setCategoryData(res.data.data); // ✅ Updates categoryData
+        console.log(res.data.data);
+      } catch (error) {
+        toast.error("Internal Server Error");
+      }
+    };
+
+    fetchExpenseCategories();
+  }, []); // ✅ Run only once on mount
+
+  // 🔹 Separate effect to update category names after `categoryData` updates
+  useEffect(() => {
+    if (categoryData.length > 0) {
+      const names = categoryData.map((cat) => cat.category_name);
+      console.log(names);
+      setexpenseCategories(names);
+    }
+  }, [categoryData]); // ✅ Runs when `categoryData` is updated
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
       <div className="bg-white rounded-lg shadow-md p-6">
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <Subnav>Add Expense</Subnav>
+        <form onSubmit={handleSubmit(onSubmit)} className="pt-4">
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
             {/* Left Column - Receipt Upload */}
             <div className="lg:col-span-2">
-              <label
-                htmlFor="receipt"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Receipt
-              </label>
               <div
                 className={`border ${
                   errors.receipt ? "border-red-300" : "border-gray-300"
                 } 
-                          border-dashed rounded-lg p-4 h-72 md:h-[95%] flex flex-col items-center justify-center
-                          bg-gray-50 transition-all duration-200 hover:bg-gray-100`}
+                border-dashed rounded-lg p-4 h-72 md:h-[95%] flex flex-col items-center justify-center bg-gray-50 transition-all duration-200 hover:bg-gray-100`}
               >
                 {isUploading ? (
                   <div className="flex flex-col items-center justify-center space-y-2">
@@ -253,54 +267,13 @@ const AddExpenseForm = () => {
 
                 {/* Category */}
                 <div>
-                  <label
-                    htmlFor="category"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Category
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <AiOutlineTag className="text-gray-500" />
-                    </div>
-                    <select
-                      id="category"
-                      className={`w-full pl-10 pr-3 py-2 border ${
-                        errors.category ? "border-red-300" : "border-gray-300"
-                      } 
-                              rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                              appearance-none bg-white`}
-                      {...register("category", {
-                        required: "Category is required",
-                      })}
-                    >
-                      <option value="">Select Category</option>
-                      <option value="Food">Food</option>
-                      <option value="Transport">Transport</option>
-                      <option value="Rent">Rent</option>
-                      <option value="Utilities">Utilities</option>
-                      <option value="Others">Others</option>
-                    </select>
-                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                      <svg
-                        className="h-5 w-5 text-gray-400"
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                  {errors.category && (
-                    <span className="text-red-500 text-xs mt-1 block">
-                      {errors.category.message}
-                    </span>
-                  )}
+                  <SelectInput
+                    id="category"
+                    label="Expense Category"
+                    options={expenseCategories}
+                    register={register}
+                    errors={errors}
+                  />
                 </div>
               </div>
 
@@ -414,8 +387,6 @@ const AddExpenseForm = () => {
                   type="text"
                   placeholder="Vendor Name"
                   register={register}
-                  error={errors.vendor?.message}
-                  validation={{ required: "Vendor is required" }}
                 />
               </div>
 
@@ -427,7 +398,7 @@ const AddExpenseForm = () => {
                   name="saveAndNew"
                   className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-md font-medium text-sm hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                 >
-                  Add & New
+                  {loading ? "Adding..." : "Add & New"}
                 </button>
                 <button
                   type="submit"

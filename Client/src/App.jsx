@@ -14,6 +14,9 @@ const AddExpenseForm = lazy(() =>
 const ExpenseLayout = lazy(() => import("./Layouts/ExpenseLayout"));
 import { PrivateRoute, AdminRoute } from "./hooks/PrivateRoute";
 import AddIncome from "./Pages/IncomePage/AddIncome";
+import SkeletonLoader from "./Components/SkeletonLoader";
+import RecentTransactios from "./Pages/DashboardPage/RecentTransactios";
+import ForgetPasswordPage from "./common/ForgetPasswordPage";
 const Home = lazy(() => import("./common/Home"));
 const ReportLayout = lazy(() => import("./Layouts/ReportLayout"));
 const SettingLayout = lazy(() => import("./Layouts/SettingLayout"));
@@ -31,24 +34,26 @@ const AdminExpensePage = lazy(() => import("./admin/Page/AdminExpensePage"));
 const AdminReportPage = lazy(() => import("./admin/Page/AdminReportPage"));
 const AdminUserPage = lazy(() => import("./admin/Page/AdminUserPage"));
 const AdminSettingPage = lazy(() => import("./admin/Page/AdminSettingPage"));
-const UserDetails = lazy(() => import("./admin/Page/UserDetails"));
-
 function App() {
   axios.defaults.baseURL = "http://localhost:3000/";
 
   return (
     <>
       <BrowserRouter>
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense fallback={<SkeletonLoader />}>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/*" element={<Home />} />
             <Route path="/signin" element={<SigninPage />} />
             <Route path="/signup" element={<SignupPage />} />
+            <Route path="/forget-password" element={<ForgetPasswordPage />} />
+            <Route path="/forget-password/:token" element={<ForgetPasswordPage />} />
 
             <Route element={<PrivateRoute />}>
               <Route path="/dashboard" element={<DashboardLayout />}>
                 <Route index element={<Dashboard />} />
+                <Route path="recent-transactions" element={<RecentTransactios />} />
+
               </Route>
 
               <Route path="/expenses" element={<ExpenseLayout />}>
@@ -93,11 +98,7 @@ function App() {
                   element={<AdminReportPage />}
                 />
                 <Route index path="admin/users" element={<AdminUserPage />} />
-                <Route
-                  index
-                  path="admin/users/detail"
-                  element={<UserDetails />}
-                />
+                
                 <Route
                   index
                   path="admin/settings"

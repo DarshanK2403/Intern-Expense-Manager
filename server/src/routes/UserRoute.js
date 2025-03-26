@@ -10,4 +10,6 @@ router.post("/signin", UserController.Login);
 
 router.get("/userdata/:userId", UserController.Userdata)
 
+router.post("/forget-password", UserController.ForgetPassword);
+
 module.exports = router;

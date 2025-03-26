@@ -11,7 +11,6 @@ import {
   Trash2,
 } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
-import { AiOutlineBank, AiOutlineCalendar, AiOutlineTag } from "react-icons/ai";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 
@@ -58,8 +57,7 @@ const DetailExpense = () => {
     navigate(-1);
   };
   const deleteExpense = async(id) => {
-    console.log(id);
-    const res = await axios.delete(`/delete-expense/${id}`)
+    await axios.delete(`/delete-expense/${id}`)
     toast.success("Expense Deleted")
     navigate(-1);
   };

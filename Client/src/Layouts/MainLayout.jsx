@@ -6,10 +6,12 @@ import Sidebar from "../Components/Sidebar";
 import { useState } from "react";
 import ExpenseNav from "../Components/navs/ExpenseNav";
 import SettingNav from "../Components/navs/SettingNav";
+import IncomeNav from "../Components/navs/IncomeNav";
 
 const routes = [
   { path: "/expenses", element: <ExpenseNav /> },
   { path: "/settings/*", element: <SettingNav /> },
+  { path: "/income/", element: <IncomeNav /> },
 ];
 
 const MainLayout = () => {

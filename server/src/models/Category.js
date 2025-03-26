@@ -12,9 +12,15 @@ const CategorySchema = new Schema(
       type: String,
       required: true,
       unique: true,
+      trim: true,
     },
     category_description: {
       type: String,
+    },
+    category_type: {
+      type: String,
+      enum: ["income", "expense"],
+      required: true,
     },
   },
   {

@@ -1,149 +1,206 @@
-/* eslint-disable no-unused-vars */
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
-import { Edit, Plus, Trash2 } from "lucide-react";
-import React, { useEffect, useState, useCallback } from "react";
-import { get, useForm } from "react-hook-form";
-import { Link } from "react-router-dom";
+import { Edit, Plus, Trash2, DollarSign, ArrowUpRight } from "lucide-react";
+import { useForm } from "react-hook-form";
 import { toast, ToastContainer } from "react-toastify";
-import Subnav from "../../Components/Subnav";
-import Input from "../../Components/Input";
 
 const Category = () => {
-  const [categorys, setCategorys] = useState([]);
+  const [activeTab, setActiveTab] = useState("expense");
+  const [categories, setCategories] = useState([]);
   const userId = localStorage.getItem("id");
-  const [loading, setLoading] = useState(false)
   const {
     register,
     handleSubmit,
-    setValue,
     formState: { errors },
+    reset
   } = useForm();
 
-  const getCategory = useCallback(async () => {
+  const fetchCategories = useCallback(async (type) => {
     try {
-      const res = await axios.get(`/get-category/${userId}`);
-      setCategorys(res.data.data);
+      const res = await axios.get(`/get-${type}-category/${userId}`);
+      setCategories(res.data.data);
     } catch (error) {
-      console.log(error);
+      toast.error(`Failed to fetch ${type} categories`);
+      console.error(error);
     }
   }, [userId]);
 
   useEffect(() => {
-    const getUserdata = async () => {
-      try {
-        const res = await axios.get(`/userdata/${userId}`);
-        for (const key in res.data) {
-          setValue(key, res.data[key] || "");
-        }
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-      }
-    };
-
     if (userId) {
-      getUserdata();
-      getCategory();
+      fetchCategories(activeTab);
     }
-  }, [userId, setValue, getCategory]);
-
-  const deleteCategory = async (id) => {
-    try {
-      await axios.delete(`/delete-category/${id}`);
-      toast.success("💣 Deleted Successfully");
-      getCategory();
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  }, [userId, activeTab, fetchCategories]);
 
   const submitHandler = async (data) => {
     const categoryData = {
       ...data,
       userId: userId,
+      category_type: activeTab
     };
+
+    console.log(categoryData);
     try {
-      const res = await axios.post(`/create-category/${userId}`, categoryData);
-      // console.log(res.data.message);
-      if (res.data.message == "Created") {
-        toast.success("Category Added");
-        getCategory();
+      const res = await axios.post(`/create-${activeTab}-category/${userId}`, categoryData);
+      
+      if (res.data.message === "Created") {
+        toast.success(`${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Category Added`);
+        fetchCategories(activeTab);
+        reset();
       } else {
-        toast.error("Something gose wrong");
+        toast.error("Something went wrong");
       }
     } catch (error) {
       toast.error("Server Error");
-      console.error(
-        "Error uploading expense:",
-        error.response?.data || error.message
-      );
+      console.error(`Error creating ${activeTab} category:`, error);
     }
   };
+
+  const deleteCategory = async (id) => {
+    try {
+      await axios.delete(`/delete-${activeTab}-category/${id}`);
+      toast.success(`${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Category Deleted`);
+      fetchCategories(activeTab);
+    } catch (error) {
+      toast.error(`Failed to delete ${activeTab} category`);
+      console.error(error);
+    }
+  };
+
+  const TabButton = ({ type, children }) => (
+    <button
+      onClick={() => {
+        setActiveTab(type);
+        fetchCategories(type);
+      }}
+      className={`
+        flex items-center justify-center px-4 py-2 rounded-t-lg transition-all
+        ${activeTab === type 
+          ? 'bg-white text-blue-600 border-b-2 border-blue-600 font-semibold' 
+          : 'text-gray-500 hover:text-gray-700 bg-gray-100 hover:bg-gray-200'}
+      `}
+    >
+      {children}
+    </button>
+  );
+
   return (
-    <div className="m-5 w-[70%] mx-auto">
+    <div className="container mx-auto px-4 py-6 max-w-4xl">
       <ToastContainer />
-      <Subnav>Category Management</Subnav>
+      
+      <div className="bg-white shadow-lg rounded-lg overflow-hidden">
+        {/* Tab Navigation */}
+        <div className="flex border-b bg-gray-50">
+          <TabButton type="expense" icon={ArrowUpRight}>
+            Expense Categories
+          </TabButton>
+          <TabButton type="income" icon={DollarSign}>
+            Income Categories
+          </TabButton>
+        </div>
 
-      <div className="mt-4">
-        <form onSubmit={handleSubmit(submitHandler)}>
-          <div className="grid lg:grid-cols-2 grid-cols-1 col-span-2 gap-x-4 items-center">
-            {/* Category Name */}
-            <Input
-              id="category_name"
-              label="Category Name"
-              type="text"
-              placeholder="Category Name"
-              register={register}
-              error={errors.category_name?.message}
-              validation={{ required: "Category Name is required" }}
-            />
+        {/* Category Creation Form */}
+        <div className="p-6">
+          <form onSubmit={handleSubmit(submitHandler)} className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Category Name
+                </label>
+                <input
+                  type="text"
+                  placeholder={`Enter ${activeTab} Category`}
+                  {...register("category_name", { 
+                    required: "Category name is required",
+                    maxLength: {
+                      value: 50,
+                      message: "Category name must be less than 50 characters"
+                    }
+                  })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                {errors.category_name && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.category_name.message}
+                  </p>
+                )}
+              </div>
 
-            {/* Category Description */}
-            <Input
-              id="category_description"
-              label="Description"
-              type="text"
-              placeholder="Category Description"
-              register={register}
-            />
-
-            {/* Submit Button */}
-            <div className="items-center gap-2 mb-2">
-              <input
-                type="submit"
-                value="Add Category"
-                className="flex  bg-blue-600 text-white py-2 px-4 rounded-md mt-2 hover:bg-blue-700 hover:cursor-pointer transition-colors"
-              />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Description (Optional)
+                </label>
+                <input
+                  type="text"
+                  placeholder="Category Description"
+                  {...register("category_description")}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
             </div>
-          </div>
-        </form>
-      </div>
 
-      <div className="bg-white rounded-lg shadow">
-        <table className="w-full">
-          <tbody className="divide-y divide-gray-200">
-            {categorys.map((category) => (
-              <tr key={category._id} className="py-4 mx-4 items-center">
-                <td className="items-start py-4 px-4">
-                  {category.category_name}
-                </td>
-                <td className="text-gray-400 py-4 px-4">
-                  {category.category_description}
-                </td>
-                <td className="py-4 px-4 text-end">
-                  <button className="p-1 text-gray-400 hover:text-gray-600 mr-2">
-                    <Edit className="h-4 w-4" />
-                  </button>
-                  <button
-                    className="p-1 text-gray-400 hover:text-red-600"
-                    onClick={() => deleteCategory(category._id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                className="
+                  flex items-center px-4 py-2 
+                  bg-blue-600 text-white rounded-md 
+                  hover:bg-blue-700 transition-colors
+                "
+              >
+                <Plus className="mr-2 h-5 w-5" />
+                Add {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Category
+              </button>
+            </div>
+          </form>
+        </div>
+
+        {/* Categories List */}
+        <div className="bg-gray-50 border-t">
+          <div className="p-4">
+            <h3 className="text-lg font-semibold text-gray-800">
+              {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Categories
+            </h3>
+          </div>
+          
+          {categories.length === 0 ? (
+            <div className="text-center py-6 text-gray-500">
+              No {activeTab} categories found
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-200">
+              {categories.map((category) => (
+                <div
+                  key={category._id}
+                  className="grid md:grid-cols-3 grid-cols-1 gap-4 p-4 hover:bg-gray-100 transition-colors"
+                >
+                  <div>
+                    <span className="font-medium text-gray-800">
+                      {category.category_name}
+                    </span>
+                  </div>
+                  <div className="text-gray-600 md:block hidden">
+                    {category.category_description || "No description"}
+                  </div>
+                  <div className="flex justify-end space-x-2">
+                    <button
+                      className="text-gray-500 hover:text-blue-600 p-2 rounded-full"
+                      title="Edit"
+                    >
+                      <Edit className="h-5 w-5" />
+                    </button>
+                    <button
+                      className="text-gray-500 hover:text-red-600 p-2 rounded-full"
+                      onClick={() => deleteCategory(category._id)}
+                      title="Delete"
+                    >
+                      <Trash2 className="h-5 w-5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

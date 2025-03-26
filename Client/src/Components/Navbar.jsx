@@ -8,6 +8,7 @@ const Navbar = () => {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [userName, setUserName] = useState("");
+  const [isAdmin, setAdmin] = useState(false)
 
   useEffect(() => {
     // Get username from localStorage or fetch from API
@@ -23,7 +24,10 @@ const Navbar = () => {
     const getUserdata = async () => {
       try {
         const res = await axios.get(`/userdata/${userId}`);
-        // console.log(res.data);
+        // console.log(res.data.role.name);
+        if(res.data.role.name === "admin"){
+          setAdmin(true)
+        }
         setUserName(res.data.firstName)
       } catch (error) {
         console.log(error);
@@ -56,6 +60,7 @@ const Navbar = () => {
 
           {/* User Menu and Logout */}
           <div className="flex items-center space-x-4">
+            {isAdmin ? (<Link to="/admin/dashboard">Admin Dashboard</Link>) : " "}
             {userName && (
               <span className="hidden md:inline text-sm">
                 Welcome, {userName}
@@ -67,37 +72,6 @@ const Navbar = () => {
             >
               Logout
             </button>
-
-            {/* Mobile menu button */}
-            <div className="md:hidden">
-              <button
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="text-gray-700 hover:text-blue-600 focus:outline-none"
-              >
-                <svg
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  {isMenuOpen ? (
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  ) : (
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 6h16M4 12h16M4 18h16"
-                    />
-                  )}
-                </svg>
-              </button>
-            </div>
           </div>
         </div>
       </div>

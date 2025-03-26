@@ -32,15 +32,8 @@ const SigninPage = () => {
       const response = await axios.post("/signin", data);
       if (response.data.message === "Login Success") {
         localStorage.setItem("id", response.data.user._id);
-        // console.log(response.data);
-        if (response.data.user.role.name === "user") {
-          navigate("/dashboard");
-          toast.success("Login Success");
-        }
-        if (response.data.user.role.name === "admin") {
-          navigate("/admin/dashboard");
-          toast.success("Admin Login Success");
-        }
+        navigate("/dashboard");
+        toast.success("Login Success");
       } else {
         toast.error("Login Failed");
       }
@@ -188,12 +181,12 @@ const SigninPage = () => {
             </div>
 
             <div className="text-sm">
-              <a
-                href="#"
+              <Link
+                to="/forget-password"
                 className="font-medium text-blue-600 hover:text-blue-500"
               >
                 Forgot your password?
-              </a>
+              </Link>
             </div>
           </div>
 
@@ -203,7 +196,7 @@ const SigninPage = () => {
               className="group relative w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
             >
               <span className="absolute left-0 inset-y-0 flex items-center pl-3">
-                <LogIn className="h-5 w-5 text-blue-500 group-hover:text-blue-400" />
+                <LogIn className="h-5 w-5 text-white group-hover:text-blue-100" />
               </span>
               Sign in
             </button>

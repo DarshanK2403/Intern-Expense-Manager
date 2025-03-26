@@ -23,7 +23,6 @@ const createExpense = async (req, res) => {
         expenseData.receipt = cloudinaryResponse.secure_url; // Save receipt URL
       }
 
-      // ✅ Create new expense
       const newExpense = new ExpenseModel(expenseData);
       await newExpense.save();
       res.status(201).json({
@@ -67,17 +66,6 @@ const getExpenseDetailbyId = async (req, res) => {
   }   
 };
 
-const getLatestExpense = async (req, res) => {
-  const limit = parseInt(req.query.limit) || 5;
-  try {
-    const {userId} = req.params;
-    const latestExpense = await ExpenseModel.find({userId}).sort({ createdAt: -1}).limit(limit);
-    res.status(200).json({data: latestExpense})
-  } catch (error) {
-    res.status(500).json({message: error.message})
-  }
-}
-
 const deleteExpensebyId = async (req, res) =>{
   try {
     const deleteExpense = await ExpenseModel.findByIdAndDelete(req.params.id);
@@ -97,5 +85,4 @@ module.exports = {
   getExpensebyUserId,
   getExpenseDetailbyId,
   deleteExpensebyId,
-  getLatestExpense,
 };

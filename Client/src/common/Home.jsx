@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ChevronRight,
@@ -15,13 +15,29 @@ import {
   Instagram,
   Linkedin,
 } from "lucide-react";
+import axios from "axios";
 
 const Home = () => {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
-
+  const [isLogin, setLogin] = useState(false);
+  const [userdata, setUserdata] = useState([])
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
+
+  useEffect(() => {
+    const id = localStorage.getItem("id");
+    const getUserdata = async () => {
+      if (id) {
+        const res = await axios.get(`/userdata/${id}`);
+        setUserdata(res.data);
+        setLogin(true);
+      } else {
+        setLogin(false);
+      }
+    };
+    getUserdata();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -66,18 +82,24 @@ const Home = () => {
 
             {/* Auth Buttons */}
             <div className="hidden md:flex items-center space-x-4">
-              <Link
-                to="/signin"
-                className="text-blue-600 border border-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors"
-              >
-                Sign In
-              </Link>
-              <Link
-                to="/signup"
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Sign Up
-              </Link>
+              {isLogin ? (
+                <span>Welcome, {userdata.firstName+" "+userdata.lastName}!</span>
+              ) : (
+                <div>
+                  <Link
+                    to="/signin"
+                    className="text-blue-600 border border-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors"
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    to="/signup"
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    Sign Up
+                  </Link>
+                </div>
+              )}
             </div>
 
             {/* Mobile Menu Button */}

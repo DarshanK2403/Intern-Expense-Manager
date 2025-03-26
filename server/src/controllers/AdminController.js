@@ -1,5 +1,6 @@
 const User = require("../models/UserModel");
 const Expense = require("../models/ExpenseModel");
+const Income = require("../models/Income");
 
 const UserDetails = async (req, res) => {
   try {
@@ -9,7 +10,10 @@ const UserDetails = async (req, res) => {
         const expenseCount = await Expense.countDocuments({
           userId: user._id,
         });
-        return { ...user.toObject(), totalExpenses: expenseCount };
+        const incomeCount = await Income.countDocuments({
+          userId: user._id,
+        })
+        return { ...user.toObject(), totalExpenses: expenseCount, totalIncome: incomeCount};
       })
     );
 

@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
-const Income = new Schema({
+const IncomeSchema = new Schema({
   userId: {
     type: mongoose.Schema.ObjectId,
     ref: "User",
@@ -18,11 +18,9 @@ const Income = new Schema({
   },
   incomeDate: {
     type: Date,
-    default: Date.now,
   },
   category: {
     type: String,
-    enum: ["Salary", "Business", "Freelance", "Investment", "Other"],
     required: true,
   },
   notes: {
@@ -41,4 +39,6 @@ const Income = new Schema({
 });
 
 
-module.exports  = Income = mongoose.model("Income", Income);
+const Income = mongoose.model("Income", IncomeSchema);
+
+module.exports = Income

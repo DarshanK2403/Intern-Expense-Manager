@@ -37,7 +37,6 @@ const ExpenseSchema = new Schema(
     },
     vendor: {
       type: String,
-      required: false,
     },
     receipt: {
       type: String,
