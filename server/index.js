@@ -45,6 +45,9 @@ app.use('/admin', AdminRouter);
 const DashboardRoute = require("./src/routes/DashboardRoute");
 app.use('/', DashboardRoute);
 
+const VendorRoute = require("./src/routes/VendorRoute")
+app.use("/", VendorRoute)
+
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });

@@ -17,6 +17,9 @@ import AddIncome from "./Pages/IncomePage/AddIncome";
 import SkeletonLoader from "./Components/SkeletonLoader";
 import RecentTransactios from "./Pages/DashboardPage/RecentTransactios";
 import ForgetPasswordPage from "./common/ForgetPasswordPage";
+import VendorLayout from "./Layouts/VendorLayout";
+import Vendor from "./Pages/VendorPage/Vendor";
+import AddVendor from "./Pages/VendorPage/AddVendor";
 const Home = lazy(() => import("./common/Home"));
 const ReportLayout = lazy(() => import("./Layouts/ReportLayout"));
 const SettingLayout = lazy(() => import("./Layouts/SettingLayout"));
@@ -62,6 +65,16 @@ function App() {
                 <Route path="expense-detail/:id" element={<DetailExpense />} />
               </Route>
 
+              <Route path="/income" element={<IncomeLayout />}>
+                <Route index element={<IncomePage />} />
+                <Route path="add" element={<AddIncome />} />
+              </Route>
+
+              <Route path="/vendor" element={<VendorLayout />}>
+                <Route index element={<Vendor />} />
+                <Route path="add" element={<AddVendor />} />
+              </Route>
+
               {/* Settings Route */}
               <Route path="/settings" element={<SettingLayout />}>
                 <Route index element={<Navigate to="profile" replace />} />
@@ -77,10 +90,6 @@ function App() {
                 <Route index element={<ReportsPage />} />
               </Route>
 
-              <Route path="/income" element={<IncomeLayout />}>
-                <Route index element={<IncomePage />} />
-                <Route path="add" element={<AddIncome />} />
-              </Route>
               {/* Expense Route */}
             </Route>
 

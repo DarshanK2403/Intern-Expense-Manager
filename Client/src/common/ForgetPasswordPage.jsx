@@ -17,15 +17,17 @@ const ForgetPasswordPage = () => {
 
   const password = watch("password");
 
+  // Handle Forget Password (Request Reset Link)
   const onEmailSubmit = async (data) => {
     try {
-      const response = await axios.post("/forget-password", { email: data.email });
-      setServerMessage(response.data.message);
+      await axios.post("/forget-password", { email: data.email });
+      setServerMessage(`Forget Password link sent to ${data.email}`);
     } catch (err) {
       setError(err.response?.data?.message || "Something went wrong");
     }
   };
 
+  // Handle Reset Password (Submit New Password)
   const onPasswordSubmit = async (data) => {
     try {
       const response = await axios.post(`/reset-password/${token}`, { password: data.password });
@@ -42,8 +44,9 @@ const ForgetPasswordPage = () => {
           {token ? "Reset Password" : "Forgot Password"}
         </h2>
 
+        {/* Show Success Message */}
         {serverMessage ? (
-          <p className="text-green-600 text-center">{serverMessage}</p>
+          <p className="text-green-600 text-center font-semibold">{serverMessage}</p>
         ) : (
           <form
             onSubmit={handleSubmit(token ? onPasswordSubmit : onEmailSubmit)}
@@ -51,8 +54,11 @@ const ForgetPasswordPage = () => {
           >
             {token ? (
               <>
+                {/* New Password */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">New Password</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    New Password
+                  </label>
                   <input
                     type="password"
                     {...register("password", {
@@ -64,8 +70,11 @@ const ForgetPasswordPage = () => {
                   {errors.password && <p className="text-red-500 text-sm">{errors.password.message}</p>}
                 </div>
 
+                {/* Confirm Password */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Confirm Password
+                  </label>
                   <input
                     type="password"
                     {...register("confirmPassword", {
@@ -74,11 +83,10 @@ const ForgetPasswordPage = () => {
                     })}
                     className="w-full px-4 py-3 border rounded-lg focus:ring-blue-200 focus:border-blue-500"
                   />
-                  {errors.confirmPassword && (
-                    <p className="text-red-500 text-sm">{errors.confirmPassword.message}</p>
-                  )}
+                  {errors.confirmPassword && <p className="text-red-500 text-sm">{errors.confirmPassword.message}</p>}
                 </div>
 
+                {/* Update Password Button */}
                 <button
                   type="submit"
                   disabled={isSubmitting}
@@ -89,8 +97,11 @@ const ForgetPasswordPage = () => {
               </>
             ) : (
               <>
+                {/* Email Input */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Email Address
+                  </label>
                   <input
                     type="email"
                     {...register("email", {
@@ -105,6 +116,7 @@ const ForgetPasswordPage = () => {
                   {errors.email && <p className="text-red-500 text-sm">{errors.email.message}</p>}
                 </div>
 
+                {/* Send Reset Link Button */}
                 <button
                   type="submit"
                   disabled={isSubmitting}
@@ -117,6 +129,7 @@ const ForgetPasswordPage = () => {
           </form>
         )}
 
+        {/* Show Error Message if Any */}
         {error && <p className="text-red-500 text-center mt-2">{error}</p>}
       </div>
     </div>

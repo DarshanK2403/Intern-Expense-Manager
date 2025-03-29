@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
-import { Edit, Plus, Trash2, DollarSign, ArrowUpRight } from "lucide-react";
+import { Edit, Plus, Trash2, DollarSign, ArrowUpRight, Store } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast, ToastContainer } from "react-toastify";
 
@@ -41,7 +41,6 @@ const Category = () => {
     console.log(categoryData);
     try {
       const res = await axios.post(`/create-${activeTab}-category/${userId}`, categoryData);
-      
       if (res.data.message === "Created") {
         toast.success(`${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Category Added`);
         fetchCategories(activeTab);
@@ -89,12 +88,15 @@ const Category = () => {
       
       <div className="bg-white shadow-lg rounded-lg overflow-hidden">
         {/* Tab Navigation */}
-        <div className="flex border-b bg-gray-50">
+        <div className="flex border-b border-gray-200 bg-gray-50">
           <TabButton type="expense" icon={ArrowUpRight}>
             Expense Categories
           </TabButton>
           <TabButton type="income" icon={DollarSign}>
             Income Categories
+          </TabButton>
+          <TabButton type="vendor" icon={Store}>
+            Vendor Categories
           </TabButton>
         </div>
 

@@ -19,7 +19,7 @@ const CategorySchema = new Schema(
     },
     category_type: {
       type: String,
-      enum: ["income", "expense"],
+      enum: ["income", "expense", "vendor"],
       required: true,
     },
   },

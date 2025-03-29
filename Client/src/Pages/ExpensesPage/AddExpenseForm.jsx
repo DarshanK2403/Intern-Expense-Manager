@@ -107,28 +107,27 @@ const AddExpenseForm = () => {
       try {
         const res = await axios.get(`/get-expense-category/${userId}`);
         setCategoryData(res.data.data); // ✅ Updates categoryData
-        console.log(res.data.data);
+        // console.log(res.data.data);
       } catch (error) {
         toast.error("Internal Server Error");
       }
     };
 
     fetchExpenseCategories();
-  }, []); // ✅ Run only once on mount
+  }, []);
 
-  // 🔹 Separate effect to update category names after `categoryData` updates
   useEffect(() => {
     if (categoryData.length > 0) {
       const names = categoryData.map((cat) => cat.category_name);
-      console.log(names);
+      // console.log(names);
       setexpenseCategories(names);
     }
-  }, [categoryData]); // ✅ Runs when `categoryData` is updated
+  }, [categoryData]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
       <div className="bg-white rounded-lg shadow-md p-6">
-        <Subnav>Add Expense</Subnav>
+        <div className="text-xl font-semibold text-gray-800">Add Expense</div>
         <form onSubmit={handleSubmit(onSubmit)} className="pt-4">
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
             {/* Left Column - Receipt Upload */}

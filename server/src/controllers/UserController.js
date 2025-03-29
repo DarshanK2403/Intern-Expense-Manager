@@ -145,66 +145,99 @@ const ForgetPassword = async (req, res) => {
     const user = await UserModel.findOne({ email });
     if (!user) return res.status(200).json({ message: "User Not Found" });
     const Token = jwt.sign(user.email, process.env.JWt_SECRET);
-    const htmlContent = `
-    <div style={{}} maxwidth:="" 600,="" margin:="" "20px="" auto",="" backgroundcolor:="" "white",="" borderradius:="" 12,="" boxshadow:="" "0="" 4px="" 15px="" rgba(0,="" 0,="" 0.1)",="" overflow:="" "hidden"="" }}="">   
-        <div style={{}} background:="" "linear-gradient(to="" right,="" #2c5282,="" #3b82f6)",="" color:="" "white",="" padding:="" 30,="" textalign:="" "center"="" }}="">
-            <div style={{}} width:="" 80,="" height:="" backgroundcolor:="" "rgba(255,255,255,0.2)",="" borderradius:="" "50%",="" display:="" "flex",="" alignitems:="" "center",="" justifycontent:="" margin:="" "0="" auto="" 20px"="" }}="">
-                <svg xmlns="http://www.w3.org/2000/svg" style={{}} width:="" 48,="" height:="" color:="" "white"="" }}="" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokelinecap="round" strokelinejoin="round" strokewidth="{2}" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-            </div>
-            <h1 style={{}} fontsize:="" 24,="" fontweight:="" "700",="" margin:="" "0"="" }}="">Password Reset</h1>
+    const htmlContent = `<div style={{ fontFamily: "Arial, sans-serif", maxWidth: 600, margin: "0 auto", padding: 20, backgroundColor: "#f4f4f4" }}>
+    <div style={{ backgroundColor: "white", borderRadius: 8, padding: 30, boxShadow: "0 4px 6px rgba(0,0,0,0.1)" }}>
+        <div style={{ textAlign: "center", marginBottom: 20 }}>
+            <h1 style={{ color: "#333", fontSize: 24, marginBottom: 10 }}>Reset Your Password</h1>
+            <p style={{ color: "#666", lineHeight: "1.6" }}>We received a request to reset your password for FinanceTrack.</p>
         </div>
-
-        <div style={{}} padding:="" 30,="" color:="" "#333"="" }}="">
-            <p style={{}} marginbottom:="" 15,="" fontsize:="" 16="" }}="">Hello [User Name],</p>
-
-            <p style={{}} marginbottom:="" 15,="" color:="" "#555",="" lineheight:="" "1.5"="" }}="">
-                We received a request to reset the password for your Expense Manager account. 
-                If you did not make this request, please ignore this email or contact our support team.
+        
+        <div style={{ backgroundColor: "#f9f9f9", border: "1px solid #e0e0e0", borderRadius: 6, padding: 20, marginBottom: 20 }}>
+            <p style={{ color: "#333", marginBottom: 15 }}>
+                Hello King Kong,
             </p>
-
-            <p style={{}} marginbottom:="" 20,="" color:="" "#555",="" lineheight:="" "1.5"="" }}="">
-                To reset your password, click the button below. This link will be valid for 60 minutes:
+            <p style={{ color: "#666", lineHeight: "1.6", marginBottom: 15 }}>
+                You have requested to reset your password for your FinanceTrack account. 
+                Click the button below to reset your password. This link will expire in 15 minutes.
             </p>
-
-            <div style={{}} textalign:="" "center",="" marginbottom:="" 20="" }}="">
-                <a href='http://localhost:5173/forget-password/${Token}' style={{}} display:="" "inline-block",="" backgroundcolor:="" "#2c5282",="" color:="" "white",="" padding:="" "12px="" 24px",="" borderradius:="" 6,="" textdecoration:="" "none",="" fontweight:="" "600",="" fontsize:="" 16="" }}="">
+            
+            <div style={{ textAlign: "center", margin: "25px 0" }}>
+                <a href="http://localhost:5173/forget-password/${Token}" style={{ display: "inline-block", backgroundColor: "#4285f4", color: "white", padding: "12px 24px", textDecoration: "none", borderRadius: 6, fontWeight: "bold", textTransform: "uppercase", letterSpacing: 1 }}>
                     Reset Password
                 </a>
             </div>
-
-            <p style={{}} marginbottom:="" 10,="" color:="" "#555",="" fontsize:="" 14="" }}="">
-                If the button does not work, copy this link:
+            
+            <p style={{ color: "#666", fontSize: 12, textAlign: "center", marginTop: 15 }}>
+                If you did not request a password reset, please ignore this email or contact support if you have concerns.
             </p>
-
-            <p style={{}} backgroundcolor:="" "#f4f4f4",="" padding:="" 10,="" borderradius:="" 4,="" wordbreak:="" "break-all",="" fontsize:="" 14,="" color:="" "#2c5282",="" marginbottom:="" 20="" }}="">
-                [FULL_PASSWORD_RESET_LINK]
-            </p>
-
-            <div style={{}} bordertop:="" "1px="" solid="" #e0e0e0",="" paddingtop:="" 15,="" margintop:="" 20,="" fontsize:="" 14,="" color:="" "#666"="" }}="">
-                <p>This link expires in 60 minutes. For security, request a new link if needed.</p>
-            </div>
         </div>
-
-        <div style={{}} backgroundcolor:="" "#f4f4f4",="" padding:="" 20,="" textalign:="" "center",="" fontsize:="" 12,="" color:="" "#666"="" }}="">
-            <p style={{}} margin:="" "0="" 0="" 10px="" 0"="" }}="">© 2024 Expense Manager. All rights reserved.</p>
-            <p style={{}} margin:="" "0"="" }}="">
-                Support: 
-                <a href="mailto:support@expensemanager.com" style={{}} color:="" "#2c5282",="" textdecoration:="" "none"="" }}="">
-                    support@expensemanager.com
-                </a>
-            </p>
+        
+        <div style={{ textAlign: "center", color: "#888", fontSize: 12, paddingTop: 20, borderTop: "1px solid #e0e0e0" }}>
+            <p style={{ marginBottom: 10 }}>© 2025 FinanceTrack. All rights reserved.</p>
+            <p style={{ color: "#666" }}>This is an automated email. Please do not reply.</p>
         </div>
     </div>
-`;
+</div>`;
     const mailResponse = mailUtil
       .sendingMail(user.email, "Forget Password", htmlContent)
-      .then(() =>
-        res.status(200).json(`📩 Email sent successfully to ${user.email}`)
-      )
-      .catch((error) => res.status(400).json("❌ Error sending email:", error));
+      .then(() => console.log(`📩 Email sent successfully to ${user.email}`))
+      .catch((error) => console.log("❌ Error sending email:", error));
     res.status(200).json(mailResponse);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const UpdatePassword = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const { password } = req.body;
+
+    // Validate password
+    if (!password || typeof password !== "string") {
+      return res
+        .status(400)
+        .json({ message: "Password must be a valid string" });
+    }
+
+    // Hash the new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Update user password
+    const updatedUser = await UserModel.findByIdAndUpdate(
+      userId,
+      { $set: { password: hashedPassword } },
+      { new: true }
+    );
+
+    // Check if user exists
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({ message: "Password updated successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const UpdateProfile = async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const { firstName, lastName, phone } = req.body;
+
+    const updateData = await UserModel.findByIdAndUpdate(
+      userId,
+      { $set: { firstName: firstName, lastName: lastName, phone: phone } },
+      { new: true },
+    );
+
+    if(!updateData){
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.status(200).json({ message: "Profile Updated", });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -215,4 +248,6 @@ module.exports = {
   Login,
   Userdata,
   ForgetPassword,
+  UpdatePassword,
+  UpdateProfile,
 };

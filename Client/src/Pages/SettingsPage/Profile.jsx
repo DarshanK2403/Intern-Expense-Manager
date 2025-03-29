@@ -10,12 +10,13 @@ const Profile = () => {
   const [initialData, setInitialData] = useState({});
   const userId = localStorage.getItem("id");
   const navigate = useNavigate();
-
+  const [loading, setLoading] = useState(false)
   const { register, handleSubmit, setValue, watch, reset } = useForm();
   const watchedValues = watch(); // Watching form changes
 
   useEffect(() => {
     const getUserdata = async () => {
+      setLoading(true)
       try {
         const res = await axios.get(`/userdata/${userId}`);
         setInitialData(res.data);
@@ -23,6 +24,7 @@ const Profile = () => {
       } catch (error) {
         console.error("Error fetching user data:", error);
       }
+      setLoading(false);
     };
 
     if (userId) getUserdata();
@@ -74,7 +76,7 @@ const Profile = () => {
 
   const onSubmit = async (data) => {
     try {
-      await axios.put(`/update-user/${userId}`, data);
+      await axios.put(`/update-profile/${userId}`, data);
       alert("Profile updated successfully!");
       setInitialData(data);
       setIsEditing(false);
@@ -107,6 +109,7 @@ const Profile = () => {
           <div className="border-t border-gray-100 pt-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
+                {/* First Name */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
                   <input
@@ -116,6 +119,8 @@ const Profile = () => {
                     disabled={!isEditing}
                   />
                 </div>
+
+                {/* Email */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Email (Read-only)</label>
                   <input
@@ -128,6 +133,7 @@ const Profile = () => {
               </div>
 
               <div className="space-y-4">
+                {/* Last Name */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
                   <input
@@ -137,6 +143,7 @@ const Profile = () => {
                     disabled={!isEditing}
                   />
                 </div>
+                {/* Phone */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
                   <input

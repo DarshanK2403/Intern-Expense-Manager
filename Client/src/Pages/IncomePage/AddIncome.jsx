@@ -1,7 +1,12 @@
+/* eslint-disable no-unused-vars */
 import { useForm } from "react-hook-form";
 import Subnav from "../../Components/Subnav";
 import Input from "../../Components/Input";
 import axios from "axios";
+import { useEffect, useState } from "react";
+import { toast, ToastContainer } from "react-toastify";
+import SelectInput from "../../Components/Select";
+import { useNavigate } from "react-router-dom";
 
 const AddIncome = () => {
   const {
@@ -9,10 +14,14 @@ const AddIncome = () => {
     handleSubmit,
     formState: { errors },
   } = useForm();
-
   const userId = localStorage.getItem("id");
+  const [categoryData, setCategoryData] = useState({});
+  const [incomeCategories, setincomeCategories] = useState();
+  const navigate = useNavigate();
+
+  // On Submit
   const submitHandler = async (data) => {
-    console.log(data);
+    // console.log(data);
     const formData = new FormData();
     formData.append("userId", userId);
     formData.append("title", data.title);
@@ -28,15 +37,41 @@ const AddIncome = () => {
       const res = await axios.post(`/add-income/${userId}`, formData, {
         headers: { "Content-Type": "application/json" },
       });
-      console.log(res);
+      // console.log(res);
+      navigate(-1);
     } catch (error) {
       console.log(error);
     }
   };
+
+  // Get Income category
+  useEffect(() => {
+    const fetchExpenseCategories = async () => {
+      const userId = localStorage.getItem("id");
+      try {
+        const res = await axios.get(`/get-income-category/${userId}`);
+        setCategoryData(res.data.data); // ✅ Updates categoryData
+        // console.log(res.data.data);
+      } catch (error) {
+        toast.error("Internal Server Error");
+      }
+    };
+
+    fetchExpenseCategories();
+  }, []);
+
+  useEffect(() => {
+    if (categoryData.length > 0) {
+      const names = categoryData.map((cat) => cat.category_name);
+      // console.log(names);
+      setincomeCategories(names);
+    }
+  }, [categoryData]);
   return (
     <div className="max-w-7xl mx-auto py-6 bg-gray-50">
+      <ToastContainer></ToastContainer>
       <div className="bg-white shadow p-6">
-        <Subnav>Add Income</Subnav>
+        <div className="text-xl font-semibold text-gray-800">Add Income</div>
         <form onSubmit={handleSubmit(submitHandler)} className="mt-2">
           <div className="grid lg:grid-cols-2 space-y-2 grid-cols-1 space-x-4">
             <Input
@@ -72,16 +107,15 @@ const AddIncome = () => {
             />
           </div>
           <div className="flex flex-col mt-2">
-            <label htmlFor="amount" className="pb-1">
-              Category
-            </label>
-            <select
-              className="bg-white rounded-sm p-1 border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-              {...register("category")}
-            >
-              <option value="1">1</option>
-              <option value="2">2</option>
-            </select>
+            <div>
+              <SelectInput
+                id="category"
+                label="Expense Category"
+                options={incomeCategories}
+                register={register}
+                errors={errors}
+              />
+            </div>
           </div>
           <div className="flex flex-col mt-2">
             <label htmlFor="title" className="pb-1">

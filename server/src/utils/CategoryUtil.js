@@ -65,6 +65,36 @@ const createDefaultCategoriesForUser = async (userId) => {
       category_description: "Money received as gifts, lottery winnings, or unexpected earnings",
       category_type: "income"
     },
+    {
+      _id: new mongoose.Types.ObjectId(),
+      category_name: "Online Retailers",
+      category_description: "E-commerce platforms and online shopping stores",
+      category_type: "vendor"
+    },
+    {
+      _id: new mongoose.Types.ObjectId(),
+      category_name: "Local Suppliers",
+      category_description: "Nearby stores and physical suppliers for goods and services",
+      category_type: "vendor"
+    },
+    {
+      _id: new mongoose.Types.ObjectId(),
+      category_name: "Service Providers",
+      category_description: "Freelancers, agencies, and professionals offering services",
+      category_type: "vendor"
+    },
+    {
+      _id: new mongoose.Types.ObjectId(),
+      category_name: "Wholesale Distributors",
+      category_description: "Bulk product suppliers and manufacturers",
+      category_type: "vendor"
+    },
+    {
+      _id: new mongoose.Types.ObjectId(),
+      category_name: "Utilities & Bills",
+      category_description: "Electricity, internet, water, and other utility providers",
+      category_type: "vendor"
+    }
 
   ];
 

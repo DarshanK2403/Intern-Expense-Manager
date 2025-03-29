@@ -68,10 +68,26 @@ const ExpenseByCategory = async (req, res) => {
     }
 };
 
+const IncomeByCategory = async (req, res) => {
+  try {
+      const userId = req.params.userId; // Extract userId from params
+      const userObjectId = mongoose.Types.ObjectId.isValid(userId) ? new mongoose.Types.ObjectId(userId) : userId;
 
+      const categoryExpense = await Income.aggregate([
+          { $match: { userId: userObjectId } },  // Filter by userId
+          { $group: { _id: "$category", total: { $sum: "$amount" } } },
+          {$sort: {total: -1}}
+      ]);
+
+      res.status(200).json(categoryExpense);
+  } catch (error) {
+      res.status(500).json({ error: "Server Error", details: error.message });
+  }
+};
 
 module.exports = {
   recentTransactions,
   getTotalValues,
   ExpenseByCategory,
+  IncomeByCategory,
 };

@@ -10,6 +10,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Banknote,
+  Store,
 } from "lucide-react";
 import axios from "axios";
 
@@ -29,6 +30,7 @@ const Sidebar = () => {
     { icon: Home, label: "Dashboard", path: "/dashboard" },
     { icon: DollarSign, label: "Expenses", path: "/expenses" },
     { icon: Banknote, label: "Income", path: "/income" },
+    { icon: Store, label: "Vendor", path: "/vendor" },
     { icon: BarChart, label: "Reports", path: "/reports" },
     { icon: Settings, label: "Settings", path: "/settings" },
   ];
