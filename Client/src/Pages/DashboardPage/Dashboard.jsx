@@ -331,8 +331,8 @@ const Dashboard = () => {
 
       {/* Expense by Category */}
       <div className="mt-6 p-6 bg-white shadow-md rounded-lg">
-        <div className="p-4 border-b">
-          <h2 className="text-lg font-semibold">Category Breakdown</h2>
+        <div className="p-4 border-b border-gray-400">
+          <h2 className="text-lg font-semibold">Category-wise Financial Overview</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
           {/* Expenses by Category */}

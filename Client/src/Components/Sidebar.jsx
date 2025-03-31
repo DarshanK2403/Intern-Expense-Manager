@@ -55,12 +55,12 @@ const Sidebar = () => {
 
   return (
     <aside
-      className={`bg-gray-100 text-gray-800 shadow-lg transition-all duration-300 sticky top-0 left-0 ${
+      className={`bg-gray-100 text-gray-800 border-r border-gray-300 shadow-lg transition-all duration-300 sticky top-0 left-0 ${
         isOpen ? "w-64" : "w-20"
       }`}
     >
       {/* Logo and company name */}
-      <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+      <div className="p-4 border-b border-gray-300 flex items-center justify-between">
         <div className="flex items-center">
           <div className="w-8 h-8 bg-blue-600 rounded-md flex items-center justify-center">
             <span className="text-white font-bold">F</span>
@@ -107,7 +107,7 @@ const Sidebar = () => {
       </nav>
 
       {/* User Profile Section */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
+      <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-300">
         <div className="flex items-center">
           <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-gray-600">
             {isOpen ? "JS" : "J"}

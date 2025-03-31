@@ -14,16 +14,16 @@ const AddVendor = () => {
   } = useForm();
   const navigate = useNavigate();
   const userId = localStorage.getItem("id");
-  const [vendorCategories, setvendorCategories]= useState([]);
+  const [vendorCategories, setvendorCategories] = useState([]);
 
   useEffect(() => {
     const getVendorCategory = async () => {
       try {
         const res = await axios.get(`/get-vendor-category/${userId}`);
         // console.log(res.data.data);
-        const data = res.data.data
-        const categoryName = data?.map((cat)=>cat.category_name);
-        setvendorCategories(categoryName)
+        const data = res.data.data;
+        const categoryName = data?.map((cat) => cat.category_name);
+        setvendorCategories(categoryName);
       } catch (error) {
         toast.error("Internal Server Error");
       }
@@ -34,7 +34,18 @@ const AddVendor = () => {
   }, [userId]);
 
   const onSubmit = async (data) => {
-    console.log(data);
+    try {
+      const formData = {
+        ...data,
+        userId
+      }
+      const res = await axios.post(`/add-vendor/${userId}`, formData);
+      toast.success("Venodr Added");
+      // console.log(res.data);
+      navigate('/vendor');
+    } catch (error) {
+      toast.error("Internal Server Error");
+    }
   };
 
   const cancle = () => {
@@ -43,6 +54,7 @@ const AddVendor = () => {
   return (
     <div className="max-w-7xl mx-auto mt-5 p-6 bg-white">
       <ToastContainer></ToastContainer>
+      {/* Form Title */}
       <div className="text-xl font-semibold text-gray-800">Add Vendor</div>
       <div className="mt-2">
         <form onSubmit={handleSubmit(onSubmit)}>
@@ -85,7 +97,7 @@ const AddVendor = () => {
             />
           </div>
 
-          {/* Vendor Category */}
+          {/* Category */}
           <div className="mt-2">
             <SelectInput
               id="category"

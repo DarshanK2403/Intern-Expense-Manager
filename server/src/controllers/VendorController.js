@@ -1,34 +1,54 @@
 const Vendor = require("../models/Vendor");
 
-const AddVendor = async (req, res) =>{    
-    const {userId} = req.params;
-    try {
-        const {name, email, phone, category, notes} = req.body;
-        if(!name){
-            return res.status(400).json({param: name, message: "vendor name is required"});
-        }
-        const vendorExist = await Vendor.findOne({userId: userId, name : name})
-        if({vendorExist}){
-            return res.status(400).json({message: "Vendor alredy exist"})
-        }
-        const createVendor = await Vendor.create(
-            name,
-            email,
-            phone,
-            category,
-            notes,
-            userId
-        );
-        if(createVendor){
-            res.status(200).json({message: "Success", Data: createVendor});
-        }else{
-            res.status(400).json({message: "request failed"});
-        }
-    } catch (error) {
-        res.status(500).json({error: error.message});
+const AddVendor = async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const { name, email, phone, category, notes } = req.body;
+    if (!name) {
+      return res.status(400).json({ message: "vendor name is required" });
     }
-}
+    const vendorExist = await Vendor.findOne({ name });
+    if (vendorExist) {
+      return res.status(400).json({ message: "Vendor alredy exist" });
+    }
+    const data = {
+        ...req.body,
+        userId,
+    }
+    const createVendor = await Vendor.create(
+      data
+    );
+    res.status(200).json(createVendor);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const GetVendor = async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const getvendor = await Vendor.find({ userId });
+    res.status(200).json(getvendor);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const DeleteVendor = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const vendor = await Vendor.findByIdAndDelete(id);
+    if (!vendor) {
+      return res.status(404).json({ message: "Vendor not found" });
+    }
+    res.status(200).json({ message: "Vendor deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
 module.exports = {
-    AddVendor
-}
+  AddVendor,
+  GetVendor,
+  DeleteVendor
+};

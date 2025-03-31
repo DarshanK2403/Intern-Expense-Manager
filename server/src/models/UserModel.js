@@ -31,14 +31,14 @@ const UserSchema = new Schema(
       required: true,
       default: "67c1d766244df2991d6959b0",
     },
-    isActive:{
+    isActive: {
       type: Boolean,
       default: true,
-    }
+    },
   },
   {
     timestamps: {
-        required: true,
+      required: true,
     },
   }
 );

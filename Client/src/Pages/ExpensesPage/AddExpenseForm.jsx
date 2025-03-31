@@ -389,7 +389,7 @@ const AddExpenseForm = () => {
                 />
               </div>
 
-              {/* Action Buttons */}
+              {/* Buttons */}
               <div className="mt-8 flex flex-col sm:flex-row gap-4">
                 <button
                   type="submit"

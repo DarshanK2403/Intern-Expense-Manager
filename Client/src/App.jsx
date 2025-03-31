@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import "./App.css";
 import axios from "axios";
+import SkeletonLoader from "./Components/SkeletonLoader";
 const SigninPage = lazy(() => import("./common/SigninPage"));
 const SignupPage = lazy(() => import("./common/SignupPage"));
 const Dashboard = lazy(() => import("./Pages/DashboardPage/Dashboard"));
@@ -14,12 +15,11 @@ const AddExpenseForm = lazy(() =>
 const ExpenseLayout = lazy(() => import("./Layouts/ExpenseLayout"));
 import { PrivateRoute, AdminRoute } from "./hooks/PrivateRoute";
 import AddIncome from "./Pages/IncomePage/AddIncome";
-import SkeletonLoader from "./Components/SkeletonLoader";
 import RecentTransactios from "./Pages/DashboardPage/RecentTransactios";
 import ForgetPasswordPage from "./common/ForgetPasswordPage";
 import VendorLayout from "./Layouts/VendorLayout";
-import Vendor from "./Pages/VendorPage/Vendor";
 import AddVendor from "./Pages/VendorPage/AddVendor";
+import VendorPage from "./Pages/VendorPage/VendorPage";
 const Home = lazy(() => import("./common/Home"));
 const ReportLayout = lazy(() => import("./Layouts/ReportLayout"));
 const SettingLayout = lazy(() => import("./Layouts/SettingLayout"));
@@ -50,13 +50,18 @@ function App() {
             <Route path="/signin" element={<SigninPage />} />
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/forget-password" element={<ForgetPasswordPage />} />
-            <Route path="/forget-password/:token" element={<ForgetPasswordPage />} />
+            <Route
+              path="/forget-password/:token"
+              element={<ForgetPasswordPage />}
+            />
 
             <Route element={<PrivateRoute />}>
               <Route path="/dashboard" element={<DashboardLayout />}>
                 <Route index element={<Dashboard />} />
-                <Route path="recent-transactions" element={<RecentTransactios />} />
-
+                <Route
+                  path="recent-transactions"
+                  element={<RecentTransactios />}
+                />
               </Route>
 
               <Route path="/expenses" element={<ExpenseLayout />}>
@@ -71,7 +76,7 @@ function App() {
               </Route>
 
               <Route path="/vendor" element={<VendorLayout />}>
-                <Route index element={<Vendor />} />
+                <Route index element={<VendorPage />} />
                 <Route path="add" element={<AddVendor />} />
               </Route>
 
@@ -107,7 +112,7 @@ function App() {
                   element={<AdminReportPage />}
                 />
                 <Route index path="admin/users" element={<AdminUserPage />} />
-                
+
                 <Route
                   index
                   path="admin/settings"
