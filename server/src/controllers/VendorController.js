@@ -47,8 +47,39 @@ const DeleteVendor = async (req, res) => {
   }
 };
 
+const UpdateVendor = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const vendor = await Vendor.findByIdAndUpdate(id, req.body, {
+      new: true,
+      runValidators: true,
+    });
+    if (!vendor) {
+      return res.status(404).json({ message: "Vendor not found" });
+    }
+    res.status(200).json(vendor);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}
+
+const GetVendorbyId = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const vendor = await Vendor.findById(id);
+    if (!vendor) {
+      return res.status(404).json({ message: "Vendor not found" });
+    }
+    res.status(200).json({name: vendor.name, email:vendor.email, phone:vendor.phone, category:vendor.category, notes: vendor.notes});
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}
+
 module.exports = {
   AddVendor,
   GetVendor,
-  DeleteVendor
+  DeleteVendor,
+  UpdateVendor,
+  GetVendorbyId,
 };

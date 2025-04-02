@@ -46,7 +46,7 @@ const getExpensebyUserId = async (req, res) => {
         .json({ success: false, message: "User ID is required" });
     }
 
-    const expenses = await ExpenseModel.find({ userId }).sort({ createdAt: -1 });
+    const expenses = await ExpenseModel.find({ userId }).sort({ expenseDate: -1 });
 
     res.status(200).json({ success: true, data: expenses });
   } catch (error) {

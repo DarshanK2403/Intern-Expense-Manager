@@ -18,7 +18,7 @@ const IncomePage = () => {
   const [incomeData, setIncomeData] = useState([]);
   const userId = localStorage.getItem("id");
 
-  // Fetch Income Data
+  // Ge Income
   const getIncome = useCallback(async () => {
     if (!userId) return;
 
@@ -28,7 +28,7 @@ const IncomePage = () => {
     } catch (error) {
       toast.error("Failed to fetch income data");
     }
-  }, [userId]); // ✅ Memoized, only changes when userId changes
+  }, [userId]);
 
   useEffect(() => {
     getIncome();
@@ -55,19 +55,19 @@ const IncomePage = () => {
           <table className="min-w-full divide-y divide-gray-300">
             <thead className="bg-blue-600 text-white">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                 <th className="p-4 text-left font-medium">
                   Title
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                 <th className="p-4 text-left font-medium">
                   Amount
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                 <th className="p-4 text-left font-medium">
                   Date
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                 <th className="p-4 text-left font-medium">
                   Category
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                 <th className="p-4 text-left font-medium">
                   Actions
                 </th>
               </tr>

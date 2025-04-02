@@ -2,20 +2,20 @@ const mailer = require("nodemailer");
 
 const sendingMail = async (to, subject, htmlContent) => {
   const transporter = mailer.createTransport({
-    service: "gmail",
+    service: process.env.MAIL_SERVICE,
     secure: true,
     headers:{
       'X-Priority': 1,
       "X-Gmail-Labels": "Inbox, Primary", 
     },
     auth: {
-      user: "darshandeesa009@gmail.com",
-      pass: "eusl gjvk jopd hhsx",
+      user: process.env.MAIL_EMAIL,
+      pass: process.env.MAIL_PASSWORD,
     },
   });
 
   const mailOptions = {
-    from: "darshandeesa009@gmail.com",
+    from: process.env.MAIL_EMAIL,
     to: to,
     subject: subject,
     html: htmlContent, 

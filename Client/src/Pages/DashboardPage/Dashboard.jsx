@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 /* eslint-disable no-unused-vars */
 import axios from "axios";
 import {
@@ -45,14 +46,14 @@ const Dashboard = () => {
   const [incomeData, setIncomeData] = useState([]);
 
   const COLORS = [
-    "#8884d8",
-    "#82ca9d",
-    "#ffc658",
-    "#ff7f50",
-    "#a28cd3",
-    "#ffcc00",
-    "#d0ed57",
-  ]; // Define custom colors
+    "#5B9BD5", // Medium Light Blue
+    "#70AD47", // Medium Light Green
+    "#FFD966", // Soft Yellow (Visible)
+    "#E57373", // Soft Red
+    "#A085C2", // Medium Light Purple
+    "#56C0E0", // Light Cyan (More Visible)
+    "#F4A261", // Light Orange
+  ];
 
   const getRecentTransactions = async (userId, limit = 5) => {
     try {
@@ -192,7 +193,7 @@ const Dashboard = () => {
       </div>
 
       {/* Recent Transactions */}
-      <div className="bg-white p-6 shadow rounded-lg mt-6">
+      <div className="bg-white p-6 border border-gray-300 shadow rounded-lg mt-6">
         <div className="flex justify-between">
           <h3 className="text-gray-700 mb-4 text-xl font-semibold">
             Recent Transactions
@@ -321,23 +322,25 @@ const Dashboard = () => {
             <h3 className="text-xl font-medium text-gray-700 mb-2">
               No Transactions Yet
             </h3>
-            <p className="text-gray-500 text-center max-w-md">
-              You haven&#39;t recorded any transactions. Start by adding an
-              income or expense.
+            <p className="text-gray-500 text-center max-w-md font-sans min-h-[40px]">
+              You haven't recorded any transactions. Start by adding an income
+              or expense.
             </p>
           </div>
         )}
       </div>
 
       {/* Expense by Category */}
-      <div className="mt-6 p-6 bg-white shadow-md rounded-lg">
-        <div className="p-4 border-b border-gray-400">
-          <h2 className="text-lg font-semibold">Category-wise Financial Overview</h2>
+      <div className="mt-6 p-6 bg-white shadow-md rounded-lg border border-gray-300">
+        <div className="py-2">
+          <h2 className="text-lg font-semibold">
+            Category-wise Financial Overview
+          </h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 rounded-md">
           {/* Expenses by Category */}
-          <div className="bg-white shadow-md rounded-lg p-4">
-            <h3 className="text-md font-semibold mb-4">Expenses by Category</h3>
+          <div className="bg-white shadow-md rounded-lg p-4 border border-gray-300">
+            <h3 className="text-md font-semibold mb-2">Spending by Category</h3>
             {expenseData.length > 0 ? (
               <PieChart width={700} height={350} style={{ margin: "auto" }}>
                 <Pie
@@ -368,8 +371,8 @@ const Dashboard = () => {
           </div>
 
           {/* Income by Category */}
-          <div className="bg-white shadow-md rounded-lg p-4">
-            <h3 className="text-md font-semibold mb-4">Income by Category</h3>
+          <div className="bg-white shadow-md rounded-lg p-4 border border-gray-300">
+            <h3 className="text-md font-semibold mb-2">Earnings by Category</h3>
             {incomeData.length > 0 ? (
               <PieChart width={700} height={350} style={{ margin: "auto" }}>
                 <Pie

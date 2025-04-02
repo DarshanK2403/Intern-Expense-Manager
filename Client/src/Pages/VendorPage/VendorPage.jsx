@@ -2,11 +2,13 @@
 import axios from "axios";
 import { Edit, FileText, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 
 const VendorPage = () => {
   const [vendorData, setVendorData] = useState([]);
   const userId = localStorage.getItem("id");
+  const navigate = useNavigate();
 
   // Fetch Vendor Data
   const getVendor = useCallback(async () => {
@@ -45,19 +47,19 @@ const VendorPage = () => {
           <table className="min-w-full divide-y divide-gray-300">
             <thead className="bg-blue-600 text-white">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  <th className="p-4 text-left font-medium">
                   Name
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  <th className="p-4 text-left font-medium">
                   Email
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  <th className="p-4 text-left font-medium">
                   Phone
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  <th className="p-4 text-left font-medium">
                   Category
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  <th className="p-4 text-left font-medium">
                   Actions
                 </th>
               </tr>
@@ -86,7 +88,7 @@ const VendorPage = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-3">
-                      <button className="text-gray-600 hover:text-indigo-600">
+                      <button className="text-gray-600 hover:text-indigo-600" onClick={() => navigate(`/vendor/edit/${entry._id}`)}>
                         <Edit className="h-5 w-5" />
                       </button>
                       <button

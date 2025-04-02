@@ -1,4 +1,4 @@
-const Income = require("../models/Income");
+const Income = require("../models/IncomeModel");
 
 const AddIncome = async (req, res) => {
   try {
@@ -37,7 +37,7 @@ const AddIncome = async (req, res) => {
 const getIncomebyUserId = async(req, res) =>{
   const {userId} = req.params;
   try {
-    const getincome = await Income.find({userId});
+    const getincome = await Income.find({userId}).sort({incomeDate: -1});
     if(getincome.length > 0){
       res.status(200).json(getincome);
     }

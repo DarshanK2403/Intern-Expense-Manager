@@ -1,23 +1,39 @@
-/* eslint-disable no-unused-vars */
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import Input from "../../Components/Input";
-import { useNavigate } from "react-router-dom";
-import SelectInput from "../../Components/Select";
-import { useEffect, useState } from "react";
 import { toast, ToastContainer } from "react-toastify";
+import Input from "../../Components/Input";
+import SelectInput from "../../Components/Select";
 import axios from "axios";
+import { useNavigate, useParams } from "react-router-dom";
 
-const AddVendor = () => {
+const UpdateVendor = () => {
   const {
     register,
     handleSubmit,
     formState: { errors },
+    setValue,
   } = useForm();
-  const navigate = useNavigate();
   const userId = localStorage.getItem("id");
   const [vendorCategories, setvendorCategories] = useState([]);
+  const { id } = useParams();
+  const navigate = useNavigate();
 
   useEffect(() => {
+    const getVendorById = async () => {
+      try {
+        const res = await axios.get(`/get-vendor-by-id/${id}`);
+        setValue("name", res.data.name);
+        setValue("email", res.data.email);
+        setValue("phone", res.data.phone);
+        setValue("category", res.data.category);
+        setValue("notes", res.data.notes);
+        console.log(res.data);
+      } catch (error) {
+        toast.error("Internal Server Error");
+      }
+    };
+    getVendorById();
+
     const getVendorCategory = async () => {
       try {
         const res = await axios.get(`/get-vendor-category/${userId}`);
@@ -25,38 +41,34 @@ const AddVendor = () => {
         const data = res.data.data;
         const categoryName = data?.map((cat) => cat.category_name);
         setvendorCategories(categoryName);
+        // console.log(id);
       } catch (error) {
         toast.error("Internal Server Error");
       }
     };
-    if (userId) {
-      getVendorCategory();
-    }
-  }, [userId]);
+    getVendorCategory();
+  }, []);
 
   const onSubmit = async (data) => {
     try {
-      const formData = {
-        ...data,
-        userId
+      const res = await axios.put(`/update-vendor/${id}`, data);
+      if (res.status === 200) {
+        toast.success("Vendor Updated Successfully");
+        navigate(-1);
+      } else {
+        toast.error("Something went wrong");
       }
-      const res = await axios.post(`/add-vendor/${userId}`, formData);
-      toast.success("Venodr Added");
-      // console.log(res.data);
-      navigate('/vendor');
     } catch (error) {
       toast.error("Internal Server Error");
     }
-  };
-
-  const cancle = () => {
-    navigate(-1);
   };
   return (
     <div className="max-w-7xl mx-auto mt-5 p-6 bg-white">
       <ToastContainer></ToastContainer>
       {/* Form Title */}
-      <div className="text-xl font-semibold text-gray-800">Add Vendor</div>
+      <div className="text-xl font-semibold text-gray-800">
+        Edit Vendor Detail
+      </div>
       <div className="mt-2">
         <form onSubmit={handleSubmit(onSubmit)}>
           {/* Vendor Name */}
@@ -140,4 +152,4 @@ const AddVendor = () => {
   );
 };
 
-export default AddVendor;
+export default UpdateVendor;

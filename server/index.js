@@ -6,7 +6,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 
 app.use(cors({
-  origin: "http://localhost:5173", // Allow requests from any origin (you can restrict it later)
+  origin: process.env.FRONTEND_URL,
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
 }));
@@ -47,6 +47,9 @@ app.use('/', DashboardRoute);
 
 const VendorRoute = require("./src/routes/VendorRoute")
 app.use("/", VendorRoute)
+
+const ReportRoute = require("./src/routes/ReportRoute")
+app.use("/", ReportRoute)
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);

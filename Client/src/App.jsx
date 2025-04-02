@@ -20,6 +20,8 @@ import ForgetPasswordPage from "./common/ForgetPasswordPage";
 import VendorLayout from "./Layouts/VendorLayout";
 import AddVendor from "./Pages/VendorPage/AddVendor";
 import VendorPage from "./Pages/VendorPage/VendorPage";
+import ChangePassword from "./Pages/SettingsPage/ChangePassword";
+import UpdateVendor from "./Pages/VendorPage/UpdateVendor";
 const Home = lazy(() => import("./common/Home"));
 const ReportLayout = lazy(() => import("./Layouts/ReportLayout"));
 const SettingLayout = lazy(() => import("./Layouts/SettingLayout"));
@@ -78,6 +80,7 @@ function App() {
               <Route path="/vendor" element={<VendorLayout />}>
                 <Route index element={<VendorPage />} />
                 <Route path="add" element={<AddVendor />} />
+                <Route path="edit/:id" element={<UpdateVendor />} />
               </Route>
 
               {/* Settings Route */}
@@ -88,6 +91,7 @@ function App() {
                 <Route path="account" element={<Account />} />
                 <Route path="payment" element={<Payment />} />
                 <Route path="currency" element={<Currency />} />
+                <Route path="profile/change-password" element={<ChangePassword />} />
               </Route>
               {/* Report Route */}
 

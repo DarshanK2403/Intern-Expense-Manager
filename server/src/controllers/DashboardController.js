@@ -1,5 +1,5 @@
 const Expense = require("../models/ExpenseModel");
-const Income = require("../models/Income");
+const Income = require("../models/IncomeModel");
 
 const recentTransactions = async (req, res) => {
   const { userId } = req.params;

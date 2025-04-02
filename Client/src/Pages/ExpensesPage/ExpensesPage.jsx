@@ -17,6 +17,10 @@ import {
   Plus,
   Receipt,
   ImageIcon,
+  Image,
+  ImagePlus,
+  ImageDown,
+  IndianRupee,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -54,73 +58,82 @@ const ExpensesPage = () => {
   }, [userId]);
 
   return (
-    <div className="bg-gray-50 max-w-6xl mx-auto p-4 md:p-6">
+    <div className="bg-gray-50 max-w-7xl mx-auto px-4 md:px-6">
       {/* Expenses List */}
-      <div className="space-y-4">
-        {expenses.length > 0 ? (
-          expenses.map((expense) => (
-            <Link
-              key={expense._id}
-              className="block transition-transform hover:translate-y-[-2px]"
-              to={`expense-detail/${expense._id}`}
-            >
-              <div className="flex flex-col md:flex-row bg-white rounded-lg shadow-sm hover:shadow transition-shadow duration-200 overflow-hidden">
-                {/* Receipt Image */}
-                <div className="w-full md:w-48 h-48 bg-gray-100 flex items-center justify-center border-b md:border-b-0 md:border-r border-gray-100">
-                  {expense.receipt ? (
-                    isImage(expense.receipt) ? (
-                      <img
-                        src={expense.receipt}
-                        alt="Receipt"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : isPDF(expense.receipt) ? (
-                      <div className="flex flex-col items-center justify-center p-2">
-                        <img
-                          src="./pdf.png"
-                          alt="PDF Receipt"
-                          className="w-20 h-20 object-contain"
-                        />
-                        <span className="text-xs text-gray-500 mt-1">
-                          PDF Document
-                        </span>
-                      </div>
+      {expenses.length > 0 ? (
+        <div className="max-w-6xl mx-auto bg-white rounded-lg shadow overflow-hidden">
+          <table className="w-full bg-white border rounded-lg shadow-sm overflow-hidden">
+            <thead>
+              <tr className="border-b bg-blue-600 text-white">
+                <th className="p-4 text-left font-medium">Receipt</th>
+                <th className="p-4 text-left font-medium">Details</th>
+                <th className="p-4 text-left font-medium">Amount</th>
+                <th className="p-4 text-left font-medium">Category</th>
+                <th className="p-4 text-left font-medium">Date</th>
+                <th className="p-4 text-left font-medium">Payment</th>
+              </tr>
+            </thead>
+            <tbody>
+              {expenses.map((expense) => (
+                <tr
+                  key={expense._id}
+                  className="hover:bg-gray-50 border-b border-gray-300  "
+                >
+                  <td className="p-4">
+                    {expense.receipt ? (
+                      <a
+                        href={expense.receipt}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-start"
+                      >
+                        {isImage(expense.receipt) ? (
+                          <Image />
+                        ) : isPDF(expense.receipt) ? (
+                          <img
+                            src="./pdf.png"
+                            alt="PDF Receipt"
+                            className="w-8 h-8"
+                          />
+                        ) : (
+                          <FileText className="w-8 h-8 text-gray-400" />
+                        )}
+                      </a>
                     ) : (
-                      <span className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-gray-100 text-gray-700 rounded-full">
-                        Unsupported File Type
-                      </span>
-                    )
-                  ) : (
-                    <div className="flex flex-col items-center justify-center">
-                      <span className="text-sm text-gray-600 mt-1">
-                        No Receipt
-                      </span>
+                      <span className="text-sm text-gray-500">No Receipt</span>
+                    )}
+                  </td>
+                  <td className="p-4">
+                    <Link to={`expense-detail/${expense._id}`}>
+                      <div>
+                        <h3 className="font-medium text-gray-900">
+                          {expense.title}
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                          {expense.vendor}
+                        </p>
+                        {expense.description && (
+                          <p className="text-xs text-gray-600 italic mt-1 line-clamp-1">
+                            {expense.description}
+                          </p>
+                        )}
+                      </div>
+                    </Link>
+                  </td>
+                  <td className="p-4 font-semibold text-gray-900">
+                    <div className="flex items-center">
+                      <IndianRupee className="w-4 h-4" />
+                      {expense.amount.toFixed(2)}
                     </div>
-                  )}
-                </div>
-
-                {/* Content Area */}
-                <div className="p-4 flex-1">
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <h3 className="font-medium text-lg text-gray-900">
-                        {expense.title}
-                      </h3>
-                      <p className="text-sm text-gray-500">{expense.vendor}</p>
+                  </td>
+                  <td className="p-4 text-gray-600">
+                    <div className="flex items-center gap-2">
+                      <Tag size={16} className="text-gray-400 flex-shrink-0" />
+                      <span className="truncate">{expense.category}</span>
                     </div>
-                    <div className="font-semibold text-lg text-gray-900">
-                      ${expense.amount.toFixed(2)}
-                    </div>
-                  </div>
-
-                  {expense.description && (
-                    <p className="text-sm text-gray-600 mb-4 line-clamp-2">
-                      {expense.description}
-                    </p>
-                  )}
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-sm mt-auto">
-                    <div className="flex items-center gap-2 text-gray-600">
+                  </td>
+                  <td className="p-4 text-gray-600">
+                    <div className="flex items-center gap-2">
                       <Calendar
                         size={16}
                         className="text-gray-400 flex-shrink-0"
@@ -129,42 +142,33 @@ const ExpensesPage = () => {
                         {new Date(expense.expenseDate).toLocaleDateString()}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <Tag size={16} className="text-gray-400 flex-shrink-0" />
-                      <span className="truncate">{expense.category}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <Wallet
-                        size={16}
-                        className="text-gray-400 flex-shrink-0"
-                      />
-                      <span className="truncate">{expense.account}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-600">
+                  </td>
+                  <td className="p-4 text-gray-600">
+                    <div className="flex items-center gap-2">
                       <CreditCard
                         size={16}
                         className="text-gray-400 flex-shrink-0"
                       />
                       <span className="truncate">{expense.paymentMethod}</span>
                     </div>
-                  </div>
-                </div>
-              </div>
-            </Link>
-          ))
-        ) : (
-          <div className="flex flex-col items-center justify-center py-16 bg-white rounded-lg shadow-sm">
-            <FileText className="h-16 w-16 text-gray-300 mb-4" />
-            <h3 className="text-xl font-medium text-gray-700 mb-2">
-              No Expense Yet
-            </h3>
-            <p className="text-gray-500 text-center max-w-md">
-              You haven&#39;t recorded any expense transactions. Start by adding
-              an expense.
-            </p>
-          </div>
-        )}
-      </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center py-16 bg-white rounded-lg shadow-sm">
+          <FileText className="h-16 w-16 text-gray-300 mb-4" />
+          <h3 className="text-xl font-medium text-gray-700 mb-2">
+            No Expense Yet
+          </h3>
+          <p className="text-gray-500 text-center max-w-md font-sans min-h-[40px]">
+            You haven&#39;t recorded any expense transactions. Start by adding
+            an expense.
+          </p>
+        </div>
+      )}
     </div>
   );
 };

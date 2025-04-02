@@ -1,5 +1,6 @@
 /* eslint-disable no-unused-vars */
 import axios from "axios";
+import { Link } from "react-router-dom";
 import { Bell, Moon, Lock, Pencil } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -92,8 +93,8 @@ const Profile = () => {
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center mb-6">
-            <div className="h-16 w-16 rounded-full bg-blue-100 flex items-center justify-center mr-4">
-              <span className="text-blue-600 font-medium text-xl">JD</span>
+            <div className="h-16 w-16 rounded-full bg-blue-100 overflow-hidden flex items-center justify-center mr-4">
+              <span className="text-blue-600 font-medium text-xl"><img src="/logo.png" alt="DD" /></span>
             </div>
             <div>
               <h3 className="text-lg font-medium">
@@ -181,10 +182,12 @@ const Profile = () => {
 
           {/* Buttons */}
           <div className="mt-6 flex justify-between">
-            <button className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 flex items-center">
+            <Link
+            to="change-password"
+            className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 flex items-center">
               <Lock className="h-4 w-4 mr-2" />
               Change Password
-            </button>
+            </Link>
 
             {!isEditing ? (
               <button

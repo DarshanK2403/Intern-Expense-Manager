@@ -183,7 +183,7 @@ const DetailExpense = () => {
                   Description
                 </label>
                 <p className="text-gray-900">
-                  {expensedata.description || "No description provided"}
+                  {expensedata.description || "-"}
                 </p>
               </div>
 
