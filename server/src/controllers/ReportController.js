@@ -141,16 +141,12 @@ const getReport = async (req, res) => {
     const recentIncomes = await Income.find({
       userId,
       incomeDate: { $gte: startDate, $lte: endDate },
-    })
-      .sort({ incomeDate: 1 })
-      .limit(5);
+    }).limit(5);
 
     const recentExpenses = await Expense.find({
       userId,
       expenseDate: { $gte: startDate, $lte: endDate },
-    })
-      .sort({ expenseDate: 1 })
-      .limit(5);
+    }).limit(5);
 
     const transaction = [...recentIncomes, ...recentExpenses].sort(
       (a, b) => b.expenseDate - a.incomeDate

@@ -8,5 +8,6 @@ router.post("/add-expense", ExpenseController.createExpense);
 router.get("/get-expense/:userId", ExpenseController.getExpensebyUserId);
 router.get("/expense-details/:id", ExpenseController.getExpenseDetailbyId);
 router.delete("/delete-expense/:id", ExpenseController.deleteExpensebyId);
+router.put("/edit-expense/:id", ExpenseController.UpdateExpensebyId);
 
 module.exports = router;

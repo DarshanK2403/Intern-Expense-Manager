@@ -430,9 +430,9 @@ const ReportPage = () => {
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis 
                         dataKey="_id" 
-                        tick={{ fontSize: 12 }}
-                        angle={-45}
-                        textAnchor="end"
+                        tick={{ fontSize: 14 }}
+                        // angle={-45}
+                        // textAnchor="end"
                         height={60}
                       />
                       <YAxis tick={{ fontSize: 12 }} />

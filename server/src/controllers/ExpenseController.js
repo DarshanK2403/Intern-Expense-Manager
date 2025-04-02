@@ -1,6 +1,6 @@
 const ExpenseModel = require("../models/ExpenseModel");
 const multer = require("multer");
-const cloudinaryUtil = require("../utils/CloudinaryUtil");  
+const cloudinaryUtil = require("../utils/CloudinaryUtil");
 
 const storage = multer.memoryStorage({});
 const upload = multer({ storage }).single("receipt");
@@ -46,7 +46,9 @@ const getExpensebyUserId = async (req, res) => {
         .json({ success: false, message: "User ID is required" });
     }
 
-    const expenses = await ExpenseModel.find({ userId }).sort({ expenseDate: -1 });
+    const expenses = await ExpenseModel.find({ userId }).sort({
+      expenseDate: -1,
+    });
 
     res.status(200).json({ success: true, data: expenses });
   } catch (error) {
@@ -59,30 +61,79 @@ const getExpensebyUserId = async (req, res) => {
 
 const getExpenseDetailbyId = async (req, res) => {
   try {
-    const expenseDetail = await ExpenseModel.findById(req.params.id);
-    res.status(200).json({ data: expenseDetail });
+    const expense = await ExpenseModel.findById(req.params.id);
+    res
+      .status(200)
+      .json({
+        title: expense.title,
+        description: expense.description,
+        amount: expense.amount,
+        expenseDate: expense.expenseDate,
+        category: expense.category,
+        account: expense.account,
+        paymentMethod: expense.paymentMethod,
+        vendor: expense.vendor,
+      });
   } catch (error) {
     res.status(500).json({ message: error.message });
-  }   
+  }
 };
 
-const deleteExpensebyId = async (req, res) =>{
+const deleteExpensebyId = async (req, res) => {
   try {
     const deleteExpense = await ExpenseModel.findByIdAndDelete(req.params.id);
-    if(deleteExpense){
-      res.status(200).json({message: "Expense Deleted"})
-    }
-    else{
-      res.status(200).json({message: "Somthing Wrong"})
+    if (deleteExpense) {
+      res.status(200).json({ message: "Expense Deleted" });
+    } else {
+      res.status(200).json({ message: "Somthing Wrong" });
     }
   } catch (error) {
-    res.status(500).json({message: error.message})
+    res.status(500).json({ message: error.message });
   }
-}
+};
+
+const UpdateExpensebyId = async (req, res) => {
+  upload(req, res, async (err) => {
+    if (err) {
+      return res.status(500).json({ message: err.message });
+    }
+
+    const { id } = req.params;
+
+    try {
+      let updatedExpenseData = { ...req.body };
+
+      // Handle file upload if a new receipt is provided
+      if (req.file) {
+        const cloudinaryResponse = await cloudinaryUtil.uploadFiletoCloudinary(
+          req.file.buffer,
+          req.file.originalname
+        );
+        updatedExpenseData.receipt = cloudinaryResponse.secure_url;
+      }
+
+      // Ensure fields update correctly
+      const updatedExpense = await ExpenseModel.findByIdAndUpdate(
+        id,
+        { $set: updatedExpenseData }, // ✅ Use `$set` to update specific fields
+        { new: true }
+      );
+
+      if (!updatedExpense) {
+        return res.status(404).json({ message: "Expense not found" });
+      }
+
+      res.status(200).json({ message: "Expense Updated", updatedExpense });
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+};
 
 module.exports = {
   createExpense,
   getExpensebyUserId,
   getExpenseDetailbyId,
   deleteExpensebyId,
+  UpdateExpensebyId,
 };

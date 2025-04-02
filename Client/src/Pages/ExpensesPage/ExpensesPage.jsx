@@ -3,26 +3,16 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import {
-  Store,
   Calendar,
-  DollarSign,
   FileText,
   CreditCard,
   Tag,
-  Wallet,
-  File,
-  Search,
-  Filter,
-  ChevronDown,
-  Plus,
-  Receipt,
-  ImageIcon,
   Image,
-  ImagePlus,
-  ImageDown,
   IndianRupee,
+  Edit,
+  Trash,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const ExpensesPage = () => {
   const userId = localStorage.getItem("id");
@@ -30,7 +20,7 @@ const ExpensesPage = () => {
   const isImage = (fileName) => {
     return /\.(jpg|jpeg|png|gif|webp)$/i.test(fileName);
   };
-
+  const navigate = useNavigate();
   const isPDF = (fileName) => {
     return /\.pdf$/i.test(fileName);
   };
@@ -71,6 +61,7 @@ const ExpensesPage = () => {
                 <th className="p-4 text-left font-medium">Category</th>
                 <th className="p-4 text-left font-medium">Date</th>
                 <th className="p-4 text-left font-medium">Payment</th>
+                <th className="p-4 text-left font-medium">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -150,6 +141,24 @@ const ExpensesPage = () => {
                         className="text-gray-400 flex-shrink-0"
                       />
                       <span className="truncate">{expense.paymentMethod}</span>
+                    </div>
+                  </td>
+                  <td className="p-4 text-gray-600">
+                    <div className="flex items-center gap-3">
+                      <button
+                      onClick={()=>navigate(`/expenses/edit-expense/${expense._id}`)}
+                      >
+                        <Edit
+                          size={16}
+                          className="text-gray-400 hover:text-blue-600 hover:cursor-pointer flex-shrink-0"
+                        />
+                      </button>
+                      <button>
+                        <Trash
+                          size={16}
+                          className="text-gray-400 hover:text-red-600 hover:cursor-pointer flex-shrink-0"
+                        />
+                      </button>
                     </div>
                   </td>
                 </tr>
