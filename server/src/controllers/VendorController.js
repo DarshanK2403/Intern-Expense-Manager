@@ -79,7 +79,7 @@ const GetVendorbyId = async (req, res) => {
 module.exports = {
   AddVendor,
   GetVendor,
+  GetVendorbyId,
   DeleteVendor,
   UpdateVendor,
-  GetVendorbyId,
 };

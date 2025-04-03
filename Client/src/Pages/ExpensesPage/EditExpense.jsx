@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import {
   AiOutlineBank,
   AiOutlineCalendar,
+  AiOutlineDelete,
   AiOutlineUpload,
 } from "react-icons/ai";
 import { useNavigate, useParams } from "react-router-dom";
@@ -27,7 +28,6 @@ const EditExpense = () => {
   const [fileType, setFileType] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [categoryData, setCategoryData] = useState({});
   const [expenseCategories, setexpenseCategories] = useState();
 
   useEffect(() => {
@@ -128,23 +128,19 @@ const EditExpense = () => {
       const userId = localStorage.getItem("id");
       try {
         const res = await axios.get(`/get-expense-category/${userId}`);
-        setCategoryData(res.data.data);
-        // console.log(res.data.data);
+        const categories = res.data.data;
+  
+        if (categories.length > 0) {
+          setexpenseCategories(categories.map((cat) => cat.category_name)); // ✅ Set both states at once
+        }
       } catch (error) {
         toast.error("Internal Server Error");
       }
     };
+  
     fetchExpenseCategories();
   }, []);
-
-  useEffect(() => {
-    if (categoryData.length > 0) {
-      const names = categoryData.map((cat) => cat.category_name);
-      // console.log(names);
-      setexpenseCategories(names);
-    }
-  }, [categoryData]);
-
+  
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
       <ToastContainer />

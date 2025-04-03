@@ -11,8 +11,11 @@ import {
   IndianRupee,
   Edit,
   Trash,
+  File,
+  FileX,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { toast, ToastContainer } from "react-toastify";
 
 const ExpensesPage = () => {
   const userId = localStorage.getItem("id");
@@ -24,31 +27,36 @@ const ExpensesPage = () => {
   const isPDF = (fileName) => {
     return /\.pdf$/i.test(fileName);
   };
-  // ✅ Fetch Expenses
-  const getExpense = async () => {
-    try {
-      const res = await axios(`/get-expense/${userId}`);
-      // console.log("API Response:", res.data.data); // ✅ Always correct
-      setExpenses(res.data.data);
-    } catch (error) {
-      console.error("Error fetching expenses:", error);
-    }
-  };
 
-  // ✅ Logs only after `expenses` updates
-  useEffect(() => {
-    // console.log("Updated Expenses (After State Change):", expenses);
-  }, [expenses]);
-
-  // ✅ Calls API only when `userId` is available
   useEffect(() => {
     if (userId) {
       getExpense();
     }
   }, [userId]);
+  
+  const getExpense = async () => {
+    try {
+      const res = await axios(`/get-expense/${userId}`);
+      setExpenses(res.data.data);
+    } catch (error) {
+      console.error("Error fetching expenses:", error);
+    }
+  };
+  
+  const deleteExpense = async (id) => {
+    try {
+      await axios.delete(`/delete-expense/${id}`);
+      toast.success("Expense Deleted");
+      getExpense();
+    } catch (error) {
+      toast.error("Expense Delete Failed");
+    }
+  };
+  
 
   return (
     <div className="bg-gray-50 max-w-7xl mx-auto px-4 md:px-6">
+      <ToastContainer/>
       {/* Expenses List */}
       {expenses.length > 0 ? (
         <div className="max-w-6xl mx-auto bg-white rounded-lg shadow overflow-hidden">
@@ -72,26 +80,11 @@ const ExpensesPage = () => {
                 >
                   <td className="p-4">
                     {expense.receipt ? (
-                      <a
-                        href={expense.receipt}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center justify-start"
-                      >
-                        {isImage(expense.receipt) ? (
-                          <Image />
-                        ) : isPDF(expense.receipt) ? (
-                          <img
-                            src="./pdf.png"
-                            alt="PDF Receipt"
-                            className="w-8 h-8"
-                          />
-                        ) : (
-                          <FileText className="w-8 h-8 text-gray-400" />
-                        )}
+                      <a href={expense.receipt?.cloudinaryUrl} target="_blank">
+                        <FileText />
                       </a>
                     ) : (
-                      <span className="text-sm text-gray-500">No Receipt</span>
+                      <FileX className="text-gray-500 hover:cursor-not-allowed" />
                     )}
                   </td>
                   <td className="p-4">
@@ -103,11 +96,6 @@ const ExpensesPage = () => {
                         <p className="text-sm text-gray-500">
                           {expense.vendor}
                         </p>
-                        {expense.description && (
-                          <p className="text-xs text-gray-600 italic mt-1 line-clamp-1">
-                            {expense.description}
-                          </p>
-                        )}
                       </div>
                     </Link>
                   </td>
@@ -146,14 +134,16 @@ const ExpensesPage = () => {
                   <td className="p-4 text-gray-600">
                     <div className="flex items-center gap-3">
                       <button
-                      onClick={()=>navigate(`/expenses/edit-expense/${expense._id}`)}
+                        onClick={() =>
+                          navigate(`/expenses/edit-expense/${expense._id}`)
+                        }
                       >
                         <Edit
                           size={16}
                           className="text-gray-400 hover:text-blue-600 hover:cursor-pointer flex-shrink-0"
                         />
                       </button>
-                      <button>
+                      <button onClick={() => deleteExpense(expense._id)}>
                         <Trash
                           size={16}
                           className="text-gray-400 hover:text-red-600 hover:cursor-pointer flex-shrink-0"

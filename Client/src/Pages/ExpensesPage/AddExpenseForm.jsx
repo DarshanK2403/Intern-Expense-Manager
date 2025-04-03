@@ -30,7 +30,6 @@ const AddExpenseForm = () => {
   const navigate = useNavigate();
   const [isUploading, setIsUploading] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [categoryData, setCategoryData] = useState({});
   const [expenseCategories, setexpenseCategories] = useState();
 
   // Handle File Change
@@ -64,6 +63,12 @@ const AddExpenseForm = () => {
 
   // Handle Form Submit
   const onSubmit = async (data) => {
+    // Ensure file is selected
+    if (data.receiptFile && !(data.receiptFile instanceof File)) {
+      console.error("Invalid file format");
+      return;
+    }
+  
     // Create FormData
     const formData = new FormData();
     formData.append("userId", userId);
@@ -75,25 +80,34 @@ const AddExpenseForm = () => {
     formData.append("account", data.account);
     formData.append("paymentMethod", data.paymentMethod);
     formData.append("vendor", data.vendor);
-
-    if (data.receiptFile) {
+  
+    // ✅ Ensure file exists before appending
+    if (data.receiptFile instanceof File) {
       formData.append("receipt", data.receiptFile);
+      formData.append("fileOriginalName", data.receiptFile.name);
+      formData.append("fileType", data.receiptFile.type);
     }
-
+  
     try {
       setLoading(true);
-      const response = await axios.post("/add-expense", formData, {
+      const res = await axios.post("/add-expense", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
+  
+      // ✅ Check if file upload was successful
+      if (res.data.file) {
+        const { cloudinaryUrl, originalName, uniqueName, fileType } = res.data.file;
+        console.log("Uploaded file details:", { cloudinaryUrl, originalName, uniqueName, fileType });
+      }
+  
+      console.log("Form Data Sent:", res.data);
       navigate("/expenses");
       setLoading(false);
     } catch (error) {
-      console.error(
-        "Error uploading expense:",
-        error.response?.data || error.message
-      );
+      console.error("Error uploading expense:", error.response?.data || error.message);
+      setLoading(false);
     }
-  };
+  };  
 
   const closeForm = () => {
     navigate(-1);
@@ -106,23 +120,19 @@ const AddExpenseForm = () => {
       const userId = localStorage.getItem("id");
       try {
         const res = await axios.get(`/get-expense-category/${userId}`);
-        setCategoryData(res.data.data); // ✅ Updates categoryData
-        // console.log(res.data.data);
+        const categories = res.data.data;
+  
+        if (categories.length > 0) {
+          setexpenseCategories(categories.map((cat) => cat.category_name));
+        }
       } catch (error) {
         toast.error("Internal Server Error");
       }
     };
-
+  
     fetchExpenseCategories();
   }, []);
-
-  useEffect(() => {
-    if (categoryData.length > 0) {
-      const names = categoryData.map((cat) => cat.category_name);
-      // console.log(names);
-      setexpenseCategories(names);
-    }
-  }, [categoryData]);
+  
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">

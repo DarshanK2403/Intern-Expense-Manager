@@ -1,38 +1,90 @@
 const ExpenseModel = require("../models/ExpenseModel");
 const multer = require("multer");
 const cloudinaryUtil = require("../utils/CloudinaryUtil");
+const { resolve } = require("path");
+const { rejects } = require("assert");
 
-const storage = multer.memoryStorage({});
+const storage = multer.memoryStorage();
 const upload = multer({ storage }).single("receipt");
 
-// Create Expense with Optional File Upload
 const createExpense = async (req, res) => {
-  upload(req, res, async (err) => {
-    if (err) {
-      return res.status(500).json({ message: err.message });
-    }
-
-    try {
-      let expenseData = { ...req.body };
-
-      if (req.file) {
-        const cloudinaryResponse = await cloudinaryUtil.uploadFiletoCloudinary(
-          req.file.buffer,
-          req.file.originalname
-        );
-        expenseData.receipt = cloudinaryResponse.secure_url; // Save receipt URL
-      }
-
-      const newExpense = new ExpenseModel(expenseData);
-      await newExpense.save();
-      res.status(201).json({
-        message: "Expense added successfully",
-        expense: newExpense,
+  try {
+    // ✅ Ensure file upload completes before processing
+    await new Promise((resolve, reject) => {
+      upload(req, res, (err) => {
+        if (err) reject(err);
+        else resolve();
       });
-    } catch (error) {
-      res.status(500).json({ error: error.message });
+    });
+
+    const {
+      userId,
+      title,
+      amount,
+      description,
+      expenseDate,
+      category,
+      account,
+      paymentMethod,
+      vendor,
+    } = req.body;
+
+    if (
+      !userId ||
+      !title ||
+      !amount ||
+      !expenseDate ||
+      !category ||
+      !account ||
+      !paymentMethod
+    ) {
+      return res.status(400).json({ message: "Missing required fields" });
     }
-  });
+
+    let expenseData = {
+      userId,
+      title,
+      amount: parseFloat(amount),
+      description,
+      expenseDate: new Date(expenseDate),
+      category,
+      account,
+      paymentMethod,
+      vendor,
+    };
+
+    if (req.file) {
+      // ✅ Upload file to Cloudinary with correct parameters
+      const cloudinaryResponse = await cloudinaryUtil.uploadFileToCloudinary(
+        req.file.buffer,
+        req.file.originalname
+      );
+
+      console.log("Cloudinary Response:", cloudinaryResponse);
+
+      if (cloudinaryResponse?.cloudinaryUrl) {
+        expenseData.receipt = {
+          cloudinaryUrl: cloudinaryResponse.cloudinaryUrl,
+          originalName: cloudinaryResponse.originalName,
+          uniqueName: cloudinaryResponse.uniqueName,
+          fileType: cloudinaryResponse.fileType,
+        };
+      }
+    }
+
+    // ✅ Save Expense in Database
+    const newExpense = new ExpenseModel(expenseData);
+    await newExpense.save();
+
+    console.log("Saved Expense:", newExpense); // ✅ Full console log of saved expense
+    res.status(201).json({
+      message: "Expense added successfully",
+      expense: newExpense,
+    });
+  } catch (error) {
+    console.error("Error creating expense:", error);
+    res.status(500).json({ error: error.message });
+  }
 };
 
 // Get Expenses by User ID
@@ -62,18 +114,16 @@ const getExpensebyUserId = async (req, res) => {
 const getExpenseDetailbyId = async (req, res) => {
   try {
     const expense = await ExpenseModel.findById(req.params.id);
-    res
-      .status(200)
-      .json({
-        title: expense.title,
-        description: expense.description,
-        amount: expense.amount,
-        expenseDate: expense.expenseDate,
-        category: expense.category,
-        account: expense.account,
-        paymentMethod: expense.paymentMethod,
-        vendor: expense.vendor,
-      });
+    res.status(200).json({
+      title: expense.title,
+      description: expense.description,
+      amount: expense.amount,
+      expenseDate: expense.expenseDate,
+      category: expense.category,
+      account: expense.account,
+      paymentMethod: expense.paymentMethod,
+      vendor: expense.vendor,
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -93,41 +143,67 @@ const deleteExpensebyId = async (req, res) => {
 };
 
 const UpdateExpensebyId = async (req, res) => {
-  upload(req, res, async (err) => {
-    if (err) {
-      return res.status(500).json({ message: err.message });
+  try {
+    // ✅ Ensure file upload completes before processing
+    await new Promise((resolve, reject) => {
+      upload(req, res, (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+
+    const { title, amount, description, expenseDate, category, account, paymentMethod, vendor } = req.body;
+    const { id } = req.params; // ✅ Extract `id` from URL
+
+    if (!id) {
+      return res.status(400).json({ message: "Expense ID is required" });
     }
 
-    const { id } = req.params;
+    let expense = await ExpenseModel.findById(id);
+    if (!expense) {
+      return res.status(404).json({ message: "Expense not found" });
+    }
 
-    try {
-      let updatedExpenseData = { ...req.body };
+    // ✅ Update expense data
+    expense.title = title || expense.title;
+    expense.amount = amount ? parseFloat(amount) : expense.amount;
+    expense.description = description || expense.description;
+    expense.expenseDate = expenseDate ? new Date(expenseDate) : expense.expenseDate;
+    expense.category = category || expense.category;
+    expense.account = account || expense.account;
+    expense.paymentMethod = paymentMethod || expense.paymentMethod;
+    expense.vendor = vendor || expense.vendor;
 
-      // Handle file upload if a new receipt is provided
-      if (req.file) {
-        const cloudinaryResponse = await cloudinaryUtil.uploadFiletoCloudinary(
-          req.file.buffer,
-          req.file.originalname
-        );
-        updatedExpenseData.receipt = cloudinaryResponse.secure_url;
+    if (req.file) {
+      // ✅ If updating receipt, delete old Cloudinary file first
+      if (expense.receipt?.uniqueName) {
+        await cloudinaryUtil.deleteFileFromCloudinary(expense.receipt.uniqueName);
       }
 
-      // Ensure fields update correctly
-      const updatedExpense = await ExpenseModel.findByIdAndUpdate(
-        id,
-        { $set: updatedExpenseData }, // ✅ Use `$set` to update specific fields
-        { new: true }
+      // ✅ Upload new file to Cloudinary
+      const cloudinaryResponse = await cloudinaryUtil.uploadFileToCloudinary(
+        req.file.buffer,
+        req.file.originalname
       );
 
-      if (!updatedExpense) {
-        return res.status(404).json({ message: "Expense not found" });
+      if (cloudinaryResponse?.cloudinaryUrl) {
+        expense.receipt = {
+          cloudinaryUrl: cloudinaryResponse.cloudinaryUrl,
+          originalName: cloudinaryResponse.originalName,
+          uniqueName: cloudinaryResponse.uniqueName,
+          fileType: cloudinaryResponse.fileType,
+        };
       }
-
-      res.status(200).json({ message: "Expense Updated", updatedExpense });
-    } catch (error) {
-      res.status(500).json({ message: error.message });
     }
-  });
+
+    await expense.save();
+
+    console.log("Updated Expense:", expense); // ✅ Log full updated data
+    res.status(200).json({ message: "Expense updated successfully", expense });
+  } catch (error) {
+    console.error("Error updating expense:", error);
+    res.status(500).json({ error: error.message });
+  }
 };
 
 module.exports = {

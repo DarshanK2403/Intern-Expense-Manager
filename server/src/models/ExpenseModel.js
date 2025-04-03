@@ -6,6 +6,7 @@ const ExpenseSchema = new Schema(
     userId: {
       type: mongoose.Schema.ObjectId,
       required: true,
+      ref: "User",
     },
     title: {
       type: String,
@@ -39,7 +40,10 @@ const ExpenseSchema = new Schema(
       type: String,
     },
     receipt: {
-      type: String,
+      cloudinaryUrl: { type: String },
+      originalName: { type: String },
+      uniqueName: { type: String },
+      fileType: { type: String },
     },
   },
   {

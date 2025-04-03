@@ -15,7 +15,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 
 const DetailExpense = () => {
-  const id = useParams();
+  const {id} = useParams();
   const [expensedata, setExpensedata] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -25,9 +25,9 @@ const DetailExpense = () => {
     const getExpenseDetails = async () => {
       try {
         if (id) {
-          const res = await axios.get(`/expense-details/${id.id}`);
-          //   console.log(res.data);
-          setExpensedata(res.data.data);
+          const res = await axios.get(`/expense-details/${id}`);
+            console.log(res.data);
+          setExpensedata(res.data);
         } else {
           console.log("error");
         }
@@ -56,7 +56,7 @@ const DetailExpense = () => {
   const handleGoBack = () => {
     navigate(-1);
   };
-  const deleteExpense = async(id) => {
+  const deleteExpense = async() => {
     await axios.delete(`/delete-expense/${id}`)
     toast.success("Expense Deleted")
     navigate(-1);
