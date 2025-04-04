@@ -12,8 +12,18 @@ const UserDetails = async (req, res) => {
         });
         const incomeCount = await Income.countDocuments({
           userId: user._id,
-        })
-        return { ...user.toObject(), totalExpenses: expenseCount, totalIncome: incomeCount};
+        });
+        const ExpenseData = await Expense.find({
+          userId: user._id,
+        });
+        const ExpenseAmount = ExpenseData.map((amount) => amount.amount);
+        const TotalExpenseAmount = ExpenseAmount.reduce((total, num)=> total + num, 0);
+        return {
+          ...user.toObject(),
+          TotalExpenseAmount,
+          expenseCount: expenseCount,
+          incomeCount: incomeCount,
+        };
       })
     );
 

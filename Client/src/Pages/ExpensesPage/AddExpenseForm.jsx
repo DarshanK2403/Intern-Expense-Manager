@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import {
   AiOutlineUpload,
@@ -13,6 +13,7 @@ import Input from "../../Components/Input";
 import Subnav from "../../Components/Subnav";
 import SelectInput from "../../Components/Select";
 import { toast } from "react-toastify";
+import AutocompleteInput from "../../Components/AutocompleteInput";
 
 const AddExpenseForm = () => {
   const {
@@ -63,6 +64,7 @@ const AddExpenseForm = () => {
 
   // Handle Form Submit
   const onSubmit = async (data) => {
+    console.log(data)
     // Ensure file is selected
     if (data.receiptFile && !(data.receiptFile instanceof File)) {
       console.error("Invalid file format");
@@ -141,6 +143,17 @@ const AddExpenseForm = () => {
 
     fetchExpenseCategories();
   }, []);
+
+  const vendorSuggestions  = [
+    "Ront Technologies",
+    "King Enterprises",
+    "Poker Industries",
+    "Jonty Solutions",
+    "Rontec Services",
+    "Kingston Data",
+    "Poker Analytics",
+    "Jonty Global",
+  ];
 
   return (
     <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-2 sm:py-4">
@@ -293,121 +306,28 @@ const AddExpenseForm = () => {
                       label="Expense Category"
                       options={expenseCategories}
                       register={register}
-                      errors={errors}
+                      // errors={errors}
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                  {/* Account */}
-                  <div>
-                    <label
-                      htmlFor="account"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Account
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <AiOutlineBank className="text-gray-500" />
-                      </div>
-                      <select
-                        id="account"
-                        className={`w-full pl-10 pr-3 py-2 border ${
-                          errors.account ? "border-red-300" : "border-gray-300"
-                        } 
-                              rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500
-                              appearance-none bg-white transition-colors`}
-                        {...register("account", {
-                          required: "Account is required",
-                        })}
-                      >
-                        <option value="">Select Account</option>
-                        <option value="Cash">Cash</option>
-                        <option value="Bank">Bank</option>
-                        <option value="UPI">UPI</option>
-                      </select>
-                      <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                        <svg
-                          className="h-5 w-5 text-gray-400"
-                          xmlns="http://www.w3.org/2000/svg"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </div>
-                    </div>
-                    {errors.account && (
-                      <span className="text-red-500 text-xs mt-1 block bg-red-50 px-2 py-1 rounded">
-                        {errors.account.message}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Payment Method */}
-                  <div>
-                    <label
-                      htmlFor="paymentMethod"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Payment Method
-                    </label>
-                    <div className="relative">
-                      <select
-                        id="paymentMethod"
-                        className={`w-full px-3 py-2 border ${
-                          errors.paymentMethod
-                            ? "border-red-300"
-                            : "border-gray-300"
-                        } 
-                              rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500
-                              appearance-none bg-white transition-colors`}
-                        {...register("paymentMethod", {
-                          required: "Payment method is required",
-                        })}
-                      >
-                        <option value="">Select Payment Method</option>
-                        <option value="creditCard">Credit Card</option>
-                        <option value="debitCard">Debit Card</option>
-                        <option value="wallet">Wallet</option>
-                        <option value="cash">Cash</option>
-                      </select>
-                      <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                        <svg
-                          className="h-5 w-5 text-gray-400"
-                          xmlns="http://www.w3.org/2000/svg"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </div>
-                    </div>
-                    {errors.paymentMethod && (
-                      <span className="text-red-500 text-xs mt-1 block bg-red-50 px-2 py-1 rounded">
-                        {errors.paymentMethod.message}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Vendor */}
-                <div>
-                  <Input
-                    id="vendor"
-                    label="Vendor"
-                    type="text"
-                    placeholder="Vendor Name"
+                  {/* Payment Through */}
+                  <SelectInput
+                    id="paymentThrough"
+                    label="Payment Through"
+                    options={["OK"]}
                     register={register}
+                  />
+
+                  <AutocompleteInput
+                    name="vendor"
+                    label="Vendor"
+                    placeholder="Search or select vendor (optional)"
+                    suggestions={vendorSuggestions}
+                    required={false}
+                    {...register("vendor")}
+                    onSelect={(value) => setValue("vendor", value)}
                   />
                 </div>
 

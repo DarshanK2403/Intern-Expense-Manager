@@ -26,15 +26,10 @@ const ExpenseSchema = new Schema(
     },
     category: {
       type: String,
-      required: true,
     },
-    account: {
+    paymentThrough: {
       type: String,
-      required: true,
-    },
-    paymentMethod: {
-      type: String,
-      required: true,
+      // required: true,
     },
     vendor: {
       type: String,

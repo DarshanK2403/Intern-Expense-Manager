@@ -2,69 +2,30 @@
 import React, { useEffect, useState } from "react";
 import { toast, ToastContainer } from "react-toastify";
 import axios from "axios";
-import { Link } from "react-router-dom";
-import Table from "@mui/material/Table";
-import TableBody from "@mui/material/TableBody";
-import TableCell from "@mui/material/TableCell";
-import TableContainer from "@mui/material/TableContainer";
-import TableHead from "@mui/material/TableHead";
-import TableRow from "@mui/material/TableRow";
-import Paper from "@mui/material/Paper";
-import TableSortLabel from "@mui/material/TableSortLabel";
 import CustomLoader from "../../Components/CustomLoader";
-import { Edit, Filter, MoreVertical, Search, Trash2 } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  Edit,
+  Filter,
+  IndianRupee,
+  MoreVertical,
+  Search,
+  Trash2,
+} from "lucide-react";
 import { format } from "date-fns";
 
 const AdminUserPage = () => {
-  const [totalUser, setTotaluser] = useState(null);
-  const [totalExpense, setTotalexpense] = useState(null);
-  const [datas, setData] = useState([]);
-  const [sortColumn, setSortColumn] = useState(null);
-  const [sortOrder, setSortOrder] = useState("asc");
+  const [original, setOriginal] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedTab, setSelectedTab] = useState("all");
   const [usersData, setUsersData] = useState([]);
-
-  useEffect(() => {
-    const getUserData = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.get("/admin/user-details");
-        setData(response.data);
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching users:", error);
-      }
-    };
-    getUserData();
-  }, []);
-
-  const handleSort = (column) => {
-    const isAsc = sortColumn === column && sortOrder === "asc";
-    setSortOrder(isAsc ? "desc" : "asc");
-    setSortColumn(column);
-
-    const sortedData = [...datas].sort((a, b) => {
-      if (column === "totalExpenses") {
-        return isAsc
-          ? a.totalExpenses - b.totalExpenses
-          : b.totalExpenses - a.totalExpenses;
-      } else if (column === "email") {
-        return isAsc
-          ? a.email.localeCompare(b.email)
-          : b.email.localeCompare(a.email);
-      } else if (column === "role") {
-        return isAsc
-          ? a.role?.name?.localeCompare(b.role?.name)
-          : b.role?.name?.localeCompare(a.role?.name);
-      } else if (column === "isActive") {
-        return isAsc ? b.isActive - a.isActive : a.isActive - b.isActive;
-      }
-      return 0;
-    });
-
-    setData(sortedData);
-  };
+  const [sortColumn, setSortColumn] = useState(null);
+  const [sortDirection, setSortDirection] = useState(null);
+  const [sortConfig, setSortConfig] = useState({
+    key: null,
+    direction: null,
+  });
 
   useEffect(() => {
     const id = localStorage.getItem("id");
@@ -72,75 +33,120 @@ const AdminUserPage = () => {
       try {
         if (id) {
           const res = await axios.get("admin/user-details");
-          console.log(res.data);
-          //Store Total User Count
           setUsersData(res.data);
-          setTotaluser(res.data.length);
+          setOriginal(res.data);
         } else {
           toast.error("Not found User");
         }
       } catch (error) {
-        // Server Error
         toast.error("Somthing goes wrong");
       }
     };
     getTotalUserCount();
   }, []);
 
-  const filteredUsers = () => {
-    if (selectedTab === "all") return usersData;
-    if (selectedTab === "active")
-      return usersData.filter((user) => user.isActive == "true");
-    if (selectedTab === "inactive")
-      return usersData.filter((user) => user.isActive == "false");
-    return usersData;
+  useEffect(() => {
+    applyFilter("");
+  }, [selectedTab]);
+
+  // const filteredUsers = () => {
+  //   if (selectedTab === "all") return usersData;
+  //   return usersData;
+  // };
+
+  const handleSort = (column) => {
+    let newDirection = "asc";
+    let direction = "asc";
+
+    if (sortConfig.key === column && sortConfig.direction === "asc") {
+      direction = "desc";
+    } else if (sortConfig.key === column && sortConfig.direction === "desc") {
+      direction = null;
+    }
+
+    setSortConfig({ key: column, direction });
+
+    if (sortColumn === column) {
+      if (sortDirection === "asc") newDirection = "desc";
+      else if (sortDirection === "desc") newDirection = null;
+      else newDirection = "asc";
+    }
+
+    setSortColumn(column);
+    setSortDirection(newDirection);
+
+    if (newDirection === null) {
+      setUsersData(original);
+      return;
+    }
+
+    const sorted = [...usersData].sort((a, b) => {
+      if (column === "email") {
+        return newDirection === "asc"
+          ? a.email.localeCompare(b.email)
+          : b.email.localeCompare(a.email);
+      }
+      if (column === "createdAt") {
+        return newDirection === "asc"
+          ? new Date(a.createdAt) - new Date(b.createdAt)
+          : new Date(b.createdAt) - new Date(a.createdAt);
+      }
+      if (column === "TotalExpenseAmount") {
+        return newDirection === "asc"
+          ? a.TotalExpenseAmount - b.TotalExpenseAmount
+          : b.TotalExpenseAmount - a.TotalExpenseAmount;
+      }
+      if (column === "expenseCount") {
+        return newDirection === "asc"
+          ? a.expenseCount - b.expenseCount
+          : b.expenseCount - a.expenseCount;
+      }
+      return 0;
+    });
+
+    setUsersData(sorted);
   };
+
+  const applyFilter = (term) => {
+    let filteredData = [...original];
+
+    if (selectedTab === "active") {
+      filteredData = filteredData.filter((user) => user.isActive == "true");
+    } else if (selectedTab === "inactive") {
+      filteredData = filteredData.filter((user) => user.isActive == "false");
+    }
+
+    if (term) {
+      filteredData = filteredData.filter(
+        (item) =>
+          item.email.toLowerCase().includes(term.toLowerCase()) ||
+          item.firstName.toLowerCase().includes(term.toLowerCase()) ||
+          item.lastName.toLowerCase().includes(term.toLowerCase())
+      );
+    }
+
+    setUsersData(filteredData);
+  };
+
   return (
     <div className="p-4">
       {/* Totast Message Show */}
       <ToastContainer></ToastContainer>
       <div className="p-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex space-x-2">
-          <button
-            onClick={() => setSelectedTab("all")}
-            className={`px-4 py-2 text-sm font-medium rounded-lg ${
-              selectedTab === "all"
-                ? "bg-blue-50 text-blue-600"
-                : "text-gray-600 hover:bg-gray-100"
-            }`}
-          >
-            All Users
-          </button>
-          <button
-            onClick={() => setSelectedTab("active")}
-            className={`px-4 py-2 text-sm font-medium rounded-lg ${
-              selectedTab === "active"
-                ? "bg-blue-50 text-blue-600"
-                : "text-gray-600 hover:bg-gray-100"
-            }`}
-          >
-            Active
-          </button>
-          <button
-            onClick={() => setSelectedTab("inactive")}
-            className={`px-4 py-2 text-sm font-medium rounded-lg ${
-              selectedTab === "inactive"
-                ? "bg-blue-50 text-blue-600"
-                : "text-gray-600 hover:bg-gray-100"
-            }`}
-          >
-            Inactive
-          </button>
+         <h2 className="text-2xl text-gray-800">Users</h2>
         </div>
         <div className="flex w-full sm:w-auto space-x-2">
           <div className="relative flex-grow">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <Search size={16} className="text-gray-400" />
             </div>
+            {/* Search */}
             <input
               type="text"
               className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm"
               placeholder="Search users..."
+              onChange={(e) => applyFilter(e.target.value)}
             />
           </div>
           <button className="px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 flex items-center">
@@ -157,48 +163,143 @@ const AdminUserPage = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
+                {/* EMAIL / USER */}
                 <th
                   scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider transition-all duration-300 min-w-[150px]"
                 >
-                  User
+                  <button onClick={() => handleSort("email")}>
+                    <div className="flex gap-2 items-center">
+                      User
+                      <div className="flex flex-col items-center w-4 transition-all">
+                        <ChevronUp
+                          className={`w-4 h-4 transition-all duration-200 ${
+                            sortConfig.key === "email" &&
+                            sortConfig.direction === "desc"
+                              ? "text-gray-800"
+                              : "text-gray-300"
+                          }`}
+                        />
+                        <ChevronDown
+                          className={`w-4 h-4 transition-all duration-200 ${
+                            sortConfig.key === "email" &&
+                            sortConfig.direction === "asc"
+                              ? "text-gray-800"
+                              : "text-gray-300"
+                          }`}
+                        />
+                      </div>
+                    </div>
+                  </button>
                 </th>
+
+                {/* ROLE */}
                 <th
                   scope="col"
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                 >
                   Role
                 </th>
+
+                {/* STATUS */}
                 <th
                   scope="col"
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                 >
                   Status
                 </th>
+
+                {/* JOIN DATE */}
                 <th
                   scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider transition-all duration-300 min-w-[150px]"
                 >
-                  Join Date
+                  <button onClick={() => handleSort("createdAt")}>
+                    <div className="flex gap-2 items-center">
+                      Join Date
+                      <div className="flex flex-col items-center w-4 transition-all">
+                        <ChevronUp
+                          className={`w-4 h-4 transition-all duration-200 ${
+                            sortConfig.key === "createdAt" &&
+                            sortConfig.direction === "desc"
+                              ? "text-gray-800"
+                              : "text-gray-300"
+                          }`}
+                        />
+                        <ChevronDown
+                          className={`w-4 h-4 transition-all duration-200 ${
+                            sortConfig.key === "createdAt" &&
+                            sortConfig.direction === "asc"
+                              ? "text-gray-800"
+                              : "text-gray-300"
+                          }`}
+                        />
+                      </div>
+                    </div>
+                  </button>
                 </th>
+
+                {/* TOTAL EXPENSES */}
                 <th
                   scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider transition-all duration-300 min-w-[150px]"
                 >
-                  Total Expenses
+                  <button onClick={() => handleSort("TotalExpenseAmount")}>
+                    <div className="flex gap-2 items-center">
+                      Total Expenses
+                      <div className="flex flex-col items-center w-4 transition-all">
+                        <ChevronUp
+                          className={`w-4 h-4 transition-all duration-200 ${
+                            sortConfig.key === "TotalExpenseAmount" &&
+                            sortConfig.direction === "desc"
+                              ? "text-gray-800"
+                              : "text-gray-300"
+                          }`}
+                        />
+                        <ChevronDown
+                          className={`w-4 h-4 transition-all duration-200 ${
+                            sortConfig.key === "TotalExpenseAmount" &&
+                            sortConfig.direction === "asc"
+                              ? "text-gray-800"
+                              : "text-gray-300"
+                          }`}
+                        />
+                      </div>
+                    </div>
+                  </button>
                 </th>
+
+                {/* EXPENSE COUNT */}
                 <th
                   scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider transition-all duration-300 min-w-[150px]"
                 >
-                  Expense Count
+                  <button onClick={() => handleSort("expenseCount")}>
+                    <div className="flex gap-2 items-center">
+                      Expense Count
+                      <div className="flex flex-col items-center w-4 transition-all">
+                        <ChevronUp
+                          className={`w-4 h-4 transition-all duration-200 ${
+                            sortConfig.key === "expenseCount" &&
+                            sortConfig.direction === "desc"
+                              ? "text-gray-800"
+                              : "text-gray-300"
+                          }`}
+                        />
+                        <ChevronDown
+                          className={`w-4 h-4 transition-all duration-200 ${
+                            sortConfig.key === "expenseCount" &&
+                            sortConfig.direction === "asc"
+                              ? "text-gray-800"
+                              : "text-gray-300"
+                          }`}
+                        />
+                      </div>
+                    </div>
+                  </button>
                 </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Last Active
-                </th>
+
+                {/* ACTIONS */}
                 <th
                   scope="col"
                   className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
@@ -207,17 +308,22 @@ const AdminUserPage = () => {
                 </th>
               </tr>
             </thead>
+
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredUsers().map((user) => (
+              {usersData.map((user) => (
                 <tr key={user.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <div className="flex-shrink-0 h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-800 font-medium">
-                        {user.firstName.charAt(0)}
+                      <div className="flex-shrink-0 h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-800 font-medium overflow-hidden">
+                        {user.profileImg ? (
+                          <img src={user.profileImg} alt="" />
+                        ) : (
+                          user.firstName.charAt(0)
+                        )}
                       </div>
                       <div className="ml-4">
                         <div className="text-sm font-medium text-gray-900">
-                          {user.firstName}
+                          {user.firstName} {user.lastName}
                         </div>
                         <div className="text-sm text-gray-500">
                           {user.email}
@@ -226,7 +332,7 @@ const AdminUserPage = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
+                    <div className="text-sm text-gray-900 capitalize">
                       {user.role.name}
                     </div>
                   </td>
@@ -245,18 +351,19 @@ const AdminUserPage = () => {
                     {format(new Date(user.createdAt), "dd MMM yyyy")}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
-                      ${user.totalExpenses}
+                    <div className="flex items-center text-sm text-gray-900">
+                      <IndianRupee className="h-4 w-4" />
+                      {user.TotalExpenseAmount.toFixed(2)}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
+                    <div className="text-sm pe-5 text-gray-900">
                       {user.expenseCount}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {user.lastActive}
-                  </td>
+                  </td> */}
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button className="text-indigo-600 hover:text-indigo-900 mr-3">
                       Edit
