@@ -11,33 +11,29 @@ const MonthlyCalendar = ({
   monthOffset = 0,
   setMonthOffset = () => {},
 }) => {
-  // Calculate the date based on the initialDate and monthOffset
-  const calculatedDate = new Date(initialDate);
-  calculatedDate.setMonth(initialDate.getMonth() + monthOffset);
-  
-  const [currentYear, setCurrentYear] = useState(calculatedDate.getFullYear());
-  const [selectedMonth, setSelectedMonth] = useState(calculatedDate.getMonth());
+  const [currentYear, setCurrentYear] = useState(initialDate.getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(initialDate.getMonth());
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
-  
+
   const months = [
     "January", "February", "March", "April", "May", "June", 
     "July", "August", "September", "October", "November", "December"
   ];
-  
+
   const monthsShort = [
     "Jan", "Feb", "Mar", "Apr", "May", "Jun", 
     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
   ];
 
-  // Update internal state when monthOffset or initialDate changes
+  // Update internal state when monthOffset changes
   useEffect(() => {
     const newDate = new Date(initialDate);
-    newDate.setMonth(initialDate.getMonth() + monthOffset);
+    newDate.setMonth(initialDate.getMonth() - monthOffset); // Reverse offset direction
     setCurrentYear(newDate.getFullYear());
     setSelectedMonth(newDate.getMonth());
-  }, [initialDate, monthOffset]);
-
+  }, [monthOffset, initialDate]);
+  
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -45,51 +41,31 @@ const MonthlyCalendar = ({
         setIsDropdownOpen(false);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
-  // Handle month selection with proper offset updates
+  // Handle month selection
   const handleMonthSelect = (monthIndex) => {
     setSelectedMonth(monthIndex);
-    
-    // Calculate the difference in months from the current state
-    const currentDate = new Date(currentYear, selectedMonth, 1);
-    const newDate = new Date(currentYear, monthIndex, 1);
-    const diffMonths = (newDate.getFullYear() - currentDate.getFullYear()) * 12 + 
-                        (newDate.getMonth() - currentDate.getMonth());
-    
-    // Update the monthOffset
-    setMonthOffset(monthOffset + diffMonths);
-    
-    // Call the parent's onMonthSelect with the new date
+    const newOffset = initialDate.getMonth() - monthIndex; // Reverse the offset calculation
+    setMonthOffset(newOffset);
     onMonthSelect(new Date(currentYear, monthIndex, 1));
     setIsDropdownOpen(false);
   };
 
-  // Handle month navigation
-  const previousMonth = () => {
-    const newOffset = monthOffset - 1;
-    setMonthOffset(newOffset);
-    
-    const newDate = new Date(initialDate);
-    newDate.setMonth(initialDate.getMonth() + newOffset);
-    setCurrentYear(newDate.getFullYear());
-    setSelectedMonth(newDate.getMonth());
-  };
+// Navigate to previous month (offset +1)
+const previousMonth = () => {
+  setMonthOffset((prev) => prev + 1);
+};
 
-  const nextMonth = () => {
-    const newOffset = monthOffset + 1;
-    setMonthOffset(newOffset);
-    
-    const newDate = new Date(initialDate);
-    newDate.setMonth(initialDate.getMonth() + newOffset);
-    setCurrentYear(newDate.getFullYear());
-    setSelectedMonth(newDate.getMonth());
-  };
+// Navigate to next month (offset -1)
+const nextMonth = () => {
+  setMonthOffset((prev) => prev - 1);
+};
+
 
   const getColorClasses = () => {
     switch (primaryColor) {

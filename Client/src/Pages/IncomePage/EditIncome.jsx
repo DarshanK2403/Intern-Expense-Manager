@@ -1,54 +1,41 @@
-/* eslint-disable no-unused-vars */
-import { useForm } from "react-hook-form";
-import Subnav from "../../Components/Subnav";
-import Input from "../../Components/Input";
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { toast, ToastContainer } from "react-toastify";
+import { useParams } from "react-router-dom";
+import { useForm } from "react-hook-form";
 import SelectInput from "../../Components/Select";
-import { useNavigate } from "react-router-dom";
+import Input from "../../Components/Input";
+import { toast, ToastContainer } from "react-toastify";
 
-const AddIncome = () => {
+const EditIncome = () => {
+  const userId = localStorage.getItem("id");
   const {
     register,
     handleSubmit,
     formState: { errors },
+    setValue,
   } = useForm();
-  const userId = localStorage.getItem("id");
+  const { id } = useParams();
   const [incomeCategories, setincomeCategories] = useState();
-  const navigate = useNavigate();
 
-  // On Submit
-  const submitHandler = async (data) => {
-    // console.log(data);
-    const formData = new FormData();
-    formData.append("userId", userId);
-    formData.append("title", data.title);
-    formData.append("amount", data.amount);
-    formData.append("incomeDate", data.incomeDate);
-    formData.append("category", data.category);
-    formData.append("notes", data.notes);
-    if (data.receipt) {
-      formData.append("receipt", data.receipt);
+  useEffect(() => {
+    const getIncome = async () => {
+      const res = await axios.get(`/get-income-by-id/${id}`);
+      setValue("title", res.data.title);
+      setValue("amount", res.data.amount);
+      setValue("incomeDate", res.data.incomeDate.split("T")[0]);
+      setValue("category", res.data.category);
+      setValue("notes", res.data.notes);
+    };
+    if (id) {
+      getIncome();
     }
+  }, [id]);
 
-    try {
-      const res = await axios.post(`/add-income/${userId}`, formData, {
-        headers: { "Content-Type": "application/json" },
-      });
-      // console.log(res);
-      navigate(-1);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  // Get Income category
   useEffect(() => {
     const fetchIncomeCategories = async () => {
       try {
         const res = await axios.get(`/get-income-category/${userId}`);
-        const resData = (res.data.data);
+        const resData = res.data.data;
         if (resData.length > 0) {
           const names = resData.map((cat) => cat.category_name);
           setincomeCategories(names);
@@ -57,18 +44,23 @@ const AddIncome = () => {
         toast.error("Internal Server Error");
       }
     };
-    if(userId){
+    if (userId) {
       fetchIncomeCategories();
     }
   }, [userId]);
+
+  const onSubmit = async (data) => {
+    console.log(data);
+  };
 
   return (
     <div className="max-w-7xl mx-auto py-6 bg-gray-50">
       <ToastContainer></ToastContainer>
       <div className="bg-white shadow p-6">
         <div className="text-xl font-semibold text-gray-800">Add Income</div>
-        <form onSubmit={handleSubmit(submitHandler)} className="mt-2">
+        <form onSubmit={handleSubmit(onSubmit)} className="mt-2">
           <div className="grid lg:grid-cols-2 space-y-2 grid-cols-1 space-x-4">
+            {/* Title */}
             <Input
               id="title"
               type="text"
@@ -78,6 +70,7 @@ const AddIncome = () => {
               validation={{ required: "Title is required" }}
             />
 
+            {/* Amount */}
             <Input
               id="amount"
               type="number"
@@ -90,6 +83,7 @@ const AddIncome = () => {
             />
           </div>
 
+          {/* IncomeDate */}
           <div className="flex flex-col mt-2">
             <Input
               id="incomeDate"
@@ -101,7 +95,9 @@ const AddIncome = () => {
               validation={{ required: "Income Date is Required" }}
             />
           </div>
+
           <div className="flex flex-col mt-2">
+            {/* Category */}
             <div>
               <SelectInput
                 id="category"
@@ -113,6 +109,7 @@ const AddIncome = () => {
             </div>
           </div>
           <div className="flex flex-col mt-2">
+            {/* Notes */}
             <label htmlFor="title" className="pb-1">
               Notes
             </label>
@@ -139,7 +136,7 @@ const AddIncome = () => {
           <input
             type="submit"
             className="bg-blue-600 py-2 px-4 rounded-lg my-2 text-white"
-            value="Add Income"
+            value="Update Income"
           />
         </form>
       </div>
@@ -147,4 +144,4 @@ const AddIncome = () => {
   );
 };
 
-export default AddIncome;
+export default EditIncome;

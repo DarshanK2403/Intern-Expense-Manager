@@ -41,9 +41,31 @@ const getIncomebyUserId = async(req, res) =>{
     if(getincome.length > 0){
       res.status(200).json(getincome);
     }
+    else{
+      res.status(200).json("No Income Yet")
+    }
   } catch (error) {
     res.status(500).json({message: error.message})
   }
+}
+
+const getIncomebyId = async(req, res) =>{
+  const {id} = req.params;
+  try {
+    const getIncome = await Income.findById(id);
+    if(getIncome){
+      res.status(200).json(getIncome)
+    }
+    else{
+      res.status(200).json("Invalid ID");
+    }
+  } catch (error) {
+    res.status(500).json({message: error.message})
+  }
+}
+
+const EditIncomebyId = async(req, res) =>{
+
 }
 
 const deleteIncomebyId = async (req, res) =>{
@@ -60,8 +82,12 @@ const deleteIncomebyId = async (req, res) =>{
   }
 }
 
+
+
 module.exports = {
   AddIncome,
   getIncomebyUserId,
+  getIncomebyId,
+  EditIncomebyId,
   deleteIncomebyId,
 };

@@ -3,6 +3,16 @@ const UserModel = require("../models/UserModel");
 const mailUtil = require("../utils/MailUtil.js");
 const CategoryUtil = require("../utils/CategoryUtil.js");
 const jwt = require("jsonwebtoken");
+const multer = require("multer");
+const { resolve } = require("path");
+const { rejects } = require("assert");
+
+// Configure multer to store the file in memory
+const storage = multer.memoryStorage();
+const upload = multer({ storage }).single("profileImg"); // Match field name!
+
+
+const CloudinaryUtil = require("../utils/CloudinaryUtil");
 
 const Signup = async (req, res) => {
   const { firstName, lastName, email, password, confirmPassword, phone } =
@@ -132,6 +142,7 @@ const Userdata = async (req, res) => {
       email: user.email,
       phone: user.phone,
       role: user.role,
+      img: user.profileImg,
     });
   } catch (error) {
     console.error("Error fetching user data:", error);
@@ -231,13 +242,13 @@ const UpdateProfile = async (req, res) => {
     const updateData = await UserModel.findByIdAndUpdate(
       userId,
       { $set: { firstName: firstName, lastName: lastName, phone: phone } },
-      { new: true },
+      { new: true }
     );
 
-    if(!updateData){
+    if (!updateData) {
       return res.status(404).json({ message: "User not found" });
     }
-    res.status(200).json({ message: "Profile Updated", });
+    res.status(200).json({ message: "Profile Updated" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -286,6 +297,61 @@ const ChangePassword = async (req, res) => {
   }
 };
 
+const ChangeProfilePicture = async (req, res) => {
+  try {
+    const { id } = req.params; // Get user ID from URL params
+
+    if (!id) {
+      return res.status(400).json({ message: "User ID is required" });
+    }
+
+    // ✅ Ensure Multer processes the file
+    await new Promise((resolve, reject) => {
+      upload(req, res, (err) => {
+        if (err) {
+          console.error("Multer Error:", err);
+          return reject(err);
+        }
+        resolve();
+      });
+    });
+
+    // console.log("File Received:", req.file);
+    if (!req.file) {
+      return res.status(400).json({ message: "No image uploaded" });
+    }
+
+    // ✅ Upload image to Cloudinary
+    const cloudinaryResponse = await CloudinaryUtil.uploadFileToCloudinary(
+      req.file.buffer,
+      req.file.originalname
+    );
+
+    if (!cloudinaryResponse?.cloudinaryUrl) {
+      return res.status(500).json({ message: "Image upload failed" });
+    }
+
+    // ✅ Update user's profileImg field in the database
+    const updatedUser = await UserModel.findByIdAndUpdate(
+      id,
+      { profileImg: cloudinaryResponse.cloudinaryUrl }, // Updating profile image
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({
+      message: "Profile image updated successfully",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Error updating profile image:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   Signup,
   Login,
@@ -294,4 +360,5 @@ module.exports = {
   UpdatePassword,
   UpdateProfile,
   ChangePassword,
+  ChangeProfilePicture,
 };

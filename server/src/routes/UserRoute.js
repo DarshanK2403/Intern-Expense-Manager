@@ -16,4 +16,7 @@ router.put("/update-profile/:userId", UserController.UpdateProfile);
 
 router.put("/change-password/:userId", UserController.ChangePassword);
 
+router.put("/change-profile-picture/:id", UserController.ChangeProfilePicture);
+
+
 module.exports = router;

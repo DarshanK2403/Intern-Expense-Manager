@@ -17,7 +17,7 @@ import { useNavigate } from "react-router-dom";
 const IncomePage = () => {
   const [incomeData, setIncomeData] = useState([]);
   const userId = localStorage.getItem("id");
-
+  const navigate = useNavigate();
   // Ge Income
   const getIncome = useCallback(async () => {
     if (!userId) return;
@@ -46,6 +46,10 @@ const IncomePage = () => {
       toast.error("Failed to delete income");
     }
   };
+
+  const EditIncome = async(id)=>{
+    navigate(`/income/edit-income/${id}`);
+  }
 
   return (
     <div>
@@ -108,7 +112,9 @@ const IncomePage = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-3">
-                      <button className="text-gray-600 hover:text-indigo-600">
+                      <button className="text-gray-600 hover:text-indigo-600"
+                      onClick={()=>EditIncome(entry._id)}
+                      >
                         <Edit className="h-5 w-5" />
                       </button>
                       <button

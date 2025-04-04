@@ -18,7 +18,7 @@ const RecentTransactios = () => {
       const res = await axios.get(
         `/recent-transactions/${userId}/?limit=${limit}`
       );
-      console.log(res.data);
+      // console.log(res.data); 
       setRecentTransaction(res.data);
     } catch (error) {
       console.log(error);

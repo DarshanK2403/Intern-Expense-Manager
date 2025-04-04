@@ -60,7 +60,7 @@ const createExpense = async (req, res) => {
         req.file.originalname
       );
 
-      console.log("Cloudinary Response:", cloudinaryResponse);
+      // console.log("Cloudinary Response:", cloudinaryResponse);
 
       if (cloudinaryResponse?.cloudinaryUrl) {
         expenseData.receipt = {
@@ -76,7 +76,7 @@ const createExpense = async (req, res) => {
     const newExpense = new ExpenseModel(expenseData);
     await newExpense.save();
 
-    console.log("Saved Expense:", newExpense); // ✅ Full console log of saved expense
+    // console.log("Saved Expense:", newExpense); // ✅ Full console log of saved expense
     res.status(201).json({
       message: "Expense added successfully",
       expense: newExpense,
@@ -198,7 +198,7 @@ const UpdateExpensebyId = async (req, res) => {
 
     await expense.save();
 
-    console.log("Updated Expense:", expense); // ✅ Log full updated data
+    // console.log("Updated Expense:", expense); // ✅ Log full updated data
     res.status(200).json({ message: "Expense updated successfully", expense });
   } catch (error) {
     console.error("Error updating expense:", error);

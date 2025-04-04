@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import { Search } from "lucide-react";
+import { Search, Settings } from "lucide-react";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from 'react-toastify';
@@ -23,19 +23,27 @@ const AdminNav = () => {
   return (
     <div className="w-full bg-white justify-center items-center flex border-b border-gray-300 shadow">
       <ToastContainer></ToastContainer>
-      <nav className="w-7xl flex flex-row justify-between px-12 py-4 ">
-        <span className="text-2xl font-bold text-blue-600">
-          <h1>FinanceTrack</h1>
-        </span>
-        <div className="flex items-center space-x-4">
-          <p className="text-blue-600">Welcome, Admin!</p>
-          <button
-          onClick={logout}
-           className="bg-red-100 text-red-600 rounded-lg py-2 font-semibold border border-red-300 hover:bg-red-200 transition-colors px-4">
-            Logout
-          </button>
+      <header className="w-full max-w-7xl bg-white border-b border-gray-200">
+      <div className="px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center">
+          {/* <button onClick={toggleSidebar} className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none">
+            {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
+          </button> */}
+          <h1 className="ml-3 text-xl font-bold text-blue-600">FinanceTrack</h1>
         </div>
-      </nav>
+        <div className="flex items-center space-x-4">
+          <button className="p-2 rounded-full bg-gray-100 text-gray-400 hover:text-gray-500">
+            <Settings size={18} />
+          </button>
+          <div className="flex items-center space-x-2">
+            <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white font-semibold">
+              D
+            </div>
+            <span className="hidden md:inline-block text-sm font-medium text-gray-700">Admin</span>
+          </div>
+        </div>
+      </div>
+    </header>
     </div>
   );
 };

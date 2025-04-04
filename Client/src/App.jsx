@@ -23,6 +23,7 @@ import VendorPage from "./Pages/VendorPage/VendorPage";
 import ChangePassword from "./Pages/SettingsPage/ChangePassword";
 import UpdateVendor from "./Pages/VendorPage/UpdateVendor";
 import EditExpense from "./Pages/ExpensesPage/EditExpense";
+import EditIncome from "./Pages/IncomePage/EditIncome";
 const Home = lazy(() => import("./common/Home"));
 const ReportLayout = lazy(() => import("./Layouts/ReportLayout"));
 const SettingLayout = lazy(() => import("./Layouts/SettingLayout"));
@@ -77,6 +78,7 @@ function App() {
               <Route path="/income" element={<IncomeLayout />}>
                 <Route index element={<IncomePage />} />
                 <Route path="add" element={<AddIncome />} />
+                <Route path="edit-income/:id" element={<EditIncome />} />
               </Route>
 
               <Route path="/vendor" element={<VendorLayout />}>
