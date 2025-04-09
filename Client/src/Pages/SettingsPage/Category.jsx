@@ -1,8 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
-import { Edit, Plus, Trash2, DollarSign, ArrowUpRight, Store } from "lucide-react";
+import {
+  Edit,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast, ToastContainer } from "react-toastify";
+import TabButton from "../../Components/TabButton";
 
 const Category = () => {
   const [activeTab, setActiveTab] = useState("expense");
@@ -12,18 +17,21 @@ const Category = () => {
     register,
     handleSubmit,
     formState: { errors },
-    reset
+    reset,
   } = useForm();
 
-  const fetchCategories = useCallback(async (type) => {
-    try {
-      const res = await axios.get(`/get-${type}-category/${userId}`);
-      setCategories(res.data.data);
-    } catch (error) {
-      toast.error(`Failed to fetch ${type} categories`);
-      console.error(error);
-    }
-  }, [userId]);
+  const fetchCategories = useCallback(
+    async (type) => {
+      try {
+        const res = await axios.get(`/get-${type}-category/${userId}`);
+        setCategories(res.data.data);
+      } catch (error) {
+        toast.error(`Failed to fetch ${type} categories`);
+        console.error(error);
+      }
+    },
+    [userId]
+  );
 
   useEffect(() => {
     if (userId) {
@@ -35,14 +43,21 @@ const Category = () => {
     const categoryData = {
       ...data,
       userId: userId,
-      category_type: activeTab
+      category_type: activeTab,
     };
 
     console.log(categoryData);
     try {
-      const res = await axios.post(`/create-${activeTab}-category/${userId}`, categoryData);
+      const res = await axios.post(
+        `/create-${activeTab}-category/${userId}`,
+        categoryData
+      );
       if (res.data.message === "Created") {
-        toast.success(`${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Category Added`);
+        toast.success(
+          `${
+            activeTab.charAt(0).toUpperCase() + activeTab.slice(1)
+          } Category Added`
+        );
         fetchCategories(activeTab);
         reset();
       } else {
@@ -57,7 +72,11 @@ const Category = () => {
   const deleteCategory = async (id) => {
     try {
       await axios.delete(`/delete-${activeTab}-category/${id}`);
-      toast.success(`${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Category Deleted`);
+      toast.success(
+        `${
+          activeTab.charAt(0).toUpperCase() + activeTab.slice(1)
+        } Category Deleted`
+      );
       fetchCategories(activeTab);
     } catch (error) {
       toast.error(`Failed to delete ${activeTab} category`);
@@ -65,37 +84,35 @@ const Category = () => {
     }
   };
 
-  const TabButton = ({ type, children }) => (
-    <button
-      onClick={() => {
-        setActiveTab(type);
-        fetchCategories(type);
-      }}
-      className={`
-        flex items-center justify-center px-4 py-2 rounded-t-lg transition-all
-        ${activeTab === type 
-          ? 'bg-white text-blue-600 border-b-2 border-blue-600 font-semibold' 
-          : 'text-gray-500 hover:text-gray-700 bg-gray-100 hover:bg-gray-200'}
-      `}
-    >
-      {children}
-    </button>
-  );
-
   return (
     <div className="container mx-auto px-4 py-6 max-w-4xl">
       <ToastContainer />
-      
+
       <div className="bg-white shadow-lg rounded-lg overflow-hidden">
         {/* Tab Navigation */}
         <div className="flex border-b border-gray-200 bg-gray-50">
-          <TabButton type="expense" icon={ArrowUpRight}>
+          <TabButton
+            type="expense"
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            fetchCategories={fetchCategories}
+          >
             Expense Categories
           </TabButton>
-          <TabButton type="income" icon={DollarSign}>
+          <TabButton
+            type="income"
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            fetchCategories={fetchCategories}
+          >
             Income Categories
           </TabButton>
-          <TabButton type="vendor" icon={Store}>
+          <TabButton
+            type="vendor"
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            fetchCategories={fetchCategories}
+          >
             Vendor Categories
           </TabButton>
         </div>
@@ -106,17 +123,18 @@ const Category = () => {
             <div className="grid md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Category Name
+                  {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}{" "}
+                  Category Name
                 </label>
                 <input
                   type="text"
                   placeholder={`Enter ${activeTab} Category`}
-                  {...register("category_name", { 
+                  {...register("category_name", {
                     required: "Category name is required",
                     maxLength: {
                       value: 50,
-                      message: "Category name must be less than 50 characters"
-                    }
+                      message: "Category name must be less than 50 characters",
+                    },
                   })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
@@ -150,7 +168,9 @@ const Category = () => {
                 "
               >
                 <Plus className="mr-2 h-5 w-5" />
-                Add {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Category
+                Add {activeTab.charAt(0).toUpperCase() +
+                  activeTab.slice(1)}{" "}
+                Category
               </button>
             </div>
           </form>
@@ -160,10 +180,11 @@ const Category = () => {
         <div className="bg-gray-50 border-t">
           <div className="p-4">
             <h3 className="text-lg font-semibold text-gray-800">
-              {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Categories
+              {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}{" "}
+              Categories
             </h3>
           </div>
-          
+
           {categories.length === 0 ? (
             <div className="text-center py-6 text-gray-500">
               No {activeTab} categories found

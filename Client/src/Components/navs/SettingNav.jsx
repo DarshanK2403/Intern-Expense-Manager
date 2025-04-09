@@ -12,8 +12,8 @@ const SettingNav = () => {
   const menuSetting = [
     { icon: User, label: "Profile Settings", path: "/settings/profile" },
     { icon: TagIcon, label: "Category Management", path: "/settings/category" },
-    { icon: User, label: "Account Management", path: "/settings/account" },
-    { icon: CreditCard, label: "Payment Methods", path: "/settings/payment" },
+    // { icon: User, label: "Account Management", path: "/settings/account" },
+    { icon: CreditCard, label: "Payment Through", path: "/settings/payment" },
     { icon: Globe, label: "Currency Settings", path: "/settings/currency" },
   ];
   return (

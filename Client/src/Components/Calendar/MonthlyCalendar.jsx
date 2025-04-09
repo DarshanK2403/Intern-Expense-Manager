@@ -17,13 +17,33 @@ const MonthlyCalendar = ({
   const dropdownRef = useRef(null);
 
   const months = [
-    "January", "February", "March", "April", "May", "June", 
-    "July", "August", "September", "October", "November", "December"
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
   ];
 
   const monthsShort = [
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun", 
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
   ];
 
   // Update internal state when monthOffset changes
@@ -33,7 +53,7 @@ const MonthlyCalendar = ({
     setCurrentYear(newDate.getFullYear());
     setSelectedMonth(newDate.getMonth());
   }, [monthOffset, initialDate]);
-  
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -56,16 +76,15 @@ const MonthlyCalendar = ({
     setIsDropdownOpen(false);
   };
 
-// Navigate to previous month (offset +1)
-const previousMonth = () => {
-  setMonthOffset((prev) => prev + 1);
-};
+  // Navigate to previous month (offset +1)
+  const previousMonth = () => {
+    setMonthOffset((prev) => prev + 1);
+  };
 
-// Navigate to next month (offset -1)
-const nextMonth = () => {
-  setMonthOffset((prev) => prev - 1);
-};
-
+  // Navigate to next month (offset -1)
+  const nextMonth = () => {
+    setMonthOffset((prev) => prev - 1);
+  };
 
   const getColorClasses = () => {
     switch (primaryColor) {
@@ -96,37 +115,38 @@ const nextMonth = () => {
   const colorClasses = getColorClasses();
 
   return (
-    <div className="flex items-center space-x-2 h-10">
+    <div className="bg-white flex rounded-lg max-w-md relative">
       <button
         onClick={previousMonth}
-        className={`p-1 rounded-md border ${colorClasses.button} ${colorClasses.focus} focus:outline-none focus:ring-2 focus:ring-offset-1`}
         aria-label="Previous Month"
+        className="px-2 py-2 border-r border-gray-300 text-gray-600"
       >
         <ChevronLeftIcon className="w-4 h-4" />
       </button>
-      
+
       <div className="relative" ref={dropdownRef}>
         <button
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-          className={`px-3 py-1 border rounded-md font-medium flex items-center space-x-1 ${colorClasses.button} ${colorClasses.focus} focus:outline-none focus:ring-2 focus:ring-offset-1`}
           aria-expanded={isDropdownOpen}
           aria-haspopup="true"
+          className="flex items-center gap-2 px-3 py-2"
         >
-          <span>{months[selectedMonth]} {currentYear}</span>
-          <CalendarIcon className="w-4 h-4 ml-1" />
+          <span>
+            {months[selectedMonth]} {currentYear}
+          </span>
         </button>
-        
+
         {isDropdownOpen && (
-          <div className="absolute z-10 mt-1 bg-white rounded-md shadow-lg p-2 border w-64">
+          <div className="absolute w-max top-full left-0 right-0 bg-white border translate-x-[-20%] border-gray-200 rounded-lg shadow-xl p-4 mt-4 z-10">
             <div className="flex justify-between items-center mb-2 px-1">
-              <button 
+              <button
                 onClick={() => setCurrentYear(currentYear - 1)}
                 className="p-1 rounded-md hover:bg-gray-100"
               >
                 <ChevronLeftIcon className="w-4 h-4" />
               </button>
               <span className="font-medium">{currentYear}</span>
-              <button 
+              <button
                 onClick={() => setCurrentYear(currentYear + 1)}
                 className="p-1 rounded-md hover:bg-gray-100"
               >
@@ -139,7 +159,9 @@ const nextMonth = () => {
                   key={index}
                   onClick={() => handleMonthSelect(index)}
                   className={`p-1 text-sm rounded-md ${
-                    selectedMonth === index ? colorClasses.selected : 'hover:bg-gray-100'
+                    selectedMonth === index
+                      ? colorClasses.selected
+                      : "hover:bg-gray-100"
                   }`}
                 >
                   {month}
@@ -149,11 +171,11 @@ const nextMonth = () => {
           </div>
         )}
       </div>
-      
+
       <button
         onClick={nextMonth}
-        className={`p-1 rounded-md border ${colorClasses.button} ${colorClasses.focus} focus:outline-none focus:ring-2 focus:ring-offset-1`}
         aria-label="Next Month"
+        className="px-2 py-2 border-l border-gray-300  text-gray-600"
       >
         <ChevronRightIcon className="w-4 h-4" />
       </button>

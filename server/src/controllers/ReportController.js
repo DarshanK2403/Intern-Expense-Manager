@@ -2,6 +2,9 @@ const { default: mongoose } = require("mongoose");
 const Expense = require("../models/ExpenseModel");
 const Income = require("../models/IncomeModel");
 
+const formatKey = (date, type) =>
+  type === "year" ? date.toISOString().slice(0, 7) : date.toISOString().split("T")[0];
+
 const getReport = async (req, res) => {
   try {
     const { type, userId } = req.params;
@@ -11,21 +14,17 @@ const getReport = async (req, res) => {
     const today = new Date();
     let startDate, endDate;
 
-    if (type === "weekly") {
+    if (type === "week") {
       startDate = new Date(today);
       const dayOfWeek = today.getDay();
       const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
       startDate.setDate(today.getDate() - daysToMonday - offset * 7);
       endDate = new Date(startDate);
       endDate.setDate(startDate.getDate() + 6);
-    } else if (type === "monthly") {
-      startDate = new Date(
-        Date.UTC(today.getFullYear(), today.getMonth() - offset, 1)
-      );
-      endDate = new Date(
-        Date.UTC(today.getFullYear(), today.getMonth() - offset + 1, 0)
-      );
-    } else if (type === "yearly") {
+    } else if (type === "month") {
+      startDate = new Date(Date.UTC(today.getFullYear(), today.getMonth() - offset, 1));
+      endDate = new Date(Date.UTC(today.getFullYear(), today.getMonth() - offset + 1, 0));
+    } else if (type === "year") {
       startDate = new Date(Date.UTC(today.getFullYear() - offset, 0, 1));
       endDate = new Date(Date.UTC(today.getFullYear() - offset, 11, 31));
     } else if (type === "custom") {
@@ -42,6 +41,7 @@ const getReport = async (req, res) => {
       userId,
       expenseDate: { $gte: startDate, $lte: endDate },
     });
+
     const incomes = await Income.find({
       userId,
       incomeDate: { $gte: startDate, $lte: endDate },
@@ -50,70 +50,44 @@ const getReport = async (req, res) => {
     const totalExpense = expenses.reduce((sum, e) => sum + e.amount, 0);
     const totalIncome = incomes.reduce((sum, i) => sum + i.amount, 0);
     const balance = totalIncome - totalExpense;
-
-    const savingRate = ((totalIncome - totalExpense) / totalIncome) * 100;
+    const savingRate = totalIncome ? ((balance / totalIncome) * 100).toFixed(2) : 0;
 
     const groupedData = {};
 
     for (const expense of expenses) {
-      const key =
-        type === "yearly"
-          ? expense.expenseDate.toISOString().slice(0, 7)
-          : expense.expenseDate.toISOString().split("T")[0];
+      const key = formatKey(expense.expenseDate, type);
       groupedData[key] = groupedData[key] || { income: 0, expense: 0 };
       groupedData[key].expense += expense.amount;
     }
 
     for (const income of incomes) {
-      const key =
-        type === "yearly"
-          ? income.incomeDate.toISOString().slice(0, 7)
-          : income.incomeDate.toISOString().split("T")[0];
+      const key = formatKey(income.incomeDate, type);
       groupedData[key] = groupedData[key] || { income: 0, expense: 0 };
       groupedData[key].income += income.amount;
     }
 
-    let formattedData = [];
+    const formattedData = [];
     let currentDate = new Date(startDate);
 
     while (currentDate <= endDate) {
-      const key =
-        type === "yearly"
-          ? currentDate.toISOString().slice(0, 7)
-          : currentDate.toISOString().split("T")[0];
-
+      const key = formatKey(currentDate, type);
       let dateLabel;
 
-      if (type === "weekly") {
-        // For weekly, get the day name
-        const dayName = currentDate.toLocaleDateString("en-US", {
-          weekday: "short",
-        });
-        dateLabel = dayName;
-      } else if (type === "monthly") {
-        // For monthly, get the numerical date
+      if (type === "week") {
+        dateLabel = currentDate.toLocaleDateString("en-US", { weekday: "short" });
+      } else if (type === "month") {
         dateLabel = currentDate.getDate();
-      } else if (type === "yearly") {
-        // For yearly, get the full month name
-        const monthName = currentDate.toLocaleDateString("en-US", {
-          month: "short",
-        });
-        dateLabel = monthName;
+      } else if (type === "year") {
+        dateLabel = currentDate.toLocaleDateString("en-US", { month: "short" });
       }
 
       formattedData.push({
-        [type === "weekly" ? "day" : type === "yearly" ? "month" : "date"]:
-          dateLabel,
+        [type === "week" ? "day" : type === "year" ? "month" : "date"]: dateLabel,
         income: groupedData[key]?.income || 0,
         expense: groupedData[key]?.expense || 0,
       });
 
-      // Increment the date based on the report type
-      if (type === "yearly") {
-        currentDate.setMonth(currentDate.getMonth() + 1);
-      } else {
-        currentDate.setDate(currentDate.getDate() + 1);
-      }
+      type === "year" ? currentDate.setMonth(currentDate.getMonth() + 1) : currentDate.setDate(currentDate.getDate() + 1);
     }
 
     const incomeSources = await Income.aggregate([
@@ -148,21 +122,22 @@ const getReport = async (req, res) => {
       expenseDate: { $gte: startDate, $lte: endDate },
     }).limit(5);
 
-    const transaction = [...recentIncomes, ...recentExpenses].sort(
-      (a, b) => b.expenseDate - a.incomeDate
-    );
+    const transaction = [...recentIncomes, ...recentExpenses].sort((a, b) => {
+      const aDate = a.expenseDate || a.incomeDate;
+      const bDate = b.expenseDate || b.incomeDate;
+      return bDate - aDate;
+    });
 
     res.status(200).json({
       totalIncome,
       totalExpense,
       balance,
-      savingRate: savingRate.toFixed(2),
+      savingRate,
       startDate: startDate.toISOString().split("T")[0],
       endDate: endDate.toISOString().split("T")[0],
       type,
       offset,
-      [type === "weekly" ? "weekly" : type === "yearly" ? "yearly" : "monthly"]:
-        formattedData,
+      formatted: formattedData,
       incomeSources,
       expenseByCategory,
       transaction,

@@ -316,7 +316,7 @@ const AddExpenseForm = () => {
                   <SelectInput
                     id="paymentThrough"
                     label="Payment Through"
-                    options={["OK"]}
+                    options={["Cash"]}
                     register={register}
                   />
 

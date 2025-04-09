@@ -48,7 +48,7 @@ const AddIncome = () => {
     const fetchIncomeCategories = async () => {
       try {
         const res = await axios.get(`/get-income-category/${userId}`);
-        const resData = (res.data.data);
+        const resData = res.data.data;
         if (resData.length > 0) {
           const names = resData.map((cat) => cat.category_name);
           setincomeCategories(names);
@@ -57,7 +57,7 @@ const AddIncome = () => {
         toast.error("Internal Server Error");
       }
     };
-    if(userId){
+    if (userId) {
       fetchIncomeCategories();
     }
   }, [userId]);
@@ -113,15 +113,12 @@ const AddIncome = () => {
             </div>
           </div>
           <div className="flex flex-col mt-2">
-            <label htmlFor="title" className="pb-1">
-              Notes
-            </label>
-            <input
+            <Input
+              id={"notes"}
               type="text"
-              name="notes"
-              id="notes"
-              className="bg-white rounded-sm w-96 p-1 border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-              {...register("notes")}
+              label="Notes"
+              register={register}
+              placeholder="Add notes here"
             />
           </div>
           <div className="flex flex-col">

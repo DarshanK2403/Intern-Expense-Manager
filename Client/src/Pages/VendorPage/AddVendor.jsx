@@ -53,7 +53,7 @@ const AddVendor = () => {
     navigate(-1);
   };
   return (
-    <div className="max-w-7xl mx-auto mt-5 p-6 bg-white">
+    <div className="max-w-7xl mx-auto mt-5 p-6 bg-white shadow-md rounded-md">
       <ToastContainer></ToastContainer>
       {/* Form Title */}
       <div className="text-xl font-semibold text-gray-800">Add Vendor</div>

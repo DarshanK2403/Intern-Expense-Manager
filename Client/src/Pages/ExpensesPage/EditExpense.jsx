@@ -19,11 +19,10 @@ const EditExpense = () => {
     register,
     handleSubmit,
     formState: { errors },
-    watch,
     setValue,
   } = useForm();
   const userId = localStorage.getItem("id");
-  const receipt = watch("receipt");
+  // const receipt = watch("receipt");
   const [filePreview, setFilePreview] = useState(null);
   const [fileType, setFileType] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -50,9 +49,10 @@ const EditExpense = () => {
         toast.error("Error fetching expense details:", error.message);
       }
     };
-
-    getExpenseDetailbyId();
-  }, []);
+    if (id) {
+      getExpenseDetailbyId();
+    }
+  }, [userId, id, setValue]);
 
   const handleFileChange = (event) => {
     const file = event.target.files[0] || null;
@@ -129,18 +129,22 @@ const EditExpense = () => {
       try {
         const res = await axios.get(`/get-expense-category/${userId}`);
         const categories = res.data.data;
-  
+
         if (categories.length > 0) {
           setexpenseCategories(categories.map((cat) => cat.category_name)); // ✅ Set both states at once
         }
-      } catch (error) {
+      } catch {
         toast.error("Internal Server Error");
       }
     };
-  
+
     fetchExpenseCategories();
   }, []);
-  
+
+  const closeForm = () => {
+    navigate("/expenses");
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
       <ToastContainer />
@@ -417,7 +421,7 @@ const EditExpense = () => {
                   {loading ? "Updating..." : "Save"}
                 </button>
                 <button
-                  //   onClick={closeForm}
+                  onClick={closeForm}
                   name="saveAndClose"
                   className="flex-1 bg-white text-blue-600 border border-blue-600 py-3 px-6 rounded-md font-medium text-sm hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                 >

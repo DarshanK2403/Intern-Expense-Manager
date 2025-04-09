@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { toast, ToastContainer } from "react-toastify";
 import axios from "axios";
 import CustomLoader from "../../Components/CustomLoader";
@@ -47,12 +47,7 @@ const AdminUserPage = () => {
 
   useEffect(() => {
     applyFilter("");
-  }, [selectedTab]);
-
-  // const filteredUsers = () => {
-  //   if (selectedTab === "all") return usersData;
-  //   return usersData;
-  // };
+  }, [applyFilter]);
 
   const handleSort = (column) => {
     let newDirection = "asc";
@@ -80,6 +75,7 @@ const AdminUserPage = () => {
       return;
     }
 
+    // Sort the data based on the selected column and direction
     const sorted = [...usersData].sort((a, b) => {
       if (column === "email") {
         return newDirection === "asc"
@@ -107,15 +103,10 @@ const AdminUserPage = () => {
     setUsersData(sorted);
   };
 
-  const applyFilter = (term) => {
+  const applyFilter = useCallback((term) => {
     let filteredData = [...original];
-
-    if (selectedTab === "active") {
-      filteredData = filteredData.filter((user) => user.isActive == "true");
-    } else if (selectedTab === "inactive") {
-      filteredData = filteredData.filter((user) => user.isActive == "false");
-    }
-
+  
+    // Search Filter
     if (term) {
       filteredData = filteredData.filter(
         (item) =>
@@ -124,23 +115,27 @@ const AdminUserPage = () => {
           item.lastName.toLowerCase().includes(term.toLowerCase())
       );
     }
-
+  
     setUsersData(filteredData);
-  };
+  }, [original, setUsersData]);
 
+  
   return (
     <div className="p-4">
       {/* Totast Message Show */}
       <ToastContainer></ToastContainer>
       <div className="p-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        {/* Header */}
         <div className="flex space-x-2">
-         <h2 className="text-2xl text-gray-800">Users</h2>
+          <h2 className="text-2xl text-gray-800">Users</h2>
         </div>
+        {/* Search & Filter */}
         <div className="flex w-full sm:w-auto space-x-2">
           <div className="relative flex-grow">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <Search size={16} className="text-gray-400" />
             </div>
+
             {/* Search */}
             <input
               type="text"
@@ -312,6 +307,7 @@ const AdminUserPage = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {usersData.map((user) => (
                 <tr key={user.id} className="hover:bg-gray-50">
+                  {/* Profile Img & Name & Email */}
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-800 font-medium overflow-hidden">
@@ -331,11 +327,15 @@ const AdminUserPage = () => {
                       </div>
                     </div>
                   </td>
+
+                  {/* Role */}
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900 capitalize">
                       {user.role.name}
                     </div>
                   </td>
+
+                  {/* Status */}
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
                       className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
@@ -347,23 +347,28 @@ const AdminUserPage = () => {
                       {user.isActive == true ? "Active" : "Inactive"}
                     </span>
                   </td>
+
+                  {/* Join Date */}
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {format(new Date(user.createdAt), "dd MMM yyyy")}
                   </td>
+
+                  {/* Total Expenses */}
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center text-sm text-gray-900">
                       <IndianRupee className="h-4 w-4" />
                       {user.TotalExpenseAmount.toFixed(2)}
                     </div>
                   </td>
+
+                  {/* Expense Count */}
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm pe-5 text-gray-900">
                       {user.expenseCount}
                     </div>
                   </td>
-                  {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {user.lastActive}
-                  </td> */}
+
+                  {/* Actions */}
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button className="text-indigo-600 hover:text-indigo-900 mr-3">
                       Edit
@@ -372,6 +377,7 @@ const AdminUserPage = () => {
                       <MoreVertical size={16} />
                     </button>
                   </td>
+
                 </tr>
               ))}
             </tbody>

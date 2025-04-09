@@ -65,7 +65,24 @@ const getIncomebyId = async(req, res) =>{
 }
 
 const EditIncomebyId = async(req, res) =>{
+  const {id} = req.params;
+  const {title, amount, incomeDate, category, notes} = req.body;
 
+  try {
+    const editIncome = await Income.findByIdAndUpdate(
+      id,
+      {title, amount, incomeDate, category, notes},
+      {new: true}
+    );
+    if(editIncome){
+      res.status(200).json(editIncome);
+    }
+    else{
+      res.status(200).json("Invalid ID")
+    }
+  } catch (error) {
+    res.status(500).json({message: error.message})
+  }
 }
 
 const deleteIncomebyId = async (req, res) =>{

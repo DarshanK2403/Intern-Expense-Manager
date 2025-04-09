@@ -101,6 +101,8 @@ function App() {
 
               <Route path="/reports" element={<ReportLayout />}>
                 <Route index element={<ReportsPage />} />
+                
+                
               </Route>
 
               {/* Expense Route */}

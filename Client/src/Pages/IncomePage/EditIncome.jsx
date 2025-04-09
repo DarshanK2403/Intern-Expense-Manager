@@ -1,6 +1,6 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import SelectInput from "../../Components/Select";
 import Input from "../../Components/Input";
@@ -16,7 +16,7 @@ const EditIncome = () => {
   } = useForm();
   const { id } = useParams();
   const [incomeCategories, setincomeCategories] = useState();
-
+  const navigate = useNavigate  ();
   useEffect(() => {
     const getIncome = async () => {
       const res = await axios.get(`/get-income-by-id/${id}`);
@@ -29,7 +29,7 @@ const EditIncome = () => {
     if (id) {
       getIncome();
     }
-  }, [id]);
+  }, [id, setValue]);
 
   useEffect(() => {
     const fetchIncomeCategories = async () => {
@@ -40,7 +40,7 @@ const EditIncome = () => {
           const names = resData.map((cat) => cat.category_name);
           setincomeCategories(names);
         }
-      } catch (error) {
+      } catch {
         toast.error("Internal Server Error");
       }
     };
@@ -50,7 +50,20 @@ const EditIncome = () => {
   }, [userId]);
 
   const onSubmit = async (data) => {
-    console.log(data);
+    try {
+      const res = await axios.put(`/edit-income/${id}`, {
+        ...data,
+        userId,
+      });
+      if (res.status === 200) {
+        toast.success("Income Updated Successfully");
+        navigate("/income");
+      } else {
+        toast.error("Failed to update income");
+      }
+    } catch {
+      toast.error("Internal Server Error");
+    }
   };
 
   return (

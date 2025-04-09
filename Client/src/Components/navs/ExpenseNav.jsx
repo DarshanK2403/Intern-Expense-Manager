@@ -1,7 +1,5 @@
 // eslint-disable-next-line no-unused-vars
 import React from "react";
-import { Link } from "react-router-dom";
-import { ChevronDown, Filter, Plus, Search } from "lucide-react";
 import Subnav from "../Subnav";
 
 const ExpenseNav = () => {

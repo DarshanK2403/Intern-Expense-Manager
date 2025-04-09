@@ -47,8 +47,10 @@ const UpdateVendor = () => {
         toast.error("Internal Server Error");
       }
     };
-    getVendorCategory();
-  }, []);
+    if (userId) {
+      getVendorCategory();
+    }
+  }, [userId, id, setValue]);
 
   const onSubmit = async (data) => {
     try {
@@ -63,6 +65,11 @@ const UpdateVendor = () => {
       toast.error("Internal Server Error");
     }
   };
+
+  const cancle = () => {
+    navigate(-1);
+  }
+
   return (
     <div className="max-w-7xl mx-auto mt-5 p-6 bg-white">
       <ToastContainer></ToastContainer>

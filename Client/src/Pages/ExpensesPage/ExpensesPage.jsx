@@ -53,6 +53,7 @@ const ExpensesPage = () => {
     }
   };
   
+  
 
   return (
     <div className="bg-gray-50 max-w-7xl mx-auto px-4 md:px-6">
@@ -128,7 +129,7 @@ const ExpensesPage = () => {
                         size={16}
                         className="text-gray-400 flex-shrink-0"
                       />
-                      <span className="truncate">{expense.paymentMethod}</span>
+                      <span className="truncate">{expense.paymentThrough}</span>
                     </div>
                   </td>
                   <td className="p-4 text-gray-600">

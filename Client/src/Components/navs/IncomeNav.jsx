@@ -1,5 +1,3 @@
-import { ChevronDown, Filter, Plus, Search } from "lucide-react";
-import { Link } from "react-router-dom";
 import Subnav from "../Subnav";
 
 const IncomeNav = () => {
