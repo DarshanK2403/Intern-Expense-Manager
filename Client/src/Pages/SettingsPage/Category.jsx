@@ -12,7 +12,7 @@ import TabButton from "../../Components/TabButton";
 const Category = () => {
   const [activeTab, setActiveTab] = useState("expense");
   const [categories, setCategories] = useState([]);
-  const userId = localStorage.getItem("id");
+  const token = localStorage.getItem("Token");
   const {
     register,
     handleSubmit,
@@ -23,35 +23,43 @@ const Category = () => {
   const fetchCategories = useCallback(
     async (type) => {
       try {
-        const res = await axios.get(`/get-${type}-category/${userId}`);
+        const res = await axios.get(`/category?type=${type}`,{
+          headers:{
+            Authorization: `Bearer ${token}`
+          }
+        });
         setCategories(res.data.data);
       } catch (error) {
         toast.error(`Failed to fetch ${type} categories`);
         console.error(error);
       }
     },
-    [userId]
+    [token]
   );
 
   useEffect(() => {
-    if (userId) {
+    if (token) {
       fetchCategories(activeTab);
     }
-  }, [userId, activeTab, fetchCategories]);
+  }, [token, activeTab, fetchCategories]);
 
   const submitHandler = async (data) => {
     const categoryData = {
       ...data,
-      userId: userId,
       category_type: activeTab,
     };
 
-    console.log(categoryData);
+    // console.log(categoryData);
     try {
       const res = await axios.post(
-        `/create-${activeTab}-category/${userId}`,
-        categoryData
+        `/category?type=${activeTab}`,
+        categoryData,{
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
       );
+      console.log("API RES", res);
       if (res.data.message === "Created") {
         toast.success(
           `${
@@ -71,7 +79,11 @@ const Category = () => {
 
   const deleteCategory = async (id) => {
     try {
-      await axios.delete(`/delete-${activeTab}-category/${id}`);
+      await axios.delete(`/category/${id}`,{
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       toast.success(
         `${
           activeTab.charAt(0).toUpperCase() + activeTab.slice(1)

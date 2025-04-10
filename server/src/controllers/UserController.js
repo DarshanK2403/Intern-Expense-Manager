@@ -11,7 +11,6 @@ const { rejects } = require("assert");
 const storage = multer.memoryStorage();
 const upload = multer({ storage }).single("profileImg"); // Match field name!
 
-
 const CloudinaryUtil = require("../utils/CloudinaryUtil");
 
 const Signup = async (req, res) => {
@@ -118,16 +117,17 @@ const Login = async (req, res) => {
     return res.status(400).json({ message: "Invalid Password" });
   }
 
-  res.status(200).json({ message: "Login Success", user: user });
+  const Token = await jwt.sign({id: user._id.toString()}, process.env.JWt_SECRET);
+  // console.log(Token);
+
+  res.status(200).json({ message: "Login Success", Token });
 };
 
 const Userdata = async (req, res) => {
   try {
-    const { userId } = req.params;
-    // console.log("Requested User ID:", userId);
+    const userId = req.user.id; // ✅ From decoded token
 
-    // Find user by ID
-    const user = await UserModel.findOne({ _id: userId }).populate("role");
+    const user = await UserModel.findById(userId).populate("role");
 
     if (!user) {
       return res

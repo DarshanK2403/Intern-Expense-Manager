@@ -28,6 +28,7 @@ import {
   Legend,
   ResponsiveContainer,
   Cell,
+  ReferenceLine,
 } from "recharts";
 
 import {
@@ -60,11 +61,12 @@ const ReportPage = () => {
   const [incomeSourceData, setincomeSourceData] = useState([]);
   const [categoryExpenseData, setcategoryExpenseData] = useState([]);
   const [allTransactions, setAllTransactions] = useState([]);
-  const totalIncome = formatedData?.reduce((sum, item) => sum + item.income, 0);
-  const totalExpense = formatedData?.reduce(
-    (sum, item) => sum + item.expense,
-    0
-  );
+  const incomeSum = formatedData?.reduce((sum, item) => sum + (item.income || 0), 0);
+  const totalIncome = isNaN(incomeSum) ? 0 : incomeSum.toFixed(2);
+  
+  const expenseSum = formatedData?.reduce((sum, item) => sum + (item.expense || 0), 0);
+  const totalExpense = isNaN(expenseSum) ? 0 : expenseSum.toFixed(2);
+  
   const [activeFilters, setActiveFilters] = useState(false);
   const [period, setPeriod] = useState("week");
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
@@ -213,7 +215,7 @@ const ReportPage = () => {
 
     setVisibleTransactions(filtered);
     setFilteredTransactions(filtered); // Optional if used elsewhere
-    console.log(filtered);
+    // console.log(filtered);
 
     // ⬇️ Update category chart data
     const filteredIncome = filtered.filter((item) => item.incomeDate);
@@ -242,8 +244,8 @@ const ReportPage = () => {
     );
 
     // ⬇️ Update totals
-    const totalIncome = filteredIncome.reduce((sum, i) => sum + i.amount, 0);
-    const totalExpense = filteredExpense.reduce((sum, e) => sum + e.amount, 0);
+    const totalIncome = filteredIncome.reduce((sum, i) => sum + i.amount, 0).toFixed(2);
+    const totalExpense = filteredExpense.reduce((sum, e) => sum + e.amount, 0).toFixed(2);
     const balance = totalIncome - totalExpense;
     const savingRate = totalIncome
       ? ((balance / totalIncome) * 100).toFixed(2)
@@ -588,47 +590,53 @@ const ReportPage = () => {
                     <SpinnerLoader size="large" color="blue" />
                   </div>
                 ) : (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart
-                      data={filteredChartData}
-                      margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis
-                        dataKey={
-                          period === "week"
-                            ? "day"
-                            : period === "month"
-                            ? "date"
-                            : period === "year"
-                            ? "month"
-                            : "week"
-                        }
-                        tickFormatter={(value) =>
-                          period === "month"
-                            ? value.toString().padStart(2, "0")
-                            : value
-                        }
-                        tick={{ fontSize: 12 }}
-                      />
-                      <YAxis tick={{ fontSize: 12 }} />
-                      <Tooltip />
-                      <Legend wrapperStyle={{ fontSize: "12px" }} />
-                      <Line
-                        type="monotone"
-                        dataKey="income"
-                        stroke="#3b82f6"
-                        activeDot={{ r: 8 }}
-                        strokeWidth={2}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="expense"
-                        stroke="#ef4444"
-                        strokeWidth={2}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart
+                        data={filteredChartData}
+                        margin={{ top: 10, right: 20, bottom: 10, left: 0 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis
+                          dataKey={
+                            period === "week"
+                              ? "day"
+                              : period === "month"
+                              ? "date"
+                              : period === "year"
+                              ? "month"
+                              : "week"
+                          }
+                          tickFormatter={(value) =>
+                            period === "month"
+                              ? value.toString().padStart(2, "0")
+                              : value
+                          }
+                          tick={{ fontSize: 12 }}
+                        />
+                        <YAxis
+                          tick={{ fontSize: 12 }}
+                          domain={["auto", "auto"]} // Dynamically adjusts min/max
+                          allowDataOverflow={false} // Prevents drawing outside area
+                        />
+                        <Tooltip />
+                        <Legend wrapperStyle={{ fontSize: "12px" }} />
+                        <Line
+                          type="monotone"
+                          dataKey="income"
+                          stroke="#3b82f6"
+                          activeDot={{ r: 8 }}
+                          strokeWidth={2}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="expense"
+                          stroke="#ef4444"
+                          strokeWidth={2}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
                 )}
               </div>
             </div>

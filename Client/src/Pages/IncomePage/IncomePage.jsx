@@ -53,7 +53,7 @@ const IncomePage = () => {
 
   return (
     <div>
-      <ToastContainer></ToastContainer>
+      <ToastContainer autoClose={1500}></ToastContainer>
       <div className="max-w-6xl mx-auto bg-white rounded-lg shadow overflow-hidden">
         {incomeData.length > 0 ? (
           <table className="min-w-full divide-y divide-gray-300">

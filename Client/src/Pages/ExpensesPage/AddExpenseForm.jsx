@@ -24,7 +24,7 @@ const AddExpenseForm = () => {
     setValue,
   } = useForm();
 
-  const userId = localStorage.getItem("id");
+  const token = localStorage.getItem("Token");
   const receipt = watch("receipt");
   const [filePreview, setFilePreview] = useState(null);
   const [fileType, setFileType] = useState(null);
@@ -64,7 +64,7 @@ const AddExpenseForm = () => {
 
   // Handle Form Submit
   const onSubmit = async (data) => {
-    console.log(data)
+    console.log(data);
     // Ensure file is selected
     if (data.receiptFile && !(data.receiptFile instanceof File)) {
       console.error("Invalid file format");
@@ -73,7 +73,6 @@ const AddExpenseForm = () => {
 
     // Create FormData
     const formData = new FormData();
-    formData.append("userId", userId);
     formData.append("title", data.title);
     formData.append("amount", data.amount);
     formData.append("description", data.description);
@@ -126,25 +125,29 @@ const AddExpenseForm = () => {
   const saveandclose = () => {};
   const saveandnew = () => {};
 
-  useEffect(() => {
-    const fetchExpenseCategories = async () => {
-      const userId = localStorage.getItem("id");
-      try {
-        const res = await axios.get(`/get-expense-category/${userId}`);
-        const categories = res.data.data;
+  const fetchExpenseCategories = async (token) => {
+    try {
+      const res = await axios.get(`/get-expense-category`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const categories = res.data.data;
 
-        if (categories.length > 0) {
-          setexpenseCategories(categories.map((cat) => cat.category_name));
-        }
-      } catch (error) {
-        toast.error("Internal Server Error");
+      if (categories.length > 0) {
+        setexpenseCategories(categories.map((cat) => cat.category_name));
       }
-    };
+    } catch (error) {
+      toast.error("Internal Server Error");
+    }
+  };
+  useEffect(() => {
+    if (token) {
+      fetchExpenseCategories();
+    }
+  }, [token]);
 
-    fetchExpenseCategories();
-  }, []);
-
-  const vendorSuggestions  = [
+  const vendorSuggestions = [
     "Ront Technologies",
     "King Enterprises",
     "Poker Industries",
@@ -306,7 +309,6 @@ const AddExpenseForm = () => {
                       label="Expense Category"
                       options={expenseCategories}
                       register={register}
-                      // errors={errors}
                     />
                   </div>
                 </div>

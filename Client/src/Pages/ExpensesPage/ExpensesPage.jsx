@@ -20,6 +20,15 @@ import { toast, ToastContainer } from "react-toastify";
 const ExpensesPage = () => {
   const userId = localStorage.getItem("id");
   const [expenses, setExpenses] = useState([]);
+  const [token, setToken] = useState("");
+
+  useEffect(() => {
+    const savedToken = localStorage.getItem("Token");
+    if (savedToken) {
+      setToken(savedToken);
+    }
+  }, []);
+
   const isImage = (fileName) => {
     return /\.(jpg|jpeg|png|gif|webp)$/i.test(fileName);
   };
@@ -29,20 +38,24 @@ const ExpensesPage = () => {
   };
 
   useEffect(() => {
-    if (userId) {
+    if (token) {
       getExpense();
     }
-  }, [userId]);
-  
+  }, [token]);
+
   const getExpense = async () => {
     try {
-      const res = await axios(`/get-expense/${userId}`);
+      const res = await axios(`/get-expense/`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       setExpenses(res.data.data);
     } catch (error) {
       console.error("Error fetching expenses:", error);
     }
   };
-  
+
   const deleteExpense = async (id) => {
     try {
       await axios.delete(`/delete-expense/${id}`);
@@ -52,12 +65,11 @@ const ExpensesPage = () => {
       toast.error("Expense Delete Failed");
     }
   };
-  
-  
 
   return (
     <div className="bg-gray-50 max-w-7xl mx-auto px-4 md:px-6">
-      <ToastContainer/>
+      <ToastContainer autoClose={1500}></ToastContainer>
+
       {/* Expenses List */}
       {expenses.length > 0 ? (
         <div className="max-w-6xl mx-auto bg-white rounded-lg shadow overflow-hidden">

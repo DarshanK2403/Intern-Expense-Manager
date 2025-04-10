@@ -18,7 +18,7 @@ const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(true);
   const location = useLocation();
   const [user, setUser] = useState([]);
-  const userId = localStorage.getItem("id");
+  const token = localStorage.getItem("Token");
   const [isAdmin, setAdmin] = useState(false);
 
   // Function to check if a route is active
@@ -38,8 +38,12 @@ const Sidebar = () => {
   useEffect(() => {
     const getUser = async () => {
       try {
-        if (userId) {
-          const res = await axios.get(`/userdata/${userId}`);
+        if (token) {
+          const res = await axios.get(`/userdata`,{
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          });
           // console.log(res);
           setUser(res.data);
           if (res.data.role.name === "admin") {
@@ -51,7 +55,7 @@ const Sidebar = () => {
       }
     };
     getUser();
-  }, [userId]);
+  }, [token]);
 
   return (
     <aside

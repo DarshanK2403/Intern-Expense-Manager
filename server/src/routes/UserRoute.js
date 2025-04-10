@@ -1,12 +1,13 @@
 const express = require("express");
 const router = express.Router();
 const UserController = require("../controllers/UserController");
+const authMiddleware = require("../middleware/authMiddleware");
 
 router.post("/signup", UserController.Signup);
 
 router.post("/signin", UserController.Login);
 
-router.get("/userdata/:userId", UserController.Userdata)
+router.get("/userdata", authMiddleware, UserController.Userdata)
 
 router.post("/forget-password", UserController.ForgetPassword);
 

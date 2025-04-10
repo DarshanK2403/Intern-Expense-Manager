@@ -26,9 +26,7 @@ const AdminNav = () => {
       <header className="w-full max-w-7xl bg-white border-b border-gray-200">
       <div className="px-4 py-3 flex items-center justify-between">
         <div className="flex items-center">
-          {/* <button onClick={toggleSidebar} className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none">
-            {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
-          </button> */}
+
           <h1 className="ml-3 text-xl font-bold text-blue-600">FinanceTrack</h1>
         </div>
         <div className="flex items-center space-x-4">

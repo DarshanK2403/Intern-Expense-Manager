@@ -1,154 +1,72 @@
 const CategoryModel = require("../models/Category");
 
-const CreateExpenseCategory = async (req, res) => {
+// Generic Create Category
+const CreateCategory = async (req, res) => {
   try {
-    const { userId } = req.params;
-    // const { category_name, category_description } = req.body;
-    const data = { ...req.body, userId };
-    const category_name = req.body.category_name;
+    const userId = req.user.id;
+    // const { type } = req.query;
+    const { category_name, category_description, category_type } = req.body;
+
     const existCategory = await CategoryModel.findOne({
+      userId,
+      category_type,
       category_name,
+      category_description,
+    });
+
+
+    if (existCategory) {
+      return res.status(409).json({ message: "Already exists" });
+    }
+
+    const newCategory = await CategoryModel.create({
+      ...req.body,
+      category_type,
       userId,
     });
-    if (existCategory) {
-      res.send("alredy exist");
-    } else {
-      const newCategory = await CategoryModel.create(data);
-      res.status(201).json({ message: "Created", data: newCategory });
-    }
+
+    res.status(201).json({ message: "Created", data: newCategory });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-const GetExpenseCategory = async (req, res) => {
-  const { userId } = req.params;
+// Generic Get Category
+const GetCategory = async (req, res) => {
   try {
-    const getExpense = await CategoryModel.find({
-      userId: userId,
-      category_type: "expense",
-    });
-    if (getExpense) {
-      res.status(200).json({ message: "success", data: getExpense });
-    } else {
-      res.json({ data: "Not have any Category" });
-    }
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
+    const userId = req.user.id;
+    const { type } = req.query; // Pass category_type like ?type=income
 
-const DeleteExpenseCategory = async (req, res) => {
-  try {
-    const deleteCategory = await CategoryModel.findByIdAndDelete(req.params.id);
-    res.send(deleteCategory);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-const CreateIncomeCategory = async (req, res) => {
-  try {
-    const { userId } = req.params;
-    // const { category_name, category_description } = req.body;
-    const data = { ...req.body, userId };
-    const category_name = req.body.category_name;
-    const existCategory = await CategoryModel.findOne({
-      category_name,
+    const categories = await CategoryModel.find({
       userId,
+      category_type: type,
     });
-    if (existCategory) {
-      res.send("alredy exist");
-    } else {
-      const newCategory = await CategoryModel.create(data);
-      res.status(201).json({ message: "Created", data: newCategory });
+
+    if (!categories.length) {
+      return res.status(200).json({ message: "No categories found", data: [] });
     }
+
+    res.status(200).json({ message: "Success", data: categories });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-const GetIncomeategory = async (req, res) => {
-  const { userId } = req.params;
+// Generic Delete Category
+const DeleteCategory = async (req, res) => {
   try {
-    const getExpense = await CategoryModel.find({
-      userId: userId,
-      category_type: "income",
-    });
-    if (getExpense) {
-      res.status(200).json({ message: "success", data: getExpense });
-    } else {
-      res.json({ data: "Not have any Category" });
+    const deleted = await CategoryModel.findByIdAndDelete(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ message: "Category not found" });
     }
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-const DeleteIncomeCategory = async (req, res) => {
-  try {
-    const deleteCategory = await CategoryModel.findByIdAndDelete(req.params.id);
-    res.send(deleteCategory);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-const CreateVendorCategory = async (req, res) => {
-  try {
-    const { userId } = req.params;
-    // const { category_name, category_description } = req.body;
-    const data = { ...req.body, userId };
-    const category_name = req.body.category_name;
-    const existCategory = await CategoryModel.findOne({
-      category_name,
-      userId,
-    });
-    if (existCategory) {
-      res.send("alredy exist");
-    } else {
-      const newCategory = await CategoryModel.create(data);
-      res.status(201).json({ message: "Created", data: newCategory });
-    }
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-const GetVendorCategory = async (req, res) => {
-  const { userId } = req.params;
-  try {
-    const getExpense = await CategoryModel.find({
-      userId: userId,
-      category_type: "vendor",
-    });
-    if (getExpense) {
-      res.status(200).json({ message: "success", data: getExpense });
-    } else {
-      res.json({ data: "Not have any Category" });
-    }
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-const DeleteVendorCategory = async (req, res) => {
-  try {
-    const deleteCategory = await CategoryModel.findByIdAndDelete(req.params.id);
-    res.send(deleteCategory);
+    res.status(200).json({ message: "Deleted", data: deleted });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
 module.exports = {
-  CreateExpenseCategory,
-  GetExpenseCategory,
-  DeleteExpenseCategory,
-  CreateIncomeCategory,
-  GetIncomeategory,
-  DeleteIncomeCategory,
-  CreateVendorCategory,
-  GetVendorCategory,
-  DeleteVendorCategory,
+  CreateCategory,
+  GetCategory,
+  DeleteCategory,
 };

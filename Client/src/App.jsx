@@ -37,13 +37,11 @@ const IncomeLayout = lazy(() => import("./Layouts/IncomeLayout"));
 const IncomePage = lazy(() => import("./Pages/IncomePage/IncomePage"));
 const AdminPage = lazy(() => import("./admin/Page/AdminPage"));
 const AdminLayout = lazy(() => import("./admin/Layout/AdminLayout"));
-const AdminExpensePage = lazy(() => import("./admin/Page/AdminExpensePage"));
 const AdminReportPage = lazy(() => import("./admin/Page/AdminReportPage"));
 const AdminUserPage = lazy(() => import("./admin/Page/AdminUserPage"));
 const AdminSettingPage = lazy(() => import("./admin/Page/AdminSettingPage"));
 function App() {
   axios.defaults.baseURL = "http://localhost:3000/";
-
   return (
     <>
       <BrowserRouter>
@@ -111,11 +109,11 @@ function App() {
             <Route element={<AdminRoute />}>
               <Route path="/" element={<AdminLayout />}>
                 <Route index path="admin/dashboard" element={<AdminPage />} />
-                <Route
+                {/* <Route
                   index
                   path="admin/expenses"
                   element={<AdminExpensePage />}
-                />
+                /> */}
                 <Route
                   index
                   path="admin/reports"

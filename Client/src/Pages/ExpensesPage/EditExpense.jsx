@@ -147,7 +147,7 @@ const EditExpense = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-      <ToastContainer />
+      <ToastContainer autoClose={1500}/>
       <div className="bg-white rounded-lg shadow-md p-6">
         <div className="text-xl font-semibold text-gray-800">Add Expense</div>
         <form onSubmit={handleSubmit(onSubmit)} className="pt-4">

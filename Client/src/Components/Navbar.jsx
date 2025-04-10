@@ -8,38 +8,33 @@ const Navbar = () => {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [userName, setUserName] = useState("");
-  const [isAdmin, setAdmin] = useState(false)
+  const [isAdmin, setAdmin] = useState(false);
 
-  useEffect(() => {
-    // Get username from localStorage or fetch from API
-    const userId = localStorage.getItem("id");
-    if (userId) {
-      setUserName("User");
-    }
-  }, []);
-
-  const userId = localStorage.getItem("id")
- 
+  const token = localStorage.getItem("Token");
   useEffect(() => {
     const getUserdata = async () => {
       try {
-        const res = await axios.get(`/userdata/${userId}`);
+        const res = await axios.get(`/userdata`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         // console.log(res.data.role.name);
-        if(res.data.role.name === "admin"){
-          setAdmin(true)
+        if (res.data.role.name === "admin") {
+          setAdmin(true);
         }
-        setUserName(res.data.firstName)
+        setUserName(res.data.firstName);
       } catch (error) {
         console.log(error);
       }
     };
     getUserdata();
-  }, [userId]);
+  }, [token]);
 
   const handleLogout = () => {
     // Show confirmation dialog
     if (window.confirm("Are you sure you want to logout?")) {
-      localStorage.removeItem("id");
+      localStorage.removeItem("Token");
       navigate("/signin");
     }
   };
@@ -60,7 +55,7 @@ const Navbar = () => {
 
           {/* User Menu and Logout */}
           <div className="flex items-center space-x-4">
-            {isAdmin ? (<Link to="/admin/dashboard">Admin Dashboard</Link>) : " "}
+            {isAdmin ? <Link to="/admin/dashboard">Admin Dashboard</Link> : " "}
             {userName && (
               <span className="hidden md:inline text-sm">
                 Welcome, {userName}

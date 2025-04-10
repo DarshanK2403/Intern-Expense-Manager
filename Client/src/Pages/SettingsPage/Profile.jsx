@@ -18,11 +18,17 @@ const Profile = () => {
   const watchedValues = watch();
   const fileInputRef = useRef(null);
   const [profileImg, setProfileImg] = useState();
+  const token = localStorage.getItem("Token");
   useEffect(() => {
     const getUserdata = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(`/userdata/${userId}`);
+        const res = await axios.get("/userdata", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        // console.log(token)
         setInitialData(res.data);
         reset(res.data);
         setProfileImg(res.data.img);
@@ -32,8 +38,8 @@ const Profile = () => {
       setLoading(false);
     };
 
-    if (userId) getUserdata();
-  }, [userId, reset]);
+    if (token) getUserdata();
+  }, [token, reset]);
 
   // Function to compare initial data with current form data
   const hasChanges = useCallback(() => {
@@ -132,7 +138,7 @@ const Profile = () => {
   return (
     <div className="space-y-6 m-5 w-[70%] mx-auto">
       <h2 className="text-xl font-semibold text-gray-800">Profile Settings</h2>
-      <ToastContainer/>
+      <ToastContainer />
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center mb-6">

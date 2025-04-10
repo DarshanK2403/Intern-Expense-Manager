@@ -33,6 +33,9 @@ import {
 
 const AdminPage = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [TotalUser, setTotaluser] = useState(0);
+  const [TotalExpense, setTotalExpense] = useState(0);
+  const [AvgExpense, setAvgExpense] = useState(0);
 
   // Sample data for charts and metrics
   const userData = [

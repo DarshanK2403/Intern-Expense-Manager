@@ -90,7 +90,7 @@ const createExpense = async (req, res) => {
 // Get Expenses by User ID
 const getExpensebyUserId = async (req, res) => {
   try {
-    const { userId } = req.params;
+    const userId = req.user.id;
 
     if (!userId) {
       return res

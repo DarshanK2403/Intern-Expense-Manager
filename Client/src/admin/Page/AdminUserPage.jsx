@@ -47,7 +47,7 @@ const AdminUserPage = () => {
 
   useEffect(() => {
     applyFilter("");
-  }, [applyFilter]);
+  }, []);
 
   const handleSort = (column) => {
     let newDirection = "asc";
@@ -306,7 +306,7 @@ const AdminUserPage = () => {
 
             <tbody className="bg-white divide-y divide-gray-200">
               {usersData.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50">
+                <tr key={user._id} className="hover:bg-gray-50">
                   {/* Profile Img & Name & Email */}
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">

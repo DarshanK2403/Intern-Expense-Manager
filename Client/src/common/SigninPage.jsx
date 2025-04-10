@@ -31,7 +31,9 @@ const SigninPage = () => {
     try {
       const response = await axios.post("/signin", data);
       if (response.data.message === "Login Success") {
-        localStorage.setItem("id", response.data.user._id);
+        // localStorage.setItem("id", response.data.user._id);
+        localStorage.setItem("Token", response.data.Token);
+        
         navigate("/dashboard");
         toast.success("Login Success");
       } else {

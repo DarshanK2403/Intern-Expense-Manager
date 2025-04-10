@@ -7,25 +7,24 @@ const useAuth = () => {
   const [isAdmin, setIsAdmin] = useState(false); // Is the user an admin
 
   useEffect(() => {
-    const id = localStorage.getItem("id");
-
     const getRole = async () => {
+      const token = localStorage.getItem("Token");
       try {
-        if (id) {
-          const res = await axios.get(`/userdata/${id}`);
-          const role = res.data.role.name;
+        const res = await axios.get("/userdata", {
+          headers: {
+            Authorization: `Bearer ${token}`, // ✅ Send token in header
+          },
+        }); // Token is sent via header
+        const role = res.data.role.name;
 
-          if (role === "user") {
-            setAuth(true);
-            setIsAdmin(false); // User role should not access admin routes
-          } else if (role === "admin") {
-            setAuth(true);
-            setIsAdmin(true); // Admin role should access admin routes
-          } else {
-            setAuth(false); // If role is invalid, block access
-          }
+        if (role === "user") {
+          setAuth(true);
+          setIsAdmin(false);
+        } else if (role === "admin") {
+          setAuth(true);
+          setIsAdmin(true);
         } else {
-          setAuth(false); // No ID means no user is logged in
+          setAuth(false);
         }
       } catch (error) {
         console.log(error);

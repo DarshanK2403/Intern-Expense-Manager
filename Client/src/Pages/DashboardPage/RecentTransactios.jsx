@@ -6,17 +6,21 @@ import { useNavigate } from "react-router-dom";
 
 const RecentTransactios = () => {
   const [recentTransaction, setRecentTransaction] = useState([]);
-  const userId = localStorage.getItem("id");
+  const token = localStorage.getItem("Token");
   const navigate = useNavigate();
 
   const formatDate = (date) => {
     return format(new Date(date), "MMM dd, yyyy");
   };
 
-  const getRecentTransactions = async (userId, limit = 0) => {
+  const getRecentTransactions = async (token) => {
     try {
       const res = await axios.get(
-        `/recent-transactions/${userId}/?limit=${limit}`
+        `/recent-transactions`,{
+          headers:{
+            Authorization: `Bearer ${token}`
+          }
+        }
       );
       // console.log(res.data); 
       setRecentTransaction(res.data);
@@ -30,10 +34,10 @@ const RecentTransactios = () => {
   };
 
   useEffect(() => {
-    if (userId) {
-      getRecentTransactions(userId);
+    if (token) {
+      getRecentTransactions(token);
     }
-  }, [userId]);
+  }, [token]);
 
   const handleGoBack = () => {
     navigate(-1);

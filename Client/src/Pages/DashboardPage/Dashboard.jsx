@@ -37,13 +37,20 @@ import MetricCard from "../../Components/MetricCard";
 
 const Dashboard = () => {
   const [recentTransaction, setRecentTransaction] = useState([]);
-  const userId = localStorage.getItem("id");
   const [totalExpense, setTotalExpense] = useState();
   const [totalIncome, setTotalIncome] = useState();
   const [currentBalance, setcurrentBalance] = useState();
   const [expenseData, setExpenseData] = useState([]);
   const [timeframe, setTimeframe] = useState("monthly");
   const [incomeData, setIncomeData] = useState([]);
+  const [token, setToken] = useState("");
+
+  useEffect(() => {
+    const savedToken = localStorage.getItem("Token");
+    if (savedToken) {
+      setToken(savedToken);
+    }
+  }, []);
 
   const COLORS = [
     "#5B9BD5", // Medium Light Blue
@@ -55,12 +62,14 @@ const Dashboard = () => {
     "#F4A261", // Light Orange
   ];
 
-  const getRecentTransactions = async (userId, limit = 5) => {
+  const getRecentTransactions = async (token) => {
     try {
-      const res = await axios.get(
-        `/recent-transactions/${userId}/?limit=${limit}`
-      );
-      // console.log(res.data);
+      const res = await axios.get(`/recent-transactions`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      // console.log("res", res.data);
       setRecentTransaction(res.data);
     } catch (error) {
       console.log(error);
@@ -68,10 +77,10 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    if (userId) {
-      getRecentTransactions(userId);
+    if (token) {
+      getRecentTransactions();
     }
-  }, [userId]);
+  }, [token]);
 
   const TransactionType = (transaction) => {
     return transaction.expenseDate ? "Expense" : "Income";
@@ -84,20 +93,29 @@ const Dashboard = () => {
   // Get Metric Amount
   useEffect(() => {
     const getTotalAmount = async () => {
-      const res = await axios.get(`/get-total/${userId}`);
+      const res = await axios.get(`/get-total`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       setTotalExpense(res.data.totalExpense);
       setTotalIncome(res.data.totalIncome);
       setcurrentBalance(res.data.currentBalance);
     };
-    getTotalAmount();
-  }, [userId]);
+    if(token){
+      getTotalAmount();
+    }
+  }, [token]);
 
   // Get Expenseby Category & Income
   useEffect(() => {
     const getExpensebyCategory = async () => {
       try {
-        const res = await axios.get(`/expensebycategory/${userId}`);
-        // console.log(res.data);
+        const res = await axios.get(`/expensebycategory`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
         setExpenseData(res.data);
       } catch (error) {
         toast.error("Interna; Server Error");
@@ -106,7 +124,11 @@ const Dashboard = () => {
 
     const getIncomebyCategory = async () => {
       try {
-        const res = await axios.get(`/incomebycategory/${userId}`);
+        const res = await axios.get(`/incomebycategory`,{
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
         // console.log(res.data);
         setIncomeData(res.data);
       } catch (error) {
@@ -114,11 +136,11 @@ const Dashboard = () => {
       }
     };
 
-    if (userId) {
+    if (token) {
       getExpensebyCategory();
       getIncomebyCategory();
     }
-  }, [userId]);
+  }, [token]);
 
   return (
     <div className="p-4">
@@ -227,7 +249,7 @@ const Dashboard = () => {
               </tr>
             </thead>
             <tbody>
-              {recentTransaction.map((transaction) => {
+              {recentTransaction.slice(0,5).map((transaction) => {
                 const isExpense = TransactionType(transaction) === "Expense";
                 const date = isExpense
                   ? transaction.expenseDate
