@@ -7,7 +7,7 @@ import Input from "../../Components/Input";
 import { toast, ToastContainer } from "react-toastify";
 
 const EditIncome = () => {
-  const userId = localStorage.getItem("id");
+  const token = localStorage.getItem("Token");
   const {
     register,
     handleSubmit,
@@ -34,7 +34,11 @@ const EditIncome = () => {
   useEffect(() => {
     const fetchIncomeCategories = async () => {
       try {
-        const res = await axios.get(`/get-income-category/${userId}`);
+        const res = await axios.get(`/category?type=income`,{
+          headers:{
+            Authorization: `Bearer ${token}`
+          }
+        });
         const resData = res.data.data;
         if (resData.length > 0) {
           const names = resData.map((cat) => cat.category_name);
@@ -44,16 +48,15 @@ const EditIncome = () => {
         toast.error("Internal Server Error");
       }
     };
-    if (userId) {
+    if (token) {
       fetchIncomeCategories();
     }
-  }, [userId]);
+  }, [token]);
 
   const onSubmit = async (data) => {
     try {
       const res = await axios.put(`/edit-income/${id}`, {
         ...data,
-        userId,
       });
       if (res.status === 200) {
         toast.success("Income Updated Successfully");

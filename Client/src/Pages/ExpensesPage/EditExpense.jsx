@@ -21,7 +21,7 @@ const EditExpense = () => {
     formState: { errors },
     setValue,
   } = useForm();
-  const userId = localStorage.getItem("id");
+  const token = localStorage.getItem("Token");
   // const receipt = watch("receipt");
   const [filePreview, setFilePreview] = useState(null);
   const [fileType, setFileType] = useState(null);
@@ -32,7 +32,11 @@ const EditExpense = () => {
   useEffect(() => {
     const getExpenseDetailbyId = async () => {
       try {
-        const res = await axios.get(`/expense-details/${id}`);
+        const res = await axios.get(`/expense-details/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         console.log(res.data);
         setValue("title", res.data.title);
         setValue("amount", res.data.amount);
@@ -52,7 +56,7 @@ const EditExpense = () => {
     if (id) {
       getExpenseDetailbyId();
     }
-  }, [userId, id, setValue]);
+  }, [token, id, setValue]);
 
   const handleFileChange = (event) => {
     const file = event.target.files[0] || null;
@@ -90,7 +94,6 @@ const EditExpense = () => {
 
     // Create FormData
     const formData = new FormData();
-    formData.append("userId", userId);
     formData.append("title", data.title);
     formData.append("amount", data.amount);
     formData.append("description", data.description);
@@ -125,9 +128,12 @@ const EditExpense = () => {
 
   useEffect(() => {
     const fetchExpenseCategories = async () => {
-      const userId = localStorage.getItem("id");
       try {
-        const res = await axios.get(`/get-expense-category/${userId}`);
+        const res = await axios.get(`/category?type=expense`,{
+          headers:{
+            Authorization: `Bearer ${token}`
+          }
+        });
         const categories = res.data.data;
 
         if (categories.length > 0) {
@@ -139,15 +145,15 @@ const EditExpense = () => {
     };
 
     fetchExpenseCategories();
-  }, []);
+  }, [token]);
 
   const closeForm = () => {
     navigate("/expenses");
-  }
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-      <ToastContainer autoClose={1500}/>
+      <ToastContainer autoClose={1500} />
       <div className="bg-white rounded-lg shadow-md p-6">
         <div className="text-xl font-semibold text-gray-800">Add Expense</div>
         <form onSubmit={handleSubmit(onSubmit)} className="pt-4">

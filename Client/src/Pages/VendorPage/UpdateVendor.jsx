@@ -14,7 +14,7 @@ const UpdateVendor = () => {
     formState: { errors },
     setValue,
   } = useForm();
-  const userId = localStorage.getItem("id");
+  const token = localStorage.getItem("Token");
   const [vendorCategories, setvendorCategories] = useState([]);
   const { id } = useParams();
   const navigate = useNavigate();
@@ -22,7 +22,11 @@ const UpdateVendor = () => {
   useEffect(() => {
     const getVendorById = async () => {
       try {
-        const res = await axios.get(`/get-vendor-by-id/${id}`);
+        const res = await axios.get(`/get-vendor-by-id/${id}`,{
+          headers:{
+            Authorization: `Bearer ${token}`
+          }
+        });
         setValue("name", res.data.name);
         setValue("email", res.data.email);
         setValue("phone", res.data.phone);
@@ -37,7 +41,11 @@ const UpdateVendor = () => {
 
     const getVendorCategory = async () => {
       try {
-        const res = await axios.get(`/get-vendor-category/${userId}`);
+        const res = await axios.get(`/category?type=vendor`,{
+          headers:{
+            Authorization: `Bearer ${token}`
+          }
+        });
         // console.log(res.data.data);
         const data = res.data.data;
         const categoryName = data?.map((cat) => cat.category_name);
@@ -47,10 +55,10 @@ const UpdateVendor = () => {
         toast.error("Internal Server Error");
       }
     };
-    if (userId) {
+    if (token) {
       getVendorCategory();
     }
-  }, [userId, id, setValue]);
+  }, [token, id, setValue]);
 
   const onSubmit = async (data) => {
     try {

@@ -15,20 +15,22 @@ import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
 
 const IncomePage = () => {
+  const token = localStorage.getItem("Token");
   const [incomeData, setIncomeData] = useState([]);
-  const userId = localStorage.getItem("id");
   const navigate = useNavigate();
   // Ge Income
   const getIncome = useCallback(async () => {
-    if (!userId) return;
-
     try {
-      const res = await axios.get(`/get-income/${userId}`);
+      const res = await axios.get(`/get-income`,{
+        headers:{
+          Authorization: `Bearer ${token}`
+        }
+      });
       setIncomeData(res.data);
     } catch (error) {
       toast.error("Failed to fetch income data");
     }
-  }, [userId]);
+  }, [token]);
 
   useEffect(() => {
     getIncome();
@@ -37,7 +39,11 @@ const IncomePage = () => {
   // Delete Income
   const deleteIncome = async (id) => {
     try {
-      await axios.delete(`/delete-income/${id}`);
+      await axios.delete(`/delete-income/${id}`,{
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       toast.success("Income Deleted");
 
       // Update state after deletion

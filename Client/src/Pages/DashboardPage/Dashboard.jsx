@@ -34,8 +34,10 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import MetricCard from "../../Components/MetricCard";
+import SpinnerLoader from "../../Components/Loader/SpinnerLoader";
 
 const Dashboard = () => {
+  const [loading, setLoading] = useState(false);
   const [recentTransaction, setRecentTransaction] = useState([]);
   const [totalExpense, setTotalExpense] = useState();
   const [totalIncome, setTotalIncome] = useState();
@@ -43,40 +45,36 @@ const Dashboard = () => {
   const [expenseData, setExpenseData] = useState([]);
   const [timeframe, setTimeframe] = useState("monthly");
   const [incomeData, setIncomeData] = useState([]);
-  const [token, setToken] = useState("");
-
-  useEffect(() => {
-    const savedToken = localStorage.getItem("Token");
-    if (savedToken) {
-      setToken(savedToken);
-    }
-  }, []);
+  const token = localStorage.getItem("Token");
 
   const COLORS = [
-    "#5B9BD5", // Medium Light Blue
-    "#70AD47", // Medium Light Green
-    "#FFD966", // Soft Yellow (Visible)
-    "#E57373", // Soft Red
-    "#A085C2", // Medium Light Purple
-    "#56C0E0", // Light Cyan (More Visible)
-    "#F4A261", // Light Orange
+    "#5B9BD5",
+    "#70AD47",
+    "#FFD966",
+    "#E57373",
+    "#A085C2",
+    "#56C0E0",
+    "#F4A261",
   ];
 
-  const getRecentTransactions = async (token) => {
-    try {
-      const res = await axios.get(`/recent-transactions`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      // console.log("res", res.data);
-      setRecentTransaction(res.data);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
   useEffect(() => {
+    const getRecentTransactions = async () => {
+      setLoading(true);
+      try {
+        const res = await axios.get(`/recent-transactions`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        // console.log("res", res.data);
+        setRecentTransaction(res.data);
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     if (token) {
       getRecentTransactions();
     }
@@ -102,7 +100,7 @@ const Dashboard = () => {
       setTotalIncome(res.data.totalIncome);
       setcurrentBalance(res.data.currentBalance);
     };
-    if(token){
+    if (token) {
       getTotalAmount();
     }
   }, [token]);
@@ -113,8 +111,8 @@ const Dashboard = () => {
       try {
         const res = await axios.get(`/expensebycategory`, {
           headers: {
-            Authorization: `Bearer ${token}`
-          }
+            Authorization: `Bearer ${token}`,
+          },
         });
         setExpenseData(res.data);
       } catch (error) {
@@ -124,10 +122,10 @@ const Dashboard = () => {
 
     const getIncomebyCategory = async () => {
       try {
-        const res = await axios.get(`/incomebycategory`,{
+        const res = await axios.get(`/incomebycategory`, {
           headers: {
-            Authorization: `Bearer ${token}`
-          }
+            Authorization: `Bearer ${token}`,
+          },
         });
         // console.log(res.data);
         setIncomeData(res.data);
@@ -227,7 +225,11 @@ const Dashboard = () => {
             View All <ChevronRight />
           </Link>
         </div>
-        {recentTransaction.length > 0 ? (
+        {loading ? (
+          <div className="flex justify-center items-center h-40">
+            <SpinnerLoader size="large" color="blue" />
+          </div>
+        ) : recentTransaction.length > 0 ? (
           <table className="w-full border-collapse">
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50">
@@ -249,7 +251,7 @@ const Dashboard = () => {
               </tr>
             </thead>
             <tbody>
-              {recentTransaction.slice(0,5).map((transaction) => {
+              {recentTransaction.slice(0, 5).map((transaction) => {
                 const isExpense = TransactionType(transaction) === "Expense";
                 const date = isExpense
                   ? transaction.expenseDate

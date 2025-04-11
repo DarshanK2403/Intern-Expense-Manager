@@ -11,11 +11,11 @@ router.get("/userdata", authMiddleware, UserController.Userdata)
 
 router.post("/forget-password", UserController.ForgetPassword);
 
-router.put("/update-password/:userId", UserController.UpdatePassword);
+router.put("/update-password",authMiddleware, UserController.UpdatePassword);
 
-router.put("/update-profile/:userId", UserController.UpdateProfile);
+router.put("/update-profile",authMiddleware, UserController.UpdateProfile);
 
-router.put("/change-password/:userId", UserController.ChangePassword);
+router.put("/change-password",authMiddleware, UserController.ChangePassword);
 
 router.put("/change-profile-picture/:id", UserController.ChangeProfilePicture);
 

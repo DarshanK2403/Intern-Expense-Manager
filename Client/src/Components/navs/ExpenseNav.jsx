@@ -1,8 +1,8 @@
-// eslint-disable-next-line no-unused-vars
-import React from "react";
+/* eslint-disable react/prop-types */
 import Subnav from "../Subnav";
 
-const ExpenseNav = () => {
+const ExpenseNav = ({onSearchChange}) => {
+
   return (
     <Subnav
       id="searchExpense"
@@ -11,6 +11,7 @@ const ExpenseNav = () => {
       placeholder="Search expenses..."
       to="add"
       ButtonText="Add Expense"
+      onSearchChange={onSearchChange} 
     />
   );
 };

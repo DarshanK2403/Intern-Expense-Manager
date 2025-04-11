@@ -3,8 +3,10 @@ import { format } from "date-fns";
 import { ArrowLeft, FileText, IndianRupee } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import SpinnerLoader from "../../Components/Loader/SpinnerLoader";
 
 const RecentTransactios = () => {
+  const [loading, setLoading] = useState(false);
   const [recentTransaction, setRecentTransaction] = useState([]);
   const token = localStorage.getItem("Token");
   const navigate = useNavigate();
@@ -14,18 +16,19 @@ const RecentTransactios = () => {
   };
 
   const getRecentTransactions = async (token) => {
+    setLoading(true);
     try {
-      const res = await axios.get(
-        `/recent-transactions`,{
-          headers:{
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
-      // console.log(res.data); 
+      const res = await axios.get(`/recent-transactions`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      // console.log(res.data);
       setRecentTransaction(res.data);
     } catch (error) {
       console.log(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -56,7 +59,11 @@ const RecentTransactios = () => {
         <h1 className="text-2xl font-bold text-gray-800">Recent Transaction</h1>
       </div>
 
-      {recentTransaction.length > 0 ? (
+      {loading ? (
+        <div className="flex justify-center items-center h-40">
+          <SpinnerLoader size="large" color="blue" />
+        </div>
+      ) : recentTransaction.length > 0 ? (
         <table className="w-full rounded-sm overflow-hidden">
           <thead>
             <tr className="bg-blue-700 text-white">

@@ -16,18 +16,14 @@ import {
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
+import SpinnerLoader from "../../Components/Loader/SpinnerLoader";
+import { useOutletContext } from "react-router-dom";
 
 const ExpensesPage = () => {
-  const userId = localStorage.getItem("id");
+  const [loading, setLoading] = useState(false);
+  const token = localStorage.getItem("Token");
   const [expenses, setExpenses] = useState([]);
-  const [token, setToken] = useState("");
-
-  useEffect(() => {
-    const savedToken = localStorage.getItem("Token");
-    if (savedToken) {
-      setToken(savedToken);
-    }
-  }, []);
+  const { searchValue } = useOutletContext();
 
   const isImage = (fileName) => {
     return /\.(jpg|jpeg|png|gif|webp)$/i.test(fileName);
@@ -41,9 +37,19 @@ const ExpensesPage = () => {
     if (token) {
       getExpense();
     }
-  }, [token]);
+  }, [token, searchValue]);
+
+  const filteredExpenses = expenses.filter((item) => {
+    const lowerSearch = searchValue.toLowerCase();
+    return (
+      item.title.toLowerCase().includes(lowerSearch) ||
+      item.category.toLowerCase().includes(lowerSearch) ||
+      item.amount.toString().includes(lowerSearch)
+    );
+  });
 
   const getExpense = async () => {
+    setLoading(true);
     try {
       const res = await axios(`/get-expense/`, {
         headers: {
@@ -53,6 +59,8 @@ const ExpensesPage = () => {
       setExpenses(res.data.data);
     } catch (error) {
       console.error("Error fetching expenses:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -71,7 +79,11 @@ const ExpensesPage = () => {
       <ToastContainer autoClose={1500}></ToastContainer>
 
       {/* Expenses List */}
-      {expenses.length > 0 ? (
+      {loading ? (
+        <div className="flex justify-center items-center h-40">
+          <SpinnerLoader size="large" color="blue" />
+        </div>
+      ) : filteredExpenses.length > 0 ? (
         <div className="max-w-6xl mx-auto bg-white rounded-lg shadow overflow-hidden">
           <table className="w-full bg-white border rounded-lg shadow-sm overflow-hidden">
             <thead>
@@ -86,7 +98,7 @@ const ExpensesPage = () => {
               </tr>
             </thead>
             <tbody>
-              {expenses.map((expense) => (
+              {filteredExpenses.map((expense) => (
                 <tr
                   key={expense._id}
                   className="hover:bg-gray-50 border-b border-gray-300  "

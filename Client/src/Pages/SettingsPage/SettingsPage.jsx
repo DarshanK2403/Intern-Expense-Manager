@@ -23,10 +23,10 @@ import axios from "axios";
 import { useForm } from "react-hook-form";
 
 const SettingsPage = () => {
+  const token = localStorage.getItem("Token");
   const [activeTab, setActiveTab] = useState("profile");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userdata, setUserData] = useState("");
-  const userId = localStorage.getItem("id");
   const [categorys, setCategorys] = useState([]);
 
   const { register, handleSubmit, setValue, watch } = useForm({
@@ -41,7 +41,11 @@ const SettingsPage = () => {
   useEffect(() => {
     const getUserdata = async () => {
       try {
-        const res = await axios.get(`/userdata/${userId}`);
+        const res = await axios.get(`/userdata`,{
+          headers:{
+            Authorization: `Bearer ${token}`
+          }
+        });
         setUserData(res.data);
 
         // Set form values dynamically
@@ -55,18 +59,22 @@ const SettingsPage = () => {
 
     const getCategory = async () => {
       try {
-        const res = await axios.get(`/get-category/${userId}`);
+        const res = await axios.get(`/get-category`,{
+          headers:{
+            Authorization: `Bearer ${token}`
+          }
+        });
         setCategorys(res.data.data);
         console.log(res.data.data);
       } catch (error) {
         console.log(error);
       }
     };
-    if (userId) {
+    if (token) {
       getUserdata();
       getCategory();
     }
-  }, [userId, setValue]);
+  }, [token, setValue]);
 
   const renderContent = () => {
     switch (activeTab) {

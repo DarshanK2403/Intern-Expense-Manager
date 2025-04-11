@@ -3,6 +3,7 @@ const router = express.Router();
 const IncomeController = require("../controllers/IncomeController");
 const generateFakeIncomes = require("../utils/GenerateFakeIncomes");
 const Income = require("../models/IncomeModel");;
+const authMiddleware = require("../middleware/authMiddleware");
 
 router.post("/fake-income", async (req, res) => {
     try {
@@ -26,13 +27,13 @@ router.post("/fake-income", async (req, res) => {
     }
   });
 
-router.post("/add-income/:userId", IncomeController.AddIncome);
+router.post("/add-income",authMiddleware, IncomeController.AddIncome);
 
-router.get("/get-income/:userId", IncomeController.getIncomebyUserId);
-router.get("/get-income-by-id/:id", IncomeController.getIncomebyId);
+router.get("/get-income", authMiddleware, IncomeController.getIncomebyUserId);
+router.get("/get-income-by-id/:id", authMiddleware, IncomeController.getIncomebyId);
 
-router.put("/edit-income/:id", IncomeController.EditIncomebyId);
+router.put("/edit-income/:id",authMiddleware, IncomeController.EditIncomebyId);
 
-router.delete("/delete-income/:id", IncomeController.deleteIncomebyId);
+router.delete("/delete-income/:id", authMiddleware, IncomeController.deleteIncomebyId);
 
 module.exports = router

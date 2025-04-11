@@ -9,7 +9,8 @@ const formatKey = (date, type) =>
 
 const getReport = async (req, res) => {
   try {
-    const { type, userId } = req.params;
+    const userId = req.user.id;
+    const { type } = req.params;
     const { start, end } = req.body;
     const offset = parseInt(req.query.offset) || 0;
 

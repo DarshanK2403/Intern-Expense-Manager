@@ -9,12 +9,12 @@ import SelectInput from "../../Components/Select";
 import { useNavigate } from "react-router-dom";
 
 const AddIncome = () => {
+  const token = localStorage.getItem("Token");
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm();
-  const userId = localStorage.getItem("id");
   const [incomeCategories, setincomeCategories] = useState();
   const navigate = useNavigate();
 
@@ -22,7 +22,6 @@ const AddIncome = () => {
   const submitHandler = async (data) => {
     // console.log(data);
     const formData = new FormData();
-    formData.append("userId", userId);
     formData.append("title", data.title);
     formData.append("amount", data.amount);
     formData.append("incomeDate", data.incomeDate);
@@ -33,8 +32,11 @@ const AddIncome = () => {
     }
 
     try {
-      const res = await axios.post(`/add-income/${userId}`, formData, {
-        headers: { "Content-Type": "application/json" },
+      const res = await axios.post(`/add-income`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
       });
       // console.log(res);
       navigate(-1);
@@ -47,7 +49,11 @@ const AddIncome = () => {
   useEffect(() => {
     const fetchIncomeCategories = async () => {
       try {
-        const res = await axios.get(`/get-income-category/${userId}`);
+        const res = await axios.get(`/category?type=income`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         const resData = res.data.data;
         if (resData.length > 0) {
           const names = resData.map((cat) => cat.category_name);
@@ -57,10 +63,10 @@ const AddIncome = () => {
         toast.error("Internal Server Error");
       }
     };
-    if (userId) {
+    if (token) {
       fetchIncomeCategories();
     }
-  }, [userId]);
+  }, [token]);
 
   return (
     <div className="max-w-7xl mx-auto py-6 bg-gray-50">

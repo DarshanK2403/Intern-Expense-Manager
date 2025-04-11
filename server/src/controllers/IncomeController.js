@@ -2,7 +2,7 @@ const Income = require("../models/IncomeModel");
 
 const AddIncome = async (req, res) => {
   try {
-    const { userId } = req.params;
+    const userId = req.user.id;
     const { title, amount, incomeDate, category, notes, receipt } = req.body;
     let errors = {};
     if (!title) errors.title = { param: "title", message: "Title is required" };
@@ -35,7 +35,7 @@ const AddIncome = async (req, res) => {
 };
 
 const getIncomebyUserId = async(req, res) =>{
-  const {userId} = req.params;
+  const userId = req.user.id;
   try {
     const getincome = await Income.find({userId}).sort({incomeDate: -1});
     if(getincome.length > 0){

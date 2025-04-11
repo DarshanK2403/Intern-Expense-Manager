@@ -8,19 +8,23 @@ import { toast, ToastContainer } from "react-toastify";
 import axios from "axios";
 
 const AddVendor = () => {
+  const token = localStorage.getItem("Token");
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm();
   const navigate = useNavigate();
-  const userId = localStorage.getItem("id");
   const [vendorCategories, setvendorCategories] = useState([]);
-
+  
   useEffect(() => {
     const getVendorCategory = async () => {
       try {
-        const res = await axios.get(`/get-vendor-category/${userId}`);
+        const res = await axios.get(`/category?type=vendor`,{
+          headers:{
+            Authorization: `Bearer ${token}`
+          }
+        });
         // console.log(res.data.data);
         const data = res.data.data;
         const categoryName = data?.map((cat) => cat.category_name);
@@ -29,18 +33,21 @@ const AddVendor = () => {
         toast.error("Internal Server Error");
       }
     };
-    if (userId) {
+    if (token) {
       getVendorCategory();
     }
-  }, [userId]);
+  }, [token]);
 
   const onSubmit = async (data) => {
     try {
       const formData = {
         ...data,
-        userId
       }
-      const res = await axios.post(`/add-vendor/${userId}`, formData);
+      const res = await axios.post(`/add-vendor`, formData,{
+        headers:{
+          Authorization: `Bearer ${token}`
+        }
+      });
       toast.success("Venodr Added");
       // console.log(res.data);
       navigate('/vendor');

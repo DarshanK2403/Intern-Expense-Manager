@@ -9,16 +9,15 @@ import { Input } from "@mui/material";
 import { toast, ToastContainer } from "react-toastify";
 
 const Profile = () => {
+  const token = localStorage.getItem("Token");
   const [isEditing, setIsEditing] = useState(false);
   const [initialData, setInitialData] = useState({});
-  const userId = localStorage.getItem("id");
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const { register, handleSubmit, setValue, watch, reset } = useForm();
   const watchedValues = watch();
   const fileInputRef = useRef(null);
   const [profileImg, setProfileImg] = useState();
-  const token = localStorage.getItem("Token");
   useEffect(() => {
     const getUserdata = async () => {
       setLoading(true);
@@ -93,7 +92,11 @@ const Profile = () => {
   const onSubmit = async (data) => {
     try {
       setLoading(true);
-      await axios.put(`/update-profile/${userId}`, data);
+      await axios.put(`/update-profile`,data  ,{
+        headers:{
+          Authorization: `Bearer ${token}`
+        }
+      });
       setInitialData(data);
       setIsEditing(false);
       setLoading(false);
@@ -113,7 +116,11 @@ const Profile = () => {
 
     try {
       const res = await axios.put(
-        `/change-profile-picture/${userId}`,
+        `/change-profile-picture`,{
+          headers:{
+            Authorization: `Bearer ${token}`
+          }
+        },
         formData,
         {
           headers: {

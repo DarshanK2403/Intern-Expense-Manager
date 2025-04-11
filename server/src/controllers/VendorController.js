@@ -1,7 +1,7 @@
 const Vendor = require("../models/Vendor");
 
 const AddVendor = async (req, res) => {
-  const { userId } = req.params;
+  const userId = req.user.id;
   try {
     const { name, email, phone, category, notes } = req.body;
     if (!name) {
@@ -25,7 +25,7 @@ const AddVendor = async (req, res) => {
 };
 
 const GetVendor = async (req, res) => {
-  const { userId } = req.params;
+  const userId = req.user.id;
   try {
     const getvendor = await Vendor.find({ userId });
     res.status(200).json(getvendor);

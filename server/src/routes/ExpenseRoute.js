@@ -28,7 +28,7 @@ router.post("/generate-fake", async (req, res) => {
       }
 });
 // POST
-router.post("/add-expense", ExpenseController.createExpense);
+router.post("/add-expense",authMiddleware, ExpenseController.createExpense);
 
 // GET
 router.get("/get-expense", authMiddleware, ExpenseController.getExpensebyUserId);

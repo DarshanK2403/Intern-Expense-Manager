@@ -8,8 +8,16 @@ router.get(
   authMiddleware,
   DashboardController.recentTransactions
 );
-router.get("/get-total",authMiddleware, DashboardController.getTotalValues);
-router.get("/expensebycategory",authMiddleware, DashboardController.ExpenseByCategory);
-router.get("/incomebycategory",authMiddleware, DashboardController.IncomeByCategory);
+router.get("/get-total", authMiddleware, DashboardController.getTotalValues);
+router.get(
+  "/expensebycategory",
+  authMiddleware,
+  DashboardController.ExpenseByCategory
+);
+router.get(
+  "/incomebycategory",
+  authMiddleware,
+  DashboardController.IncomeByCategory
+);
 
 module.exports = router;

@@ -102,13 +102,17 @@ const ReportPage = () => {
   };
 
   useEffect(() => {
-    const userId = localStorage.getItem("id");
+    const token = localStorage.getItem("Token");
 
     const generateReport = async () => {
       try {
         setLoading(true);
         const res = await axios.get(
-          `/get-report/${period}/${userId}?offset=${Offset}`
+          `/get-report/${period}/?offset=${Offset}`,{
+            headers:{
+              Authorization: `Bearer ${token}`
+            }
+          }
         );
 
         setData(res.data);

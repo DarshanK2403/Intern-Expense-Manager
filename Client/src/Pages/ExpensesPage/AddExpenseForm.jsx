@@ -32,6 +32,7 @@ const AddExpenseForm = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [expenseCategories, setexpenseCategories] = useState();
+  const [vendorSuggestions, setvendorSuggestions] = useState([]);
 
   // Handle File Change
   const handleFileChange = (event) => {
@@ -81,8 +82,6 @@ const AddExpenseForm = () => {
     formData.append("account", data.account);
     formData.append("paymentMethod", data.paymentMethod);
     formData.append("vendor", data.vendor);
-
-    // ✅ Ensure file exists before appending
     if (data.receiptFile instanceof File) {
       formData.append("receipt", data.receiptFile);
       formData.append("fileOriginalName", data.receiptFile.name);
@@ -92,7 +91,10 @@ const AddExpenseForm = () => {
     try {
       setLoading(true);
       const res = await axios.post("/add-expense", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       // ✅ Check if file upload was successful
@@ -125,9 +127,9 @@ const AddExpenseForm = () => {
   const saveandclose = () => {};
   const saveandnew = () => {};
 
-  const fetchExpenseCategories = async (token) => {
+  const fetchExpenseCategories = async () => {
     try {
-      const res = await axios.get(`/get-expense-category`, {
+      const res = await axios.get("/category?type=expense", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -141,22 +143,23 @@ const AddExpenseForm = () => {
       toast.error("Internal Server Error");
     }
   };
+
+  const VendorSuggest = async () => {
+    const res = await axios.get(`/get-vendor`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const vendor = res.data.map((data) => data.name);
+    setvendorSuggestions(vendor);
+  };
+
   useEffect(() => {
     if (token) {
       fetchExpenseCategories();
+      VendorSuggest();
     }
   }, [token]);
-
-  const vendorSuggestions = [
-    "Ront Technologies",
-    "King Enterprises",
-    "Poker Industries",
-    "Jonty Solutions",
-    "Rontec Services",
-    "Kingston Data",
-    "Poker Analytics",
-    "Jonty Global",
-  ];
 
   return (
     <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-2 sm:py-4">

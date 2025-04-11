@@ -7,6 +7,7 @@ import { toast, ToastContainer } from "react-toastify";
 import axios from "axios";
 
 const ChangePassword = () => {
+  const token = localStorage.getItem("Token");
   const {
     register,
     handleSubmit,
@@ -14,13 +15,16 @@ const ChangePassword = () => {
   } = useForm();
   const onSubmit = async (data) => {
     try {
-      const userId = localStorage.getItem("id");
       const res = await axios.put(
-        `/change-password/${userId}`,
+        `/change-password`,
         {
           oldPassword: data.oldPassword,
           newPassword: data.newPassword,
           confirmPassword: data.confirmPassword,
+        },{
+          headers:{
+            Authorization: `Bearer ${token}`
+          }
         }
       );
       if (res.data.success) {

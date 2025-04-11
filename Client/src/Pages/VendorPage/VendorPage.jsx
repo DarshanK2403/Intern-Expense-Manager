@@ -6,21 +6,23 @@ import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 
 const VendorPage = () => {
+  const token = localStorage.getItem("Token");
   const [vendorData, setVendorData] = useState([]);
-  const userId = localStorage.getItem("id");
   const navigate = useNavigate();
 
   // Fetch Vendor Data
   const getVendor = useCallback(async () => {
-    if (!userId) return;
-
     try {
-      const res = await axios.get(`/get-vendor/${userId}`);
+      const res = await axios.get(`/get-vendor`,{
+        headers:{
+          Authorization: `Bearer ${token}`
+        }
+      });
       setVendorData(res.data);
     } catch (error) {
       toast.error("Failed to fetch vendor data");
     }
-  }, [userId]);
+  }, [token]);
 
   useEffect(() => {
     getVendor();
@@ -29,7 +31,11 @@ const VendorPage = () => {
   // Delete Vendor
   const deleteVendor = async (id) => {
     try {
-      await axios.delete(`/delete-vendor/${id}`);
+      await axios.delete(`/delete-vendor/${id}`,{
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       toast.success("Vendor Deleted");
 
       // Update state after deletion

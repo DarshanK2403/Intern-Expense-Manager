@@ -3,7 +3,6 @@ const Income = require("../models/IncomeModel");
 
 const recentTransactions = async (req, res) => {
   const userId = req.user.id;
-  const limit = parseInt(req.query.limit) || 10;
 
   try {
     const latestExpense = await Expense.find({ userId }).sort({

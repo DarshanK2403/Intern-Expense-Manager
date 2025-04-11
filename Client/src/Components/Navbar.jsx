@@ -4,13 +4,13 @@ import React, { useState, useEffect } from "react";
 import { Link, Outlet, useNavigate, useLocation } from "react-router-dom";
 
 const Navbar = () => {
+  const token = localStorage.getItem("Token");
   const navigate = useNavigate();
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [userName, setUserName] = useState("");
   const [isAdmin, setAdmin] = useState(false);
 
-  const token = localStorage.getItem("Token");
   useEffect(() => {
     const getUserdata = async () => {
       try {

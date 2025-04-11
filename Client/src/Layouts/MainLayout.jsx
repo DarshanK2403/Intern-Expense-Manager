@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import "react";
 import { matchRoutes, Outlet, useLocation } from "react-router-dom";
 import Navbar from "../Components/Navbar";
@@ -9,16 +8,17 @@ import SettingNav from "../Components/navs/SettingNav";
 import IncomeNav from "../Components/navs/IncomeNav";
 import VendorNav from "../Components/navs/VendorNav";
 
-const routes = [
-  { path: "/expenses", element: <ExpenseNav /> },
-  { path: "/settings/*", element: <SettingNav /> },
-  { path: "/income/", element: <IncomeNav /> },
-  { path: "/vendor/", element: <VendorNav /> },
-];
-
 const MainLayout = () => {
   const location = useLocation();
-  const [isOpen, setIsOpen] = useState(true);
+  const [searchValue, setSearchValue] = useState("");
+
+  const routes = [
+    { path: "/expenses", element: <ExpenseNav onSearchChange={setSearchValue} /> },
+    { path: "/settings/*", element: <SettingNav onSearchChange={setSearchValue} /> },
+    { path: "/income/", element: <IncomeNav onSearchChange={setSearchValue} /> },
+    { path: "/vendor/", element: <VendorNav onSearchChange={setSearchValue} /> },
+  ];
+
   const matchedRoute = matchRoutes(routes, location);
   const SubNav = matchedRoute ? matchedRoute[0].route.element : null;
   const isSettingsPage = location.pathname.startsWith("/settings");
@@ -36,7 +36,7 @@ const MainLayout = () => {
           }`}
         >
           {SubNav}
-          <Outlet />
+          <Outlet context={{ searchValue }} />
         </main>
       </div>
     </div>

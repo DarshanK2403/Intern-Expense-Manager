@@ -17,8 +17,8 @@ const createExpense = async (req, res) => {
       });
     });
 
+    const userId = req.user.id;
     const {
-      userId,
       title,
       amount,
       description,
@@ -30,7 +30,6 @@ const createExpense = async (req, res) => {
     } = req.body;
 
     if (
-      !userId ||
       !title ||
       !amount ||
       !expenseDate ||
@@ -92,12 +91,6 @@ const getExpensebyUserId = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    if (!userId) {
-      return res
-        .status(400)
-        .json({ success: false, message: "User ID is required" });
-    }
-
     const expenses = await ExpenseModel.find({ userId }).sort({
       expenseDate: -1,
     });
@@ -130,8 +123,10 @@ const getExpenseDetailbyId = async (req, res) => {
 };
 
 const deleteExpensebyId = async (req, res) => {
+  // const userId = req.user.id
+  const expenseId = req.params.id;
   try {
-    const deleteExpense = await ExpenseModel.findByIdAndDelete(req.params.id);
+    const deleteExpense = await ExpenseModel.findByIdAndDelete(expenseId);
     if (deleteExpense) {
       res.status(200).json({ message: "Expense Deleted" });
     } else {

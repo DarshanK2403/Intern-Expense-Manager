@@ -235,7 +235,7 @@ const UpdatePassword = async (req, res) => {
 };
 
 const UpdateProfile = async (req, res) => {
-  const { userId } = req.params;
+  const userId = req.user.id;
   try {
     const { firstName, lastName, phone } = req.body;
 
