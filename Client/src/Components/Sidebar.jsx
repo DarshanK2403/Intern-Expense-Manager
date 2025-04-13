@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   Home,
@@ -13,18 +13,22 @@ import {
   Store,
 } from "lucide-react";
 import axios from "axios";
+import { AuthContext } from "../context/AuthContext";
 
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(true);
   const location = useLocation();
-  const [user, setUser] = useState([]);
-  const token = localStorage.getItem("Token");
   const [isAdmin, setAdmin] = useState(false);
 
   // Function to check if a route is active
   const isActive = (path) => {
     return location.pathname.startsWith(path);
   };
+
+   const { user, loading } = useContext(AuthContext); // Access the user data from context
+  
+    if (loading) return <p>Loading...</p>; // Display loading state while fetching user data
+  
 
   const menuItems = [
     { icon: Home, label: "Dashboard", path: "/dashboard" },
@@ -34,28 +38,6 @@ const Sidebar = () => {
     { icon: BarChart, label: "Reports", path: "/reports" },
     { icon: Settings, label: "Settings", path: "/settings" },
   ];
-
-  useEffect(() => {
-    const getUser = async () => {
-      try {
-        if (token) {
-          const res = await axios.get(`/userdata`,{
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          });
-          // console.log(res);
-          setUser(res.data);
-          if (res.data.role.name === "admin") {
-            setAdmin(true);
-          }
-        }
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    getUser();
-  }, [token]);
 
   return (
     <aside

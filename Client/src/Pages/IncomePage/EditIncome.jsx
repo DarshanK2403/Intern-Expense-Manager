@@ -19,7 +19,11 @@ const EditIncome = () => {
   const navigate = useNavigate  ();
   useEffect(() => {
     const getIncome = async () => {
-      const res = await axios.get(`/get-income-by-id/${id}`);
+      const res = await axios.get(`/get-income-by-id/${id}`,{
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       setValue("title", res.data.title);
       setValue("amount", res.data.amount);
       setValue("incomeDate", res.data.incomeDate.split("T")[0]);
@@ -57,6 +61,10 @@ const EditIncome = () => {
     try {
       const res = await axios.put(`/edit-income/${id}`, {
         ...data,
+      },{
+        headers:{
+          Authorization: `Bearer ${token}`
+        }
       });
       if (res.status === 200) {
         toast.success("Income Updated Successfully");

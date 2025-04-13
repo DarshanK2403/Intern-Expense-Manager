@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import {
-  AiOutlineBank,
   AiOutlineCalendar,
   AiOutlineDelete,
   AiOutlineUpload,
@@ -11,6 +10,7 @@ import { toast, ToastContainer } from "react-toastify";
 import Input from "../../Components/Input";
 import SelectInput from "../../Components/Select";
 import axios from "axios";
+import AutocompleteInput from "../../Components/AutocompleteInput";
 
 const EditExpense = () => {
   const { id } = useParams();
@@ -28,6 +28,8 @@ const EditExpense = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [expenseCategories, setexpenseCategories] = useState();
+  const [vendorSuggestions, setvendorSuggestions] = useState([]);
+
 
   useEffect(() => {
     const getExpenseDetailbyId = async () => {
@@ -37,14 +39,13 @@ const EditExpense = () => {
             Authorization: `Bearer ${token}`,
           },
         });
-        console.log(res.data);
+        // console.log(res.data);
         setValue("title", res.data.title);
         setValue("amount", res.data.amount);
         setValue("description", res.data.description);
         setValue("expenseDate", res.data.expenseDate.split("T")[0]);
         setValue("category", res.data.category);
-        setValue("account", res.data.account);
-        setValue("paymentMethod", res.data.paymentMethod);
+        setValue("paymentThrough", res.data.paymentThrough);
         setValue("vendor", res.data.vendor);
         setValue("receipt", res.data.receipt);
         // setValue("receiptFile", res.data.data.receipt); // Set the receipt file for preview
@@ -99,8 +100,7 @@ const EditExpense = () => {
     formData.append("description", data.description);
     formData.append("expenseDate", data.expenseDate);
     formData.append("category", data.category);
-    formData.append("account", data.account);
-    formData.append("paymentMethod", data.paymentMethod);
+    formData.append("paymentThrough", data.paymentThrough);
     formData.append("vendor", data.vendor);
 
     // Ensure file is valid before appending
@@ -126,13 +126,23 @@ const EditExpense = () => {
     }
   };
 
+  const VendorSuggest = async () => {
+    const res = await axios.get(`/get-vendor`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const vendor = res.data.map((data) => data.name);
+    setvendorSuggestions(vendor);
+  };
+
   useEffect(() => {
     const fetchExpenseCategories = async () => {
       try {
-        const res = await axios.get(`/category?type=expense`,{
-          headers:{
-            Authorization: `Bearer ${token}`
-          }
+        const res = await axios.get(`/category?type=expense`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         });
         const categories = res.data.data;
 
@@ -145,6 +155,7 @@ const EditExpense = () => {
     };
 
     fetchExpenseCategories();
+    VendorSuggest();
   }, [token]);
 
   const closeForm = () => {
@@ -304,116 +315,25 @@ const EditExpense = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Account */}
-                <div>
-                  <label
-                    htmlFor="account"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Account
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <AiOutlineBank className="text-gray-500" />
-                    </div>
-                    <select
-                      id="account"
-                      className={`w-full pl-10 pr-3 py-2 border ${
-                        errors.account ? "border-red-300" : "border-gray-300"
-                      } 
-                              rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                              appearance-none bg-white`}
-                      {...register("account", {
-                        required: "Account is required",
-                      })}
-                    >
-                      <option value="">Select Account</option>
-                      <option value="Cash">Cash</option>
-                      <option value="Bank">Bank</option>
-                      <option value="UPI">UPI</option>
-                    </select>
-                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                      <svg
-                        className="h-5 w-5 text-gray-400"
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                  {errors.account && (
-                    <span className="text-red-500 text-xs mt-1 block">
-                      {errors.account.message}
-                    </span>
-                  )}
-                </div>
-
-                {/* Payment Method */}
-                <div>
-                  <label
-                    htmlFor="paymentMethod"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Payment Method
-                  </label>
-                  <div className="relative">
-                    <select
-                      id="paymentMethod"
-                      className={`w-full px-3 py-2 border ${
-                        errors.paymentMethod
-                          ? "border-red-300"
-                          : "border-gray-300"
-                      } 
-                              rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                              appearance-none bg-white`}
-                      {...register("paymentMethod", {
-                        required: "Payment method is required",
-                      })}
-                    >
-                      <option value="">Select Payment Method</option>
-                      <option value="creditCard">Credit Card</option>
-                      <option value="debitCard">Debit Card</option>
-                      <option value="wallet">Wallet</option>
-                      <option value="cash">Cash</option>
-                    </select>
-                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                      <svg
-                        className="h-5 w-5 text-gray-400"
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                  {errors.paymentMethod && (
-                    <span className="text-red-500 text-xs mt-1 block">
-                      {errors.paymentMethod.message}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Vendor */}
-              <div>
-                <Input
-                  id="vendor"
-                  label="Vendor"
-                  type="text"
-                  placeholder="Vendor Name"
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                {/* Payment Through */}
+                <SelectInput
+                  id="paymentThrough"
+                  label="Payment Through"
+                  options={["Cash"]}
                   register={register}
+                  error={errors.paymentThrough?.message}
+                  validation={{ required: "Select one" }}
+                />
+
+                <AutocompleteInput
+                  name="vendor"
+                  label="Vendor"
+                  placeholder="Search or select vendor (optional)"
+                  suggestions={vendorSuggestions}
+                  required={false}
+                  {...register("vendor")}
+                  onSelect={(value) => setValue("vendor", value)}
                 />
               </div>
 

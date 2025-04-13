@@ -79,8 +79,7 @@ const AddExpenseForm = () => {
     formData.append("description", data.description);
     formData.append("expenseDate", data.expenseDate);
     formData.append("category", data.category);
-    formData.append("account", data.account);
-    formData.append("paymentMethod", data.paymentMethod);
+    formData.append("paymentThrough", data.paymentThrough);
     formData.append("vendor", data.vendor);
     if (data.receiptFile instanceof File) {
       formData.append("receipt", data.receiptFile);
@@ -323,6 +322,8 @@ const AddExpenseForm = () => {
                     label="Payment Through"
                     options={["Cash"]}
                     register={register}
+                    error={errors.paymentThrough?.message}
+                    validation={{ required: "Select one" }}
                   />
 
                   <AutocompleteInput

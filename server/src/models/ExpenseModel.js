@@ -29,7 +29,7 @@ const ExpenseSchema = new Schema(
     },
     paymentThrough: {
       type: String,
-      // required: true,
+      required: true,
     },
     vendor: {
       type: String,

@@ -13,17 +13,40 @@ import {
   Trash,
   File,
   FileX,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import SpinnerLoader from "../../Components/Loader/SpinnerLoader";
 import { useOutletContext } from "react-router-dom";
+import EditExpense from "./EditExpense";
+import { format } from "date-fns";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TableSortLabel,
+  TablePagination,
+  Paper,
+  Checkbox,
+} from "@mui/material";
 
 const ExpensesPage = () => {
   const [loading, setLoading] = useState(false);
   const token = localStorage.getItem("Token");
   const [expenses, setExpenses] = useState([]);
   const { searchValue } = useOutletContext();
+  const [selected, setSelected] = useState([]);
+
+  // Pagination states
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5); // default 5 per page
 
   const isImage = (fileName) => {
     return /\.(jpg|jpeg|png|gif|webp)$/i.test(fileName);
@@ -39,15 +62,7 @@ const ExpensesPage = () => {
     }
   }, [token, searchValue]);
 
-  const filteredExpenses = expenses.filter((item) => {
-    const lowerSearch = searchValue.toLowerCase();
-    return (
-      item.title.toLowerCase().includes(lowerSearch) ||
-      item.category.toLowerCase().includes(lowerSearch) ||
-      item.amount.toString().includes(lowerSearch)
-    );
-  });
-
+  // Get Expense
   const getExpense = async () => {
     setLoading(true);
     try {
@@ -64,6 +79,7 @@ const ExpensesPage = () => {
     }
   };
 
+  // Delete Expense API
   const deleteExpense = async (id) => {
     try {
       await axios.delete(`/delete-expense/${id}`);
@@ -74,113 +90,198 @@ const ExpensesPage = () => {
     }
   };
 
+  // Handle Delete
+  const handleDelete = () => {
+    // Call your deleteExpense function here
+    deleteExpense(selected);
+    setSelected([]); // Clear selection after deletion
+  };
+
+  // Handle Selct All Click
+  const handleSelectAllClick = (event) => {
+    if (event.target.checked) {
+      setSelected(sortedData.map((n) => n._id)); // Select all rows
+    } else {
+      setSelected([]); // Deselect all
+    }
+  };
+
+  // Handle Checkbox Click
+  const handleCheckboxClick = (event, id) => {
+    const selectedIndex = selected.indexOf(id);
+    let newSelected = [];
+
+    if (selectedIndex === -1) {
+      newSelected = newSelected.concat(selected, id);
+    } else if (selectedIndex === 0) {
+      newSelected = newSelected.concat(selected.slice(1));
+    } else {
+      newSelected = newSelected.concat(
+        selected.slice(0, selectedIndex),
+        selected.slice(selectedIndex + 1)
+      );
+    }
+
+    setSelected(newSelected);
+  };
+
+  // Sorting table
+  const getComparator = (order, orderBy) => {
+    return (a, b) => {
+      let aValue = a[orderBy];
+      let bValue = b[orderBy];
+
+      // Fix: Convert incomeDate string to Date object for correct comparison
+      if (orderBy === "expenseDate") {
+        aValue = new Date(aValue);
+        bValue = new Date(bValue);
+      }
+
+      if (aValue === undefined || bValue === undefined) return 0;
+
+      if (order === "asc") {
+        return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+      } else {
+        return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+      }
+    };
+  };
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const [order, setOrder] = useState("asc");
+  const [orderBy, setOrderBy] = useState("title");
+
+  // Hanlde Sort
+  const handleSort = (property) => {
+    const isAsc = orderBy === property && order === "asc";
+    setOrder(isAsc ? "desc" : "asc");
+    setOrderBy(property);
+  };
+
+  // Sorted Data
+  const sortedData = [...expenses].sort(getComparator(order, orderBy));
+  const lowerSearch = searchValue.toLowerCase();
+  console.log(lowerSearch);
+  // Filtered Expense
+  const filteredExpenses = expenses.filter(
+    (item) =>
+      item.title.toLowerCase().includes(lowerSearch) ||
+      item.category.toLowerCase().includes(lowerSearch) ||
+      item.amount.toString().includes(lowerSearch)
+  );
+
+  const sortedFilteredExpenses = filteredExpenses.sort(
+    getComparator(order, orderBy)
+  );
+
+  const visibleRows = sortedFilteredExpenses.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
+  );
+
   return (
     <div className="bg-gray-50 max-w-7xl mx-auto px-4 md:px-6">
       <ToastContainer autoClose={1500}></ToastContainer>
-
+      {selected.length > 0 && (
+        <button
+          onClick={handleDelete}
+          className="bg-red-500 text-white py-2 px-4 rounded-md mt-4"
+        >
+          Delete Expense
+        </button>
+      )}
       {/* Expenses List */}
       {loading ? (
         <div className="flex justify-center items-center h-40">
           <SpinnerLoader size="large" color="blue" />
         </div>
-      ) : filteredExpenses.length > 0 ? (
-        <div className="max-w-6xl mx-auto bg-white rounded-lg shadow overflow-hidden">
-          <table className="w-full bg-white border rounded-lg shadow-sm overflow-hidden">
-            <thead>
-              <tr className="border-b bg-blue-600 text-white">
-                <th className="p-4 text-left font-medium">Receipt</th>
-                <th className="p-4 text-left font-medium">Details</th>
-                <th className="p-4 text-left font-medium">Amount</th>
-                <th className="p-4 text-left font-medium">Category</th>
-                <th className="p-4 text-left font-medium">Date</th>
-                <th className="p-4 text-left font-medium">Payment</th>
-                <th className="p-4 text-left font-medium">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredExpenses.map((expense) => (
-                <tr
-                  key={expense._id}
-                  className="hover:bg-gray-50 border-b border-gray-300  "
-                >
-                  <td className="p-4">
-                    {expense.receipt ? (
-                      <a href={expense.receipt?.cloudinaryUrl} target="_blank">
-                        <FileText />
-                      </a>
-                    ) : (
-                      <FileX className="text-gray-500 hover:cursor-not-allowed" />
-                    )}
-                  </td>
-                  <td className="p-4">
-                    <Link to={`expense-detail/${expense._id}`}>
-                      <div>
-                        <h3 className="font-medium text-gray-900">
-                          {expense.title}
-                        </h3>
-                        <p className="text-sm text-gray-500">
-                          {expense.vendor}
-                        </p>
-                      </div>
-                    </Link>
-                  </td>
-                  <td className="p-4 font-semibold text-gray-900">
-                    <div className="flex items-center">
-                      <IndianRupee className="w-4 h-4" />
-                      {expense.amount.toFixed(2)}
-                    </div>
-                  </td>
-                  <td className="p-4 text-gray-600">
-                    <div className="flex items-center gap-2">
-                      <Tag size={16} className="text-gray-400 flex-shrink-0" />
-                      <span className="truncate">{expense.category}</span>
-                    </div>
-                  </td>
-                  <td className="p-4 text-gray-600">
-                    <div className="flex items-center gap-2">
-                      <Calendar
-                        size={16}
-                        className="text-gray-400 flex-shrink-0"
-                      />
-                      <span>
-                        {new Date(expense.expenseDate).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="p-4 text-gray-600">
-                    <div className="flex items-center gap-2">
-                      <CreditCard
-                        size={16}
-                        className="text-gray-400 flex-shrink-0"
-                      />
-                      <span className="truncate">{expense.paymentThrough}</span>
-                    </div>
-                  </td>
-                  <td className="p-4 text-gray-600">
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={() =>
-                          navigate(`/expenses/edit-expense/${expense._id}`)
-                        }
+      ) : visibleRows.length > 0 ? (
+        // Table
+        <Paper>
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell padding="checkbox">
+                    <Checkbox
+                      onChange={handleSelectAllClick}
+                      checked={selected.length === expenses.length}
+                      indeterminate={
+                        selected.length > 0 && selected.length < expenses.length
+                      }
+                    />
+                  </TableCell>
+                  {["title", "amount", "category", "expenseDate"].map(
+                    (headCell) => (
+                      <TableCell
+                        key={headCell}
+                        sortDirection={orderBy === headCell ? order : false}
                       >
-                        <Edit
-                          size={16}
-                          className="text-gray-400 hover:text-blue-600 hover:cursor-pointer flex-shrink-0"
-                        />
-                      </button>
-                      <button onClick={() => deleteExpense(expense._id)}>
-                        <Trash
-                          size={16}
-                          className="text-gray-400 hover:text-red-600 hover:cursor-pointer flex-shrink-0"
-                        />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                        <TableSortLabel
+                          active={orderBy === headCell}
+                          direction={orderBy === headCell ? order : "asc"}
+                          onClick={() => handleSort(headCell)}
+                        >
+                          {headCell.charAt(0).toUpperCase() + headCell.slice(1)}
+                        </TableSortLabel>
+                      </TableCell>
+                    )
+                  )}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {visibleRows.map((item) => {
+                  const isSelected = selected.indexOf(item._id) !== -1;
+                  return (
+                    <TableRow
+                      key={item._id}
+                      hover
+                      onClick={(event) => handleCheckboxClick(event, item._id)}
+                      role="checkbox"
+                      aria-checked={isSelected}
+                      selected={isSelected}
+                    >
+                      <TableCell padding="checkbox">
+                        <Checkbox checked={isSelected} />
+                      </TableCell>
+                      <TableCell>
+                        <div className="grid grid-rows-2">
+                          {item.title}
+                          <span className="text-gray-600">
+                            {item.description}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>${item.amount}</TableCell>
+                      <TableCell>{item.category}</TableCell>
+                      <TableCell>
+                        {format(new Date(item.expenseDate), "dd MMM yyyy")}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </TableContainer>
+
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 20, 25, 50]}
+            component="div"
+            count={filteredExpenses.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+          />
+        </Paper>
       ) : (
         <div className="flex flex-col items-center justify-center py-16 bg-white rounded-lg shadow-sm">
           <FileText className="h-16 w-16 text-gray-300 mb-4" />

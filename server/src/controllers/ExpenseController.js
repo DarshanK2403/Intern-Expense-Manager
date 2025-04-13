@@ -24,8 +24,7 @@ const createExpense = async (req, res) => {
       description,
       expenseDate,
       category,
-      account,
-      paymentMethod,
+      paymentThrough,
       vendor,
     } = req.body;
 
@@ -34,8 +33,7 @@ const createExpense = async (req, res) => {
       !amount ||
       !expenseDate ||
       !category ||
-      !account ||
-      !paymentMethod
+      !paymentThrough
     ) {
       return res.status(400).json({ message: "Missing required fields" });
     }
@@ -47,8 +45,7 @@ const createExpense = async (req, res) => {
       description,
       expenseDate: new Date(expenseDate),
       category,
-      account,
-      paymentMethod,
+      paymentThrough,
       vendor,
     };
 
@@ -113,8 +110,7 @@ const getExpenseDetailbyId = async (req, res) => {
       amount: expense.amount,
       expenseDate: expense.expenseDate,
       category: expense.category,
-      account: expense.account,
-      paymentMethod: expense.paymentMethod,
+      paymentThrough: expense.paymentThrough,
       vendor: expense.vendor,
     });
   } catch (error) {
@@ -147,7 +143,7 @@ const UpdateExpensebyId = async (req, res) => {
       });
     });
 
-    const { title, amount, description, expenseDate, category, account, paymentMethod, vendor } = req.body;
+    const { title, amount, description, expenseDate, category, paymentThrough, vendor } = req.body;
     const { id } = req.params; // ✅ Extract `id` from URL
 
     if (!id) {
@@ -165,8 +161,7 @@ const UpdateExpensebyId = async (req, res) => {
     expense.description = description || expense.description;
     expense.expenseDate = expenseDate ? new Date(expenseDate) : expense.expenseDate;
     expense.category = category || expense.category;
-    expense.account = account || expense.account;
-    expense.paymentMethod = paymentMethod || expense.paymentMethod;
+    expense.paymentThrough = paymentThrough || expense.paymentThrough;
     expense.vendor = vendor || expense.vendor;
 
     if (req.file) {

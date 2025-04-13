@@ -2,48 +2,41 @@
 import axios from "axios";
 import { Link } from "react-router-dom";
 import { Bell, Moon, Lock, Pencil } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom"; // Used for route change warning
 import { Input } from "@mui/material";
 import { toast, ToastContainer } from "react-toastify";
+import { AuthContext } from "../../context/AuthContext";
 
 const Profile = () => {
   const token = localStorage.getItem("Token");
   const [isEditing, setIsEditing] = useState(false);
-  const [initialData, setInitialData] = useState({});
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
+  const [loadings, setLoading] = useState(false);
   const { register, handleSubmit, setValue, watch, reset } = useForm();
   const watchedValues = watch();
   const fileInputRef = useRef(null);
   const [profileImg, setProfileImg] = useState();
-  useEffect(() => {
-    const getUserdata = async () => {
-      setLoading(true);
-      try {
-        const res = await axios.get("/userdata", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        // console.log(token)
-        setInitialData(res.data);
-        reset(res.data);
-        setProfileImg(res.data.img);
-      } catch (error) {
-        toast.error("User data not found");
-      }
-      setLoading(false);
-    };
+  const { user, loading } = useContext(AuthContext);
 
-    if (token) getUserdata();
-  }, [token, reset]);
+  console.log(user);
+
+  useEffect(() => {
+    if (user) {
+      reset({
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
+        phone: user.phone || "",
+        email: user.email || "",
+      });
+    }
+  }, [user, reset]);
 
   // Function to compare initial data with current form data
   const hasChanges = useCallback(() => {
-    return JSON.stringify(initialData) !== JSON.stringify(watchedValues);
-  }, [initialData, watchedValues]);
+    return JSON.stringify(user) !== JSON.stringify(watchedValues);
+  }, [user, watchedValues]);
 
   const enableEditing = () => setIsEditing(true);
 
@@ -55,7 +48,7 @@ const Profile = () => {
       if (!confirmDiscard) return;
     }
     setIsEditing(false);
-    reset(initialData);
+    reset(user);
   };
 
   // Prevent closing tab if there are unsaved changes
@@ -92,12 +85,11 @@ const Profile = () => {
   const onSubmit = async (data) => {
     try {
       setLoading(true);
-      await axios.put(`/update-profile`,data  ,{
-        headers:{
-          Authorization: `Bearer ${token}`
-        }
+      await axios.put(`/update-profile`, data, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
-      setInitialData(data);
       setIsEditing(false);
       setLoading(false);
       toast.success("Profile Picture updated successfully!");
@@ -116,10 +108,11 @@ const Profile = () => {
 
     try {
       const res = await axios.put(
-        `/change-profile-picture`,{
-          headers:{
-            Authorization: `Bearer ${token}`
-          }
+        `/change-profile-picture`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
         formData,
         {
@@ -151,8 +144,8 @@ const Profile = () => {
           <div className="flex items-center mb-6">
             <div className="h-16 w-16 rounded-full bg-blue-100 overflow-hidden flex items-center justify-center mr-4">
               <span className="text-blue-600 font-medium text-xl">
-                {initialData.img ? (
-                  <img src={profileImg} />
+                {user.img ? (
+                  <img src={user.img} />
                 ) : (
                   <img src="/logo.png" />
                 )}{" "}
@@ -160,16 +153,16 @@ const Profile = () => {
             </div>
             <div>
               <h3 className="text-lg font-medium">
-                {initialData.firstName} {initialData.lastName}
+                {user.firstName} {user.lastName}
               </h3>
-              <p className="text-gray-500">{initialData.email}</p>
+              <p className="text-gray-500">{user.email}</p>
               <button
                 type="button"
                 className="mt-2 text-sm text-blue-600 hover:text-blue-800"
                 onClick={handleButtonClick}
-                disabled={loading} // Disable while uploading
+                disabled={loadings} // Disable while uploading
               >
-                {loading ? "Uploading..." : "Change Profile Picture"}
+                {loadings ? "Uploading..." : "Change Profile Picture"}
               </button>
 
               <input

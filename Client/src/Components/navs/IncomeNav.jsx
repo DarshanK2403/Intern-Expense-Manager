@@ -1,6 +1,7 @@
+/* eslint-disable react/prop-types */
 import Subnav from "../Subnav";
 
-const IncomeNav = () => {
+const IncomeNav = ({onSearchChange}) => {
   return (
     <Subnav
       id="searchIncome"
@@ -9,6 +10,7 @@ const IncomeNav = () => {
       placeholder="Search income..."
       to="add"
       ButtonText="Add Income"
+      onSearchChange={onSearchChange} 
     />
   );
 };
