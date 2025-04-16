@@ -1,4 +1,4 @@
-import { CreditCard, Globe, TagIcon, User } from "lucide-react";
+import { CreditCard, TagIcon, User } from "lucide-react";
 import "react";
 import { Link, useLocation } from "react-router-dom";
 
@@ -12,9 +12,7 @@ const SettingNav = () => {
   const menuSetting = [
     { icon: User, label: "Profile Settings", path: "/settings/profile" },
     { icon: TagIcon, label: "Category Management", path: "/settings/category" },
-    // { icon: User, label: "Account Management", path: "/settings/account" },
     { icon: CreditCard, label: "Payment Through", path: "/settings/payment" },
-    { icon: Globe, label: "Currency Settings", path: "/settings/currency" },
   ];
   return (
     <div className="w-64 border-r bg-white border-gray-200 max-h-screen md:sticky md:top-0">

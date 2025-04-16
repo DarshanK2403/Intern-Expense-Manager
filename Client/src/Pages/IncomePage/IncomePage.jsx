@@ -82,7 +82,7 @@ const IncomePage = () => {
     }
   };
 
-  const EditIncome = async (id) => {
+  const editIncome = async (id) => {
     navigate(`/income/edit-income/${id}`);
   };
 
@@ -151,8 +151,8 @@ const IncomePage = () => {
     setPage(0); // Reset to first page
   };
 
-  const [order, setOrder] = useState("asc");
-  const [orderBy, setOrderBy] = useState("title");
+  const [order, setOrder] = useState("desc");
+  const [orderBy, setOrderBy] = useState("incomeDate");
 
   const handleSort = (property) => {
     const isAsc = orderBy === property && order === "asc";
@@ -163,7 +163,6 @@ const IncomePage = () => {
   const sortedData = [...incomeData].sort(getComparator(order, orderBy));
 
   const lowerSearch = searchValue.toLowerCase();
-  console.log(lowerSearch)
   // Filtered Expense
   const filteredIncomes = incomeData.filter(
     (item) =>
@@ -171,8 +170,6 @@ const IncomePage = () => {
       item.category.toLowerCase().includes(lowerSearch) ||
       item.amount.toString().includes(lowerSearch)
   );
-
-  console.log(filteredIncomes);
 
   // Apply sort to the filtered results
   const sortedFilteredExpenses = filteredIncomes.sort(
@@ -219,47 +216,50 @@ const IncomePage = () => {
                           }
                         />
                       </TableCell>
-                      {["title", "amount", "category", "incomeDate"].map(
-                        (headCell) => (
-                          <TableCell
-                            key={headCell}
-                            sortDirection={orderBy === headCell ? order : false}
+                      {[
+                        "title",
+                        "amount",
+                        "category",
+                        "incomeDate",
+                        "Action",
+                      ].map((headCell) => (
+                        <TableCell
+                          key={headCell}
+                          sortDirection={orderBy === headCell ? order : false}
+                        >
+                          <TableSortLabel
+                            active={orderBy === headCell}
+                            direction={orderBy === headCell ? order : "asc"}
+                            onClick={() => handleSort(headCell)}
                           >
-                            <TableSortLabel
-                              active={orderBy === headCell}
-                              direction={orderBy === headCell ? order : "asc"}
-                              onClick={() => handleSort(headCell)}
-                            >
-                              {headCell.charAt(0).toUpperCase() +
-                                headCell.slice(1)}
-                            </TableSortLabel>
-                          </TableCell>
-                        )
-                      )}
+                            {headCell.charAt(0).toUpperCase() +
+                              headCell.slice(1)}
+                          </TableSortLabel>
+                        </TableCell>
+                      ))}
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {visibleRows.map((item) => {
                       const isSelected = selected.indexOf(item._id) !== -1;
                       return (
-                        <TableRow
-                          key={item._id}
-                          hover
-                          onClick={(event) =>
-                            handleCheckboxClick(event, item._id)
-                          }
-                          role="checkbox"
-                          aria-checked={isSelected}
-                          selected={isSelected}
-                        >
+                        <TableRow key={item._id} hover>
                           <TableCell padding="checkbox">
-                            <Checkbox checked={isSelected} />
+                            <Checkbox
+                              checked={isSelected}
+                              onClick={(event) =>
+                                handleCheckboxClick(event, item._id)
+                              }
+                              role="checkbox"
+                              aria-checked={isSelected}
+                              selected={isSelected}
+                            />
                           </TableCell>
                           <TableCell>
                             <div className="grid grid-rows-2">
                               {item.title}
                               <span className="text-gray-600">
-                                {item.notes}
+                                {item.notes}  
                               </span>
                             </div>
                           </TableCell>
@@ -267,6 +267,23 @@ const IncomePage = () => {
                           <TableCell>{item.category}</TableCell>
                           <TableCell>
                             {format(new Date(item.incomeDate), "dd MMM, yyyy")}
+                          </TableCell>
+                          {/* Action */}
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <button onClick={() => editIncome(item._id)}>
+                                <Edit
+                                  size={16}
+                                  className="text-gray-600 hover:text-blue-600"
+                                />
+                              </button>
+                              <button onClick={() => deleteIncome(item._id)}>
+                                <Trash2
+                                  size={16}
+                                  className="text-gray-600 hover:text-red-600"
+                                />
+                              </button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       );

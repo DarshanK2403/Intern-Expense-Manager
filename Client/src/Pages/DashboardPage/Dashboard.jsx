@@ -20,21 +20,10 @@ import React, { useEffect, useRef, useState, PureComponent } from "react";
 import { format } from "date-fns";
 import { toast, ToastContainer } from "react-toastify";
 import { Link } from "react-router-dom";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-} from "recharts";
+import { PieChart } from "@mui/x-charts/PieChart";
 import MetricCard from "../../Components/MetricCard";
 import SpinnerLoader from "../../Components/Loader/SpinnerLoader";
+import { Box, Paper, Typography, useTheme } from "@mui/material";
 
 const Dashboard = () => {
   const [loading, setLoading] = useState(false);
@@ -115,8 +104,9 @@ const Dashboard = () => {
           },
         });
         setExpenseData(res.data);
+        console.log(res.data);
       } catch (error) {
-        toast.error("Interna; Server Error");
+        toast.error("Internal Server Error");
       }
     };
 
@@ -130,7 +120,7 @@ const Dashboard = () => {
         // console.log(res.data);
         setIncomeData(res.data);
       } catch (error) {
-        toast.error("Interna; Server Error");
+        toast.error("Internal Server Error");
       }
     };
 
@@ -139,6 +129,30 @@ const Dashboard = () => {
       getIncomebyCategory();
     }
   }, [token]);
+
+  const theme = useTheme();
+
+  // Custom color palette for professional look
+  const chartColors = [
+    theme.palette.primary.main,
+    theme.palette.secondary.main,
+    "#34a853", // green
+    "#ea4335", // red
+    "#fbbc05", // yellow
+    "#4285f4", // blue
+    "#8e24aa", // purple
+    "#00acc1", // cyan
+  ];
+
+  // Format data with colors assigned
+  const formatPieChartData = (expenseData) => {
+    return expenseData.map((item, index) => ({
+      id: item._id,
+      value: item.total,
+      label: item._id,
+      color: chartColors[index % chartColors.length],
+    }));
+  };
 
   return (
     <div className="p-4">
@@ -200,7 +214,7 @@ const Dashboard = () => {
               <PlusCircle className="h-5 w-5 mr-2 text-green-600" />
               <div>
                 <p className={`font-medium text-start  text-green-600`}>
-                  Add Expense
+                  Add Income
                 </p>
                 <p className="text-xs text-gray-500">
                   Record a new income source
@@ -267,19 +281,15 @@ const Dashboard = () => {
                    transition-colors duration-150 hover:cursor-pointer
                     ${
                       isExpense
-                        ? "bg-red-50 hover:bg-red-100"
-                        : "bg-green-50 hover:bg-green-100"
+                        ? "bg-white hover:bg-red-50"
+                        : "bg-white hover:bg-green-50"
                     }
                   `}
                   >
                     <td className="py-3 px-4 text-gray-800 font-medium">
                       <div className="flex items-center">
                         <div>
-                          <div
-                            className={`font-medium ${
-                              isExpense ? "text-red-800" : "text-green-800"
-                            }`}
-                          >
+                          <div className={`font-medium `}>
                             {transaction.title}
                           </div>
                           <div className="text-xs text-gray-600">
@@ -296,12 +306,12 @@ const Dashboard = () => {
                       <div className="flex items-center justify-end">
                         {isExpense ? (
                           <div className="flex items-center">
-                            -<IndianRupee className="h-4 w-4" />
+                            <IndianRupee className="h-4 w-4" />
                             <span>{transaction.amount}</span>
                           </div>
                         ) : (
                           <div className="flex items-center">
-                            +<IndianRupee className="h-4 w-4" />
+                            <IndianRupee className="h-4 w-4" />
                             <span>{transaction.amount}</span>
                           </div>
                         )}
@@ -362,67 +372,238 @@ const Dashboard = () => {
           </h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 rounded-md">
-          {/* Expenses by Category */}
-          <div className="bg-white shadow-md rounded-lg p-4 border border-gray-300">
-            <h3 className="text-md font-semibold mb-2">Spending by Category</h3>
-            {expenseData.length > 0 ? (
-              <PieChart width={700} height={350} style={{ margin: "auto" }}>
-                <Pie
-                  dataKey="total"
-                  data={expenseData}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={100}
-                  fill="#8884d8"
-                  label={({ name, percent }) =>
-                    `${name} (${(percent * 100).toFixed(1)}%)`
-                  }
-                  nameKey="_id"
+          {/* Expenses by Category*/}
+          {expenseData.length > 0 ? (
+            <div style={{ width: "100%", height: 150 }}>
+              <Paper
+                elevation={2}
+                sx={{
+                  p: 3,
+                  borderRadius: 2,
+                  bgcolor: "background.paper",
+                  overflow: "hidden",
+                }}
+              >
+                <Typography
+                  variant="h6"
+                  component="h2"
+                  gutterBottom
+                  sx={{
+                    fontWeight: 600,
+                    mb: 2,
+                    color: theme.palette.text.primary,
+                  }}
                 >
-                  {expenseData.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={COLORS[index % COLORS.length]}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            ) : (
-              <div>No Expense Data</div>
-            )}
-          </div>
+                  Expense Distribution
+                </Typography>
 
-          {/* Income by Category */}
+                {expenseData.length > 0 ? (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      position: "relative",
+                      height: 350,
+                    }}
+                  >
+                    <PieChart
+                      series={[
+                        {
+                          data: formatPieChartData(expenseData),
+                          innerRadius: 60,
+                          outerRadius: 120,
+                          paddingAngle: 2,
+                          cornerRadius: 4,
+                          startAngle: -90,
+                          endAngle: 270,
+                          highlightScope: {
+                            faded: "global",
+                            highlighted: "item",
+                          },
+                          faded: {
+                            innerRadius: 50,
+                            additionalRadius: -20,
+                            color: "gray",
+                            opacity: 0.3,
+                          },
+
+                          arcLabelRadius: 0.7,
+                          arcLabelsSkipAngle: 10,
+                        },
+                      ]}
+                      slotProps={{
+                        legend: {
+                          direction: "column",
+                          position: {
+                            vertical: "middle",
+                            horizontal: "right",
+                          },
+                          padding: 8,
+                          itemMarkWidth: 12,
+                          itemMarkHeight: 12,
+                          markGap: 8,
+                          itemGap: 12,
+                          labelStyle: {
+                            fontSize: 13,
+                            fontWeight: 500,
+                            fill: theme.palette.text.secondary,
+                          },
+                        },
+                      }}
+                      height={350}
+                      margin={{ top: 10, bottom: 10, left: 10, right: 120 }}
+                      sx={{
+                        [".MuiChartsLegend-root"]: {
+                          borderLeft: `1px solid ${theme.palette.divider}`,
+                          pl: 2,
+                        },
+                        [".MuiChartsLegend-mark"]: {
+                          borderRadius: "50%",
+                          rx: 0,
+                        },
+                      }}
+                    />
+                  </Box>
+                ) : (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      height: 200,
+                      color: theme.palette.text.secondary,
+                      bgcolor: theme.palette.background.default,
+                      borderRadius: 1,
+                    }}
+                  >
+                    <Typography variant="body2">
+                      No expense data available
+                    </Typography>
+                  </Box>
+                )}
+              </Paper>
+            </div>
+          ) : (
+            <div className="flex justify-center items-center h-64 text-gray-500">
+              No Expense Data
+            </div>
+          )}
+
+          {/* Income by Category*/}
           <div className="bg-white shadow-md rounded-lg p-4 border border-gray-300">
             <h3 className="text-md font-semibold mb-2">Earnings by Category</h3>
             {incomeData.length > 0 ? (
-              <PieChart width={700} height={350} style={{ margin: "auto" }}>
-                <Pie
-                  dataKey="total"
-                  data={incomeData}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={100}
-                  fill="#82ca9d"
-                  label={({ name, percent }) =>
-                    `${name} (${(percent * 100).toFixed(1)}%)`
-                  }
-                  nameKey="_id"
-                >
-                  {incomeData.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={COLORS[index % COLORS.length]}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  position: "relative",
+                  height: 350,
+                }}
+              >
+                <PieChart
+                  series={[
+                    {
+                      data: formatPieChartData(incomeData),
+                      innerRadius: 60,
+                      outerRadius: 120,
+                      paddingAngle: 2,
+                      cornerRadius: 4,
+                      startAngle: -90,
+                      endAngle: 270,
+                      highlightScope: {
+                        faded: "global",
+                        highlighted: "item",
+                      },
+                      faded: {
+                        innerRadius: 50,
+                        additionalRadius: -20,
+                        color: "gray",
+                        opacity: 0.3,
+                      },
+
+                      arcLabelRadius: 0.7,
+                      arcLabelsSkipAngle: 10,
+                    },
+                  ]}
+                  slotProps={{
+                    legend: {
+                      direction: "column",
+                      position: {
+                        vertical: "middle",
+                        horizontal: "right",
+                      },
+                      padding: 8,
+                      itemMarkWidth: 12,
+                      itemMarkHeight: 12,
+                      markGap: 8,
+                      itemGap: 12,
+                      labelStyle: {
+                        fontSize: 13,
+                        fontWeight: 500,
+                        fill: theme.palette.text.secondary,
+                      },
+                    },
+                  }}
+                  height={350}
+                  margin={{ top: 10, bottom: 10, left: 10, right: 120 }}
+                  sx={{
+                    [".MuiChartsLegend-root"]: {
+                      borderLeft: `1px solid ${theme.palette.divider}`,
+                      pl: 2,
+                    },
+                    [".MuiChartsLegend-mark"]: {
+                      borderRadius: "50%",
+                      rx: 0,
+                    },
+                  }}
+                />
+              </Box>
             ) : (
-              <div>No Income Data</div>
+              // <div style={{ width: "100%", height: 350 }}>
+              //   <PieChart
+              //     series={[
+              //       {
+              //         data: formatPieChartData(incomeData),
+              //         highlightScope: { faded: "global", highlighted: "item" },
+              //         faded: {
+              //           innerRadius: 30,
+              //           additionalRadius: -30,
+              //           color: "gray",
+              //         },
+              //       },
+              //     ]}
+              //     height={350}
+              //     margin={{ top: 0, bottom: 0, left: 0, right: 0 }}
+              //     slotProps={{
+              //       legend: {
+              //         direction: "row",
+              //         position: { vertical: "bottom", horizontal: "middle" },
+              //         itemMarkWidth: 20,
+              //         itemMarkHeight: 20,
+              //         markGap: 5,
+              //         itemGap: 15,
+              //       },
+              //     }}
+              //   />
+              // </div>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  height: 200,
+                  color: theme.palette.text.secondary,
+                  bgcolor: theme.palette.background.default,
+                  borderRadius: 1,
+                }}
+              >
+                <Typography variant="body2">
+                  No income data available
+                </Typography>
+              </Box>
             )}
           </div>
         </div>

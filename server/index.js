@@ -51,6 +51,9 @@ app.use("/", VendorRoute)
 const ReportRoute = require("./src/routes/ReportRoute")
 app.use("/", ReportRoute)
 
+const PaymentRoute = require("./src/routes/PaymentRoute")
+app.use("/", PaymentRoute)
+
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });

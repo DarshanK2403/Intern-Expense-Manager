@@ -48,6 +48,8 @@ const ExpenseSchema = new Schema(
   }
 );
 
+ExpenseSchema.index({ userId: 1, title: 1, amount: 1, expenseDate: 1 }, { unique: true });
+
 const Expense = mongoose.model("Expense", ExpenseSchema);
 
 module.exports = Expense;

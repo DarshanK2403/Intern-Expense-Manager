@@ -27,6 +27,7 @@ const DetailExpense = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
+  const dropdownRef = useRef(null); // Added the missing dropdownRef
 
   useEffect(() => {
     const getExpenseDetails = async () => {
@@ -35,6 +36,7 @@ const DetailExpense = () => {
           setIsLoading(true);
           const res = await axios.get(`/expense-details/${id}`);
           setExpenseData(res.data);
+          // console.log(res.data)
         }
       } catch (error) {
         toast.error("Failed to load expense details");
@@ -110,9 +112,8 @@ const DetailExpense = () => {
               </h1>
               <p className="text-sm text-gray-500">
                 Created on{" "}
-                {/* {format(new Date(expenseData.createdAt), "dd/MM/yyyy") || "-"}
-                 */}
-                {expenseData.createdAt}
+                {format(new Date(expenseData.createdAt), "dd MMM yyyy, hh:mm a") || "-"}
+                
               </p>
             </div>
           </div>
@@ -253,7 +254,7 @@ const DetailExpense = () => {
                   Expense Date
                 </p>
                 <p className="text-gray-900">
-                  {format(new Date(expenseData.expenseDate), "dd/MM/yyyy") ||
+                  {format(new Date(expenseData.expenseDate), "dd MMM yyyy") ||
                     "-"}
                 </p>
               </div>
@@ -285,7 +286,7 @@ const DetailExpense = () => {
                 </p>
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <p className="text-gray-800 whitespace-pre-line">
-                    {expenseData.description || "No description provided."}
+                    {expenseData.description || <span className="text-gray-600">No description provided.</span>}
                   </p>
                 </div>
               </div>

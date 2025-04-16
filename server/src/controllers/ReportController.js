@@ -15,7 +15,7 @@ const getReport = async (req, res) => {
     const offset = parseInt(req.query.offset) || 0;
 
     const today = new Date();
-    let startDate, endDate;
+    let startDate, endDate, prevStartDate, prevEndDate;
 
     if (type === "week") {
       startDate = new Date(today);
@@ -24,6 +24,12 @@ const getReport = async (req, res) => {
       startDate.setDate(today.getDate() - daysToMonday - offset * 7);
       endDate = new Date(startDate);
       endDate.setDate(startDate.getDate() + 6);
+      
+      // Previous week
+      prevStartDate = new Date(startDate);
+      prevStartDate.setDate(prevStartDate.getDate() - 7);
+      prevEndDate = new Date(prevStartDate);
+      prevEndDate.setDate(prevStartDate.getDate() + 6);
     } else if (type === "month") {
       startDate = new Date(
         Date.UTC(today.getFullYear(), today.getMonth() - offset, 1)
@@ -31,19 +37,39 @@ const getReport = async (req, res) => {
       endDate = new Date(
         Date.UTC(today.getFullYear(), today.getMonth() - offset + 1, 0)
       );
+      
+      // Previous month
+      prevStartDate = new Date(
+        Date.UTC(today.getFullYear(), today.getMonth() - offset - 1, 1)
+      );
+      prevEndDate = new Date(
+        Date.UTC(today.getFullYear(), today.getMonth() - offset, 0)
+      );
     } else if (type === "year") {
       startDate = new Date(Date.UTC(today.getFullYear() - offset, 0, 1));
       endDate = new Date(Date.UTC(today.getFullYear() - offset, 11, 31));
+      
+      // Previous year
+      prevStartDate = new Date(Date.UTC(today.getFullYear() - offset - 1, 0, 1));
+      prevEndDate = new Date(Date.UTC(today.getFullYear() - offset - 1, 11, 31));
     } else if (type === "custom") {
       startDate = new Date(start);
       endDate = new Date(end);
       if (isNaN(startDate) || isNaN(endDate)) {
         return res.status(400).json({ message: "Invalid date format" });
       }
+      
+      // For custom date range, calculate previous period with same duration
+      const duration = endDate - startDate;
+      prevEndDate = new Date(startDate);
+      prevEndDate.setDate(prevEndDate.getDate() - 1);
+      prevStartDate = new Date(prevEndDate);
+      prevStartDate.setTime(prevStartDate.getTime() - duration);
     } else {
       return res.status(400).json({ message: "Invalid report type" });
     }
 
+    // Current period data
     const expenses = await Expense.find({
       userId,
       expenseDate: { $gte: startDate, $lte: endDate },
@@ -63,6 +89,55 @@ const getReport = async (req, res) => {
     const balance = (totalIncome - totalExpense).toFixed(2);
     const savingRate =
       totalIncome > 0 ? Number(((balance / totalIncome) * 100).toFixed(2)) : 0;
+
+    // Previous period data
+    const prevExpenses = await Expense.find({
+      userId,
+      expenseDate: { $gte: prevStartDate, $lte: prevEndDate },
+    });
+
+    const prevIncomes = await Income.find({
+      userId,
+      incomeDate: { $gte: prevStartDate, $lte: prevEndDate },
+    });
+
+    const prevTotalExpense = prevExpenses
+      .reduce((sum, e) => sum + e.amount, 0)
+      .toFixed(2);
+    const prevTotalIncome = prevIncomes
+      .reduce((sum, i) => sum + i.amount, 0)
+      .toFixed(2);
+    const prevBalance = (prevTotalIncome - prevTotalExpense).toFixed(2);
+    const prevSavingRate =
+      prevTotalIncome > 0 
+      ? Number(((prevBalance / prevTotalIncome) * 100).toFixed(2)) 
+      : 0;
+
+    // Calculate percentage changes
+    const calculateChange = (current, previous) => {
+      if (previous == 0) return current > 0 ? "0" : "0.00";
+      const change = ((current - previous) / Math.abs(previous)) * 100;
+      return change.toFixed(2);
+    };
+
+    const expenseChange = calculateChange(totalExpense, prevTotalExpense);
+    const incomeChange = calculateChange(totalIncome, prevTotalIncome);
+    const balanceChange = calculateChange(balance, prevBalance);
+    const savingRateChange = calculateChange(savingRate, prevSavingRate);
+
+    // Format comparison strings
+    const formatComparison = (change) => {
+      if (change === "0") return `+0% vs previous ${type}`;
+      const prefix = parseFloat(change) >= 0 ? "+" : "";
+      return `${prefix}${change}% vs last ${type}`;
+    };
+
+    const comparisons = {
+      expense: formatComparison(expenseChange),
+      income: formatComparison(incomeChange),
+      balance: formatComparison(balanceChange),
+      savingRate: formatComparison(savingRateChange)
+  };
 
     const groupedData = {};
 
@@ -150,8 +225,11 @@ const getReport = async (req, res) => {
       totalExpense,
       balance,
       savingRate,
+      comparisons,
       startDate: startDate.toISOString().split("T")[0],
       endDate: endDate.toISOString().split("T")[0],
+      prevStartDate: prevStartDate.toISOString().split("T")[0],
+      prevEndDate: prevEndDate.toISOString().split("T")[0],
       type,
       offset,
       formatted: formattedData,

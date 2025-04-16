@@ -56,17 +56,20 @@ const ReportPage = () => {
   const [loading, setLoading] = useState(false);
   const [customRange, setCustomRange] = useState({ from: "", to: "" });
   const [data, setData] = useState([]);
-  const [Offset, setOffset] = useState(0); // Move weekOffset state here
+  const [Offset, setOffset] = useState(0);
   const [formatedData, setFormatedData] = useState([]);
   const [incomeSourceData, setincomeSourceData] = useState([]);
   const [categoryExpenseData, setcategoryExpenseData] = useState([]);
   const [allTransactions, setAllTransactions] = useState([]);
-  const incomeSum = formatedData?.reduce((sum, item) => sum + (item.income || 0), 0);
-  const totalIncome = isNaN(incomeSum) ? 0 : incomeSum.toFixed(2);
+  const incomeSum = formatedData?.reduce(
+    (sum, item) => sum + (item.income || 0),
+    0
+  );
   
-  const expenseSum = formatedData?.reduce((sum, item) => sum + (item.expense || 0), 0);
-  const totalExpense = isNaN(expenseSum) ? 0 : expenseSum.toFixed(2);
-  
+  const expenseSum = formatedData?.reduce(
+    (sum, item) => sum + (item.expense || 0),
+    0
+  );
   const [activeFilters, setActiveFilters] = useState(false);
   const [period, setPeriod] = useState("week");
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
@@ -74,12 +77,10 @@ const ReportPage = () => {
   const [IncomeCategory, setIncomeCategory] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredTransactions, setFilteredTransactions] = useState([]);
-  const [isExpanded, setIsExpanded] = useState(false);
   const [visibleTransactions, setVisibleTransactions] =
     useState(allTransactions);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
-
   const [filters, setFilters] = useState({
     type: "all",
     expenseCategory: "all",
@@ -107,14 +108,12 @@ const ReportPage = () => {
     const generateReport = async () => {
       try {
         setLoading(true);
-        const res = await axios.get(
-          `/get-report/${period}/?offset=${Offset}`,{
-            headers:{
-              Authorization: `Bearer ${token}`
-            }
-          }
-        );
-
+        const res = await axios.get(`/get-report/${period}/?offset=${Offset}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        // console.log(res.data);
         setData(res.data);
         setFormatedData(res.data.formatted);
         setincomeSourceData(res.data.incomeSources);
@@ -248,8 +247,12 @@ const ReportPage = () => {
     );
 
     // ⬇️ Update totals
-    const totalIncome = filteredIncome.reduce((sum, i) => sum + i.amount, 0).toFixed(2);
-    const totalExpense = filteredExpense.reduce((sum, e) => sum + e.amount, 0).toFixed(2);
+    const totalIncome = filteredIncome
+      .reduce((sum, i) => sum + i.amount, 0)
+      .toFixed(2);
+    const totalExpense = filteredExpense
+      .reduce((sum, e) => sum + e.amount, 0)
+      .toFixed(2);
     const balance = totalIncome - totalExpense;
     const savingRate = totalIncome
       ? ((balance / totalIncome) * 100).toFixed(2)
@@ -504,8 +507,10 @@ const ReportPage = () => {
               </div>
               <div className="mt-2 flex items-center text-xs md:text-sm">
                 <TrendingUp className="text-green-500 mr-1" size={14} />
-                <span className="text-green-500 font-medium">+12.5%</span>
-                <span className="text-gray-500 ml-1">vs last week</span>
+                {/* <span className="text-green-500 font-medium">+12.5%</span> */}
+                <span className="text-green-500 ml-1">
+                  {data?.comparisons?.income ?? 0}
+                </span>
               </div>
             </div>
 
@@ -525,8 +530,9 @@ const ReportPage = () => {
               </div>
               <div className="mt-2 flex items-center text-xs md:text-sm">
                 <TrendingUp className="text-red-500 mr-1" size={14} />
-                <span className="text-red-500 font-medium">+8.2%</span>
-                <span className="text-gray-500 ml-1">vs last week</span>
+                <span className="text-red-500 ml-1">
+                  {data?.comparisons?.expense ?? 0}
+                </span>
               </div>
             </div>
 
@@ -545,9 +551,9 @@ const ReportPage = () => {
                 </div>
               </div>
               <div className="mt-2 flex items-center text-xs md:text-sm">
-                <TrendingUp className="text-blue-500 mr-1" size={14} />
-                <span className="text-blue-500 font-medium">+18.3%</span>
-                <span className="text-gray-500 ml-1">vs last week</span>
+                <span className="text-blue-500 ml-1">
+                  {data?.comparisons?.income ?? 0}
+                </span>
               </div>
             </div>
 
@@ -567,8 +573,9 @@ const ReportPage = () => {
               </div>
               <div className="mt-2 flex items-center text-xs md:text-sm">
                 <TrendingUp className="text-purple-500 mr-1" size={14} />
-                <span className="text-purple-500 font-medium">+5.7%</span>
-                <span className="text-gray-500 ml-1">vs last week</span>
+                <span className="text-purple-500 ml-1">
+                  {data?.comparisons?.savingRate ?? 0}
+                </span>
               </div>
             </div>
           </div>
@@ -850,42 +857,6 @@ const ReportPage = () => {
                     </div>
                   )}
                 </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Insights & Recommendations */}
-          <div className="bg-white p-4 md:p-6 rounded-xl shadow-sm mb-4 md:mb-6">
-            <h2 className="text-base md:text-lg font-medium text-gray-900 mb-3 md:mb-4">
-              Insights & Recommendations
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
-              <div className="p-3 md:p-4 bg-blue-50 rounded-lg">
-                <h3 className="font-medium text-blue-700 mb-1 md:mb-2 text-sm md:text-base">
-                  Spending Insight
-                </h3>
-                <p className="text-xs md:text-sm text-blue-600">
-                  Your food expenses increased by 15% compared to last week.
-                  Consider meal planning to reduce costs.
-                </p>
-              </div>
-              <div className="p-3 md:p-4 bg-green-50 rounded-lg">
-                <h3 className="font-medium text-green-700 mb-1 md:mb-2 text-sm md:text-base">
-                  Savings Opportunity
-                </h3>
-                <p className="text-xs md:text-sm text-green-600">
-                  You&apos;re on track to reach your monthly savings goal. Keep
-                  up the good work!
-                </p>
-              </div>
-              <div className="p-3 md:p-4 bg-purple-50 rounded-lg">
-                <h3 className="font-medium text-purple-700 mb-1 md:mb-2 text-sm md:text-base">
-                  Budget Alert
-                </h3>
-                <p className="text-xs md:text-sm text-purple-600">
-                  Entertainment spending is nearing your monthly budget limit.
-                  Consider adjusting your plans.
-                </p>
               </div>
             </div>
           </div>

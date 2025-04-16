@@ -31,9 +31,9 @@ const AddExpenseForm = () => {
   const navigate = useNavigate();
   const [isUploading, setIsUploading] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [expenseCategories, setexpenseCategories] = useState();
+  const [expenseCategories, setexpenseCategories] = useState([]);
   const [vendorSuggestions, setvendorSuggestions] = useState([]);
-
+  const [PaymentType, setPaymentType] = useState([]);
   // Handle File Change
   const handleFileChange = (event) => {
     const file = event.target.files[0] || null;
@@ -133,16 +133,27 @@ const AddExpenseForm = () => {
           Authorization: `Bearer ${token}`,
         },
       });
-      const categories = res.data.data;
 
-      if (categories.length > 0) {
-        setexpenseCategories(categories.map((cat) => cat.category_name));
-      }
+      setexpenseCategories(res.data.data);
+      console.log(res.data.data);
     } catch (error) {
       toast.error("Internal Server Error");
     }
   };
 
+  const getPaymentType = async() =>{
+    try {
+      const res = await axios.get('/payment', {
+        headers:{
+          Authorization: `Bearer ${token}`
+        }
+      })
+      console.log(res.data.data)
+      setPaymentType(res.data.data)
+    } catch (error) {
+      toast.error("Somthing went wrong")
+    }
+  }
   const VendorSuggest = async () => {
     const res = await axios.get(`/get-vendor`, {
       headers: {
@@ -157,6 +168,7 @@ const AddExpenseForm = () => {
     if (token) {
       fetchExpenseCategories();
       VendorSuggest();
+      getPaymentType();
     }
   }, [token]);
 
@@ -309,6 +321,9 @@ const AddExpenseForm = () => {
                     <SelectInput
                       id="category"
                       label="Expense Category"
+                      valueField="_id"
+                      keyField="_id"
+                      displayField="category_name"
                       options={expenseCategories}
                       register={register}
                     />
@@ -320,7 +335,10 @@ const AddExpenseForm = () => {
                   <SelectInput
                     id="paymentThrough"
                     label="Payment Through"
-                    options={["Cash"]}
+                    options={PaymentType}
+                    valueField="_id"
+                    keyField="_id"
+                    displayField="label"
                     register={register}
                     error={errors.paymentThrough?.message}
                     validation={{ required: "Select one" }}

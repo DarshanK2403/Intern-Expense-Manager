@@ -20,7 +20,7 @@ const Profile = () => {
   const [profileImg, setProfileImg] = useState();
   const { user, loading } = useContext(AuthContext);
 
-  console.log(user);
+  // console.log(user);
 
   useEffect(() => {
     if (user) {
@@ -122,7 +122,7 @@ const Profile = () => {
         }
       );
       // console.log("Profile updated:", res.data);
-      setProfileImg(res.data.user.profileImg); // Update UI with new image
+      setProfileImg(res.data.user?.profileImg); // Update UI with new image
     } catch (error) {
       console.error("Error updating profile picture:", error);
     }
@@ -144,8 +144,8 @@ const Profile = () => {
           <div className="flex items-center mb-6">
             <div className="h-16 w-16 rounded-full bg-blue-100 overflow-hidden flex items-center justify-center mr-4">
               <span className="text-blue-600 font-medium text-xl">
-                {user.img ? (
-                  <img src={user.img} />
+                {user?.img ? (
+                  <img src={user?.img} />
                 ) : (
                   <img src="/logo.png" />
                 )}{" "}
@@ -153,9 +153,9 @@ const Profile = () => {
             </div>
             <div>
               <h3 className="text-lg font-medium">
-                {user.firstName} {user.lastName}
+                {user?.firstName} {user?.lastName}
               </h3>
-              <p className="text-gray-500">{user.email}</p>
+              <p className="text-gray-500">{user?.email}</p>
               <button
                 type="button"
                 className="mt-2 text-sm text-blue-600 hover:text-blue-800"

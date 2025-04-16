@@ -112,6 +112,8 @@ const getExpenseDetailbyId = async (req, res) => {
       category: expense.category,
       paymentThrough: expense.paymentThrough,
       vendor: expense.vendor,
+      createdAt: expense.createdAt,
+      updatedAt: expense.updatedAt,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -196,10 +198,33 @@ const UpdateExpensebyId = async (req, res) => {
   }
 };
 
+const FakeExpense = async(req, res) =>{
+  try {
+    const { userId, count = 20, month, year } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ error: "userId is required" });
+    }
+
+    const fakeIncomes = generateFakeExpenses(userId, count, { month, year });
+
+    await Expense.insertMany(fakeIncomes);
+
+    res.status(201).json({
+      message: `${count} fake Expense generated successfully`,
+      data: fakeIncomes,
+    });
+  } catch (err) {
+    console.error("Error generating expenses:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+}
+
 module.exports = {
   createExpense,
   getExpensebyUserId,
   getExpenseDetailbyId,
   deleteExpensebyId,
   UpdateExpensebyId,
+  FakeExpense,
 };

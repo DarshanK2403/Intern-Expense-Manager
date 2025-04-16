@@ -82,7 +82,7 @@ const Sidebar = () => {
                 }`}
               >
                 <Icon className={`${isOpen ? "w-5 h-5" : "w-6 h-6"} text-gray-700`} />
-                {isOpen && <span className="ml-3">{item.label}</span>}
+                {isOpen && <span className="ml-3">{item?.label}</span>}
               </Link>
             </li>
           );
@@ -99,7 +99,7 @@ const Sidebar = () => {
         {isOpen && (
           <div className="ml-3">
             <p className="text-sm font-medium text-gray-900">
-              {user.firstName} {user.lastName}
+              {user?.firstName} {user?.lastName}
             </p>
             {isAdmin ? <p className="text-xs text-gray-500">Administrator</p> : ""}
           </div>

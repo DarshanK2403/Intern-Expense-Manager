@@ -4,7 +4,7 @@ const Schema = mongoose.Schema;
 const VendorSchema = new Schema(
   {
     userId: { type: mongoose.Schema.ObjectId, required: true, ref: "User" },
-    name: { type: String, required: true, unique: true, },
+    name: { type: String, required: true, trim: true },
     email: { type: String },
     phone: { type: Number, trim: true },
     category: { type: String },
@@ -14,6 +14,8 @@ const VendorSchema = new Schema(
     timestamps: true,
   }
 );
+
+VendorSchema.index({ userId: 1, name: 1 }, { unique: true });
 
 const Vendor = mongoose.model("Vendor", VendorSchema);
 

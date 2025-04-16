@@ -17,6 +17,7 @@
     "@faker-js/faker": "^9.6.0",
     "@mui/material": "^6.4.11",
     "@mui/styled-engine-sc": "^6.4.6",
+    "@mui/x-charts": "^7.28.0",
     "@tailwindcss/vite": "^4.0.9",
     "axios": "^1.8.3",
     "client": "file:",

@@ -17,6 +17,7 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  Trash2,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
@@ -76,6 +77,22 @@ const ExpensesPage = () => {
       console.error("Error fetching expenses:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const expenseDetail = async (id) => {
+    try {
+      navigate(`expense-detail/${id}`);
+    } catch (error) {
+      toast.error("Somthing went wrong!");
+    }
+  };
+
+  const editExpense = async (id) => {
+    try {
+      navigate(`edit-expense/${id}`);
+    } catch (error) {
+      toast.error("Something went wrong!");
     }
   };
 
@@ -156,8 +173,8 @@ const ExpensesPage = () => {
     setPage(0);
   };
 
-  const [order, setOrder] = useState("asc");
-  const [orderBy, setOrderBy] = useState("title");
+  const [order, setOrder] = useState("desc");
+  const [orderBy, setOrderBy] = useState("expenseDate");
 
   // Hanlde Sort
   const handleSort = (property) => {
@@ -169,7 +186,7 @@ const ExpensesPage = () => {
   // Sorted Data
   const sortedData = [...expenses].sort(getComparator(order, orderBy));
   const lowerSearch = searchValue.toLowerCase();
-  console.log(lowerSearch);
+  // console.log(lowerSearch);
   // Filtered Expense
   const filteredExpenses = expenses.filter(
     (item) =>
@@ -188,7 +205,7 @@ const ExpensesPage = () => {
   );
 
   return (
-    <div className="bg-gray-50 max-w-7xl mx-auto px-4 md:px-6">
+    <div className="max-w-6xl mx-auto bg-white rounded-lg shadow overflow-hidden mb-5 ">
       <ToastContainer autoClose={1500}></ToastContainer>
       {selected.length > 0 && (
         <button
@@ -219,7 +236,7 @@ const ExpensesPage = () => {
                       }
                     />
                   </TableCell>
-                  {["title", "amount", "category", "expenseDate"].map(
+                  {["title", "amount", "category", "expenseDate", "Action"].map(
                     (headCell) => (
                       <TableCell
                         key={headCell}
@@ -241,18 +258,19 @@ const ExpensesPage = () => {
                 {visibleRows.map((item) => {
                   const isSelected = selected.indexOf(item._id) !== -1;
                   return (
-                    <TableRow
-                      key={item._id}
-                      hover
-                      onClick={(event) => handleCheckboxClick(event, item._id)}
-                      role="checkbox"
-                      aria-checked={isSelected}
-                      selected={isSelected}
-                    >
-                      <TableCell padding="checkbox">
+                    <TableRow key={item._id} hover>
+                      <TableCell
+                        padding="checkbox"
+                        onClick={(event) =>
+                          handleCheckboxClick(event, item._id)
+                        }
+                        role="checkbox"
+                        aria-checked={isSelected}
+                        selected={isSelected}
+                      >
                         <Checkbox checked={isSelected} />
                       </TableCell>
-                      <TableCell>
+                      <TableCell onClick={() => expenseDetail(item._id)}>
                         <div className="grid grid-rows-2">
                           {item.title}
                           <span className="text-gray-600">
@@ -264,6 +282,23 @@ const ExpensesPage = () => {
                       <TableCell>{item.category}</TableCell>
                       <TableCell>
                         {format(new Date(item.expenseDate), "dd MMM yyyy")}
+                      </TableCell>
+                      {/* Action */}
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <button onClick={() => editExpense(item._id)}>
+                            <Edit
+                              size={16}
+                              className="text-gray-600 hover:text-blue-600"
+                            />
+                          </button>
+                          <button onClick={() => deleteExpense(item._id)}>
+                            <Trash2
+                              size={16}
+                              className="text-gray-600 hover:text-red-600"
+                            />
+                          </button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
