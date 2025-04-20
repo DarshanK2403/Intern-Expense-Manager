@@ -1,17 +1,19 @@
 /* eslint-disable no-unused-vars */
-import { useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { Eye, EyeOff, LogIn, DollarSign } from "lucide-react";
+import { AuthContext } from "../context/AuthContext";
 
 const SigninPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [serverError, setServerError] = useState("");
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
-
+  const { setUser } = useContext(AuthContext);
+  const token = localStorage.getItem("Token");
   const {
     register,
     handleSubmit,
@@ -32,7 +34,9 @@ const SigninPage = () => {
       const response = await axios.post("/signin", data);
       if (response.data.message === "Login Success") {
         localStorage.setItem("Token", response.data.Token);
-        
+
+        // setUser(response.data);
+
         navigate("/dashboard");
         toast.success("Login Success");
       } else {
@@ -60,6 +64,19 @@ const SigninPage = () => {
       setIsSubmitting(false);
     }
   };
+
+  const context = async () => {
+    const userRes = await axios.get("/userdata", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    setUser(userRes.data);
+    console.log(userRes.data);
+  };
+  useEffect(() => {
+    if (token) {
+      context();
+    }
+  }, [token]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-100">

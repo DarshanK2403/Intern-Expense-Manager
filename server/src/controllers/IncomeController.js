@@ -27,7 +27,7 @@ const AddIncome = async (req, res) => {
       receipt,
       userId,
     };
-    const IncomeResponse = await Income.create(data);
+    const IncomeResponse = (await Income.create(data));
     res.status(200).json(IncomeResponse);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -37,7 +37,7 @@ const AddIncome = async (req, res) => {
 const getIncomebyUserId = async(req, res) =>{
   const userId = req.user.id;
   try {
-    const getincome = await Income.find({userId}).sort({incomeDate: -1});
+    const getincome = await Income.find({userId}).sort({incomeDate: -1}).populate("category");
     if(getincome.length > 0){
       res.status(200).json(getincome);
     }

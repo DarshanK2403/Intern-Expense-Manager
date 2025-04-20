@@ -7,6 +7,7 @@ import ExpenseNav from "../Components/navs/ExpenseNav";
 import SettingNav from "../Components/navs/SettingNav";
 import IncomeNav from "../Components/navs/IncomeNav";
 import VendorNav from "../Components/navs/VendorNav";
+import ReportNav from "../Components/navs/ReportNav";
 
 const MainLayout = () => {
   const location = useLocation();
@@ -17,6 +18,8 @@ const MainLayout = () => {
     { path: "/settings/*", element: <SettingNav onSearchChange={setSearchValue} /> },
     { path: "/income/", element: <IncomeNav onSearchChange={setSearchValue} /> },
     { path: "/vendor/", element: <VendorNav onSearchChange={setSearchValue} /> },
+    { path: "/reports/*", element: <ReportNav onSearchChange={setSearchValue} /> },
+
   ];
 
   const matchedRoute = matchRoutes(routes, location);

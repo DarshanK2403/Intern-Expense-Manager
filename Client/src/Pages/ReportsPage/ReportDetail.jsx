@@ -13,6 +13,7 @@ import {
   CreditCard,
   IndianRupee,
   Save,
+  Trash2,
 } from "lucide-react";
 
 import {
@@ -51,10 +52,12 @@ import MonthlyCalendar from "../../Components/Calendar/MonthlyCalendar";
 import YearlyCalendar from "../../Components/Calendar/YearlyCalendar";
 import DateCalender from "../../Components/Calendar/DateCalender";
 import SpinnerLoader from "../../Components/Loader/SpinnerLoader";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
-const ReportPage = () => {
+const ReportDetail = () => {
+  const { id } = useParams();
+  console.log(id);
   const [loading, setLoading] = useState(false);
   const [customRange, setCustomRange] = useState({ from: "", to: "" });
   const [data, setData] = useState([]);
@@ -73,7 +76,7 @@ const ReportPage = () => {
     0
   );
   const [activeFilters, setActiveFilters] = useState(false);
-  const [period, setPeriod] = useState("week");
+  const [period, setPeriod] = useState("");
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const [ExpenseCategory, setExpenseCategory] = useState([]);
   const [IncomeCategory, setIncomeCategory] = useState([]);
@@ -92,7 +95,7 @@ const ReportPage = () => {
   });
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
-
+  const [ReportType, setReportType] = useState("Week")
   const COLORS = [
     "#0088FE",
     "#00C49F",
@@ -120,17 +123,17 @@ const ReportPage = () => {
         };
       }
 
-      const res = await axios.get(`/get-report/${period}/?offset=${Offset}`, {
+      const res = await axios.get(`/report-by-id/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
         params: requestData,
       });
-      console.log("Res" ,res.data);
+      console.log("Res", res.data);
+      setReportType(res.data.type)
       setData(res.data);
       setFormatedData(res.data.formatted);
       setincomeSourceData(res.data.incomeSources);
-      console.log(res.data.incomeSources)
       setcategoryExpenseData(res.data.expenseByCategory);
       setAllTransactions(res.data.transaction);
       setExpenseCategory(res.data.expenseByCategory.map((cat) => cat._id));
@@ -148,30 +151,6 @@ const ReportPage = () => {
     }
   }, [Offset, period]);
 
-  const generateCustomReport = async () => {
-    generateReport();
-  };
-
-  const handleWeekOffsetChange = (newOffset) => {
-    setOffset(newOffset);
-  };
-
-  const handleMonthOffsetChange = (newOffset) => {
-    setOffset(newOffset);
-  };
-
-  const toggleDropdown = () => setIsDropdownOpen((prev) => !prev);
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsDropdownOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-  const toggleMoreMenu = () => setIsMoreMenuOpen(!isMoreMenuOpen);
 
   const handlePeriodSelect = (selected) => {
     setPeriod(selected);
@@ -294,18 +273,18 @@ const ReportPage = () => {
     }));
   }, [formatedData, filters.type]);
 
-  const saveReport = async () =>{
+  const saveReport = async () => {
     try {
-      const res = await axios.post("/save-report", data,{
-        headers:{
-          Authorization: `Bearer ${token}`
-        }
-      })
+      const res = await axios.post("/save-report", data, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       toast.success("Report Saved");
     } catch (error) {
-      toast("Report Save Failed")
+      toast("Report Save Failed");
     }
-  }
+  };
   return (
     <div className="w-full p-2 md:p-4 xl:p-6 min-h-screen bg-gray-50">
       <ToastContainer></ToastContainer>
@@ -316,75 +295,16 @@ const ReportPage = () => {
         <div className="w-full max-w-7xl mx-auto bg-white shadow-sm p-4">
           <div className="flex flex-nowrap items-center justify-between">
             <div className="font-bold text-xl text-gray-800 whitespace-nowrap mr-4">
-              Report
+              Report Detail
             </div>
 
             {/* Period */}
             <div className="flex flex-col sm:flex-row md:items-center items-start gap-3 w-full md:w-auto">
-              <div ref={dropdownRef}>
-                <button
-                  onClick={toggleDropdown}
-                  className="flex items-center gap-2 px-3 py-2 border border-gray-400 rounded-md bg-white hover:bg-gray-50 whitespace-nowrap"
-                >
-                  <span className="capitalize">{period}</span>
-                  <ChevronDown size={16} />
-                </button>
-
-                {isDropdownOpen && (
-                  <div className="absolute z-10 w-40 bg-white border-gray-400 border rounded-md shadow-lg">
-                    {["week", "month", "year", "custom"].map((option) => (
-                      <button
-                        key={option}
-                        onClick={() => {
-                          handlePeriodSelect(option);
-                          setIsDropdownOpen(false); // close after selection
-                        }}
-                        className="block w-full text-left px-4 py-2 hover:bg-gray-100 capitalize"
-                      >
-                        {option}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <span className="capitalize font-bold">{ReportType}</span>
 
               {/* Calaender */}
               <div className="flex items-center border border-gray-400 rounded-md bg-white whitespace-nowrap ">
-                {/* Week Calendar Import */}
-                {period === "week" ? (
-                  <WeeklyCalendar
-                    weekOffset={Offset}
-                    setWeekOffset={handleWeekOffsetChange}
-                  />
-                ) : period === "month" ? (
-                  <MonthlyCalendar
-                    monthOffset={Offset}
-                    setMonthOffset={handleMonthOffsetChange}
-                  />
-                ) : period === "year" ? (
-                  <YearlyCalendar
-                    yearOffset={Offset}
-                    setYearOffset={handleMonthOffsetChange}
-                  />
-                ) : period === "custom" ? (
-                  <div className="flex items-center">
-                    <DateCalender
-                      startDate={startDate}
-                      endDate={endDate}
-                      onStartDateChange={setStartDate}
-                      onEndDateChange={setEndDate}
-                      primaryColor="blue"
-                    />
-                    <button
-                      onClick={generateCustomReport}
-                      className="bg-blue-600 text-white py-2 px-4 rounded-md"
-                    >
-                      Apply
-                    </button>
-                  </div>
-                ) : (
-                  <MonthlyCalendar />
-                )}
+                
               </div>
 
               {/* Filter Button */}
@@ -406,11 +326,13 @@ const ReportPage = () => {
                 <span>Export</span>
               </button>
 
-              <button className="flex items-center justify-center gap-2 bg-green-100 hover:bg-green-200 text-green-700 font-medium px-4 py-2 rounded-md w-full sm:w-auto shadow-sm" onClick={saveReport}>
-                <Save size={16} />
-                <span>Save</span>
+              <button
+                className="flex items-center justify-center gap-2 bg-red-100 hover:bg-red-200 text-red-700 font-medium px-4 py-2 rounded-md w-full sm:w-auto shadow-sm"
+                onClick={saveReport}
+              >
+                <Trash2 size={16} />
+                <span>Delete</span>
               </button>
-
             </div>
           </div>
         </div>
@@ -919,4 +841,4 @@ const ReportPage = () => {
   );
 };
 
-export default ReportPage;
+export default ReportDetail;

@@ -2,77 +2,60 @@ const mongoose = require("mongoose");
 
 const reportSchema = new mongoose.Schema({
   userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    required: true,
+    type: mongoose.Schema.ObjectId,
+    required: true
   },
-  type: {
-    type: String,
-    enum: ["week", "month", "year", "custom"],
-    required: true,
+  totalIncome: { type: Number, required: true },
+  totalExpense: { type: Number, required: true },
+  balance: { type: Number, required: true },
+  savingRate: { type: Number, required: true },
+  comparisons: {
+    expense: { type: String },
+    income: { type: String },
+    balance: { type: String },
+    savingRate: { type: String },
   },
-  startDate: {
-    type: Date,
-    required: true,
-  },
-  endDate: {
-    type: Date,
-    required: true,
-  },
-  offset: {
-    type: Number,
-    default: 0,
-  },
-  totalIncome: {
-    type: Number,
-    required: true,
-  },
-  totalExpense: {
-    type: Number,
-    required: true,
-  },
-  balance: {
-    type: Number,
-    required: true,
-  },
-  savingRate: {
-    type: Number,
-    required: true,
-  },
+  startDate: { type: Date, required: true },
+  endDate: { type: Date, required: true },
+  prevStartDate: { type: Date, required: true },
+  prevEndDate: { type: Date, required: true },
+  type: { type: String, required: true },
   formatted: [
     {
-      day: String,
-      date: String,
-      month: String,
-      income: Number,
-      expense: Number,
-    },  
+      date: { type: String },
+      income: { type: Number },
+      expense: { type: Number },
+    },
   ],
   incomeSources: [
     {
-      _id: String,
-      value: Number,
+      _id: { type: mongoose.Schema.Types.ObjectId, ref: "IncomeSource" },
+      value: { type: Number },
     },
   ],
   expenseByCategory: [
     {
-      _id: String,
-      value: Number,
+      _id: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
+      value: { type: Number },
     },
   ],
   transaction: [
     {
-      title: String,
-      amount: Number,
-      category: String,
-      incomeDate: Date,
-      expenseDate: Date,
+      _id: { type: mongoose.Schema.Types.ObjectId, ref: "Transaction" },
+      title: { type: String },
+      description: { type: String },
+      amount: { type: Number },
+      expenseDate: { type: Date },
+      incomeDate: { type: Date },
+      category: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
+      paymentThrough: { type: mongoose.Schema.Types.ObjectId, ref: "PaymentMethod" },
+      vendor: { type: String },
     },
   ],
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
+},{
+  timestamps: true,
 });
 
-module.exports = mongoose.model("Report", reportSchema);
+const ReportModel = mongoose.model("Report", reportSchema);
+
+module.exports = ReportModel;

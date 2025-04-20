@@ -19,47 +19,47 @@ const UpdateVendor = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const getVendorById = async () => {
-      try {
-        const res = await axios.get(`/get-vendor-by-id/${id}`,{
-          headers:{
-            Authorization: `Bearer ${token}`
-          }
-        });
-        setValue("name", res.data.name);
-        setValue("email", res.data.email);
-        setValue("phone", res.data.phone);
-        setValue("category", res.data.category);
-        setValue("notes", res.data.notes);
-        console.log(res.data);
-      } catch (error) {
-        toast.error("Internal Server Error");
-      }
-    };
-    getVendorById();
+  const getVendorById = async () => {
+    try {
+      const res = await axios.get(`/get-vendor-by-id/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setValue("name", res.data.name);
+      setValue("email", res.data.email);
+      setValue("phone", res.data.phone);
+      setValue("category", res.data.category);
+      setValue("notes", res.data.notes);
+      console.log(res.data);
+    } catch (error) {
+      toast.error("Internal Server Error");
+    }
+  };
 
-    const getVendorCategory = async () => {
-      try {
-        const res = await axios.get(`/category?type=vendor`,{
-          headers:{
-            Authorization: `Bearer ${token}`
-          }
-        });
-        // console.log(res.data.data);
-        const data = res.data.data;
-        const categoryName = data?.map((cat) => cat.category_name);
-        setvendorCategories(categoryName);
-        // console.log(id);
-      } catch (error) {
-        toast.error("Internal Server Error");
-      }
-    };
+  const getVendorCategory = async () => {
+    try {
+      const res = await axios.get(`/category?type=vendor`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      // console.log(res.data.data);
+      setvendorCategories(res.data.data);
+      // console.log(id);
+    } catch (error) {
+      toast.error("Internal Server Error");
+    }
+  };
+
+  useEffect(() => {
     if (token) {
+      getVendorById();
       getVendorCategory();
     }
   }, [token, id, setValue]);
 
+  // Update Vendor
   const onSubmit = async (data) => {
     try {
       const res = await axios.put(`/update-vendor/${id}`, data);
@@ -76,7 +76,7 @@ const UpdateVendor = () => {
 
   const cancle = () => {
     navigate(-1);
-  }
+  };
 
   return (
     <div className="max-w-7xl mx-auto mt-5 p-6 bg-white">
@@ -131,6 +131,9 @@ const UpdateVendor = () => {
             <SelectInput
               id="category"
               label="Category"
+              valueField="_id"
+              keyField="_id"
+              displayField="category_name"
               options={vendorCategories}
               register={register}
               errors={errors}

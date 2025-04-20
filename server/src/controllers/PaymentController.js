@@ -47,6 +47,36 @@ const GetPaymentType = async (req, res) => {
   }
 };
 
+const DeletePaymentType = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const typeId = req.params.id;
+
+    // Check if this payment type is used by any payment label
+    const used = await PaymentModel.findOne({ userId, paymentTypeId: typeId });
+
+    if (used) {
+      return res.status(400).json({
+        message: "Cannot delete: this payment type is used in payment labels.",
+      });
+    }
+
+    const deleted = await PaymentType.findOneAndDelete({ _id: typeId, userId });
+
+    if (!deleted) {
+      return res.status(404).json({ message: "Payment type not found." });
+    }
+
+    return res.status(200).json({
+      message: "Payment type deleted successfully.",
+      data: deleted,
+    });
+  } catch (err) {
+    console.error("DeletePaymentType Error:", err);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
 const CreatePayment = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -96,9 +126,35 @@ const GetPayment = async (req, res) => {
   }
 };
 
+const DeletePayment = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const id  = req.params.id;
+
+    if (!id) {
+      return res.status(400).json({ message: "Payment ID is required." });
+    }
+
+    const deleted = await PaymentModel.findOneAndDelete({ _id: id, userId });
+
+    if (!deleted) {
+      return res
+        .status(404)
+        .json({ message: "Payment not found or already deleted." });
+    }
+
+    return res.status(200).json({ message: "Payment deleted successfully." });
+  } catch (err) {
+    console.error("DeletePayment Error:", err);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
 module.exports = {
   CreatePaymentType,
   GetPaymentType,
+  DeletePaymentType,
   CreatePayment,
   GetPayment,
+  DeletePayment,
 };

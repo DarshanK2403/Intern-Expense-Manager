@@ -234,36 +234,7 @@ const Profile = () => {
             </div>
           </div>
 
-          <div className="border-t border-gray-100 mt-6 pt-4">
-            <h4 className="text-sm font-medium text-gray-700 mb-4">
-              Preferences
-            </h4>
-
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <Bell className="h-5 w-5 text-gray-500 mr-3" />
-                  <span className="text-sm text-gray-700">
-                    Email Notifications
-                  </span>
-                </div>
-                <input
-                  type="checkbox"
-                  className="toggle-checkbox"
-                  defaultChecked
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <Moon className="h-5 w-5 text-gray-500 mr-3" />
-                  <span className="text-sm text-gray-700">Dark Mode</span>
-                </div>
-                <input type="checkbox" className="toggle-checkbox" />
-              </div>
-            </div>
-          </div>
-
+      
           {/* Buttons */}
           <div className="mt-6 flex justify-between">
             <Link

@@ -59,7 +59,7 @@ const IncomePage = () => {
         },
       });
       setIncomeData(res.data);
-      // console.log(res.data);
+      console.log(res.data);
     } catch (error) {
       toast.error("Failed to fetch income data");
     } finally {
@@ -163,14 +163,16 @@ const IncomePage = () => {
   const sortedData = [...incomeData].sort(getComparator(order, orderBy));
 
   const lowerSearch = searchValue.toLowerCase();
-  // Filtered Expense
-  const filteredIncomes = incomeData.filter(
-    (item) =>
-      item.title.toLowerCase().includes(lowerSearch) ||
-      item.category.toLowerCase().includes(lowerSearch) ||
-      item.amount.toString().includes(lowerSearch)
-  );
 
+// Later in your code, where the error occurs:
+const filteredIncomes = Array.isArray(incomeData) 
+  ? incomeData.filter(
+      (item) =>
+        item.title.toLowerCase().includes(lowerSearch) ||
+        item.category.toLowerCase().includes(lowerSearch) ||
+        item.amount.toString().includes(lowerSearch)
+    )
+  : [];
   // Apply sort to the filtered results
   const sortedFilteredExpenses = filteredIncomes.sort(
     getComparator(order, orderBy)
@@ -264,7 +266,7 @@ const IncomePage = () => {
                             </div>
                           </TableCell>
                           <TableCell>${item.amount}</TableCell>
-                          <TableCell>{item.category}</TableCell>
+                          <TableCell>{item.category.category_name}</TableCell>
                           <TableCell>
                             {format(new Date(item.incomeDate), "dd MMM, yyyy")}
                           </TableCell>

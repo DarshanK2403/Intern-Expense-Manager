@@ -7,7 +7,7 @@ const VendorSchema = new Schema(
     name: { type: String, required: true, trim: true },
     email: { type: String },
     phone: { type: Number, trim: true },
-    category: { type: String },
+    category: { type: mongoose.Schema.ObjectId, ref: "Category" },
     notes: { type: String, trim: true },
   },
   {

@@ -7,7 +7,7 @@ const cors = require('cors');
 
 app.use(cors({
   origin: process.env.FRONTEND_URL,
-  methods: ["GET", "POST", "PUT", "DELETE"],
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
   credentials: true
 }));
 
@@ -53,6 +53,9 @@ app.use("/", ReportRoute)
 
 const PaymentRoute = require("./src/routes/PaymentRoute")
 app.use("/", PaymentRoute)
+
+const FakeRoute = require("./src/routes/FakeRoute")
+app.use('/', FakeRoute);
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);

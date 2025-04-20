@@ -16,19 +16,17 @@ const AddVendor = () => {
   } = useForm();
   const navigate = useNavigate();
   const [vendorCategories, setvendorCategories] = useState([]);
-  
+
   useEffect(() => {
     const getVendorCategory = async () => {
       try {
-        const res = await axios.get(`/category?type=vendor`,{
-          headers:{
-            Authorization: `Bearer ${token}`
-          }
+        const res = await axios.get(`/category?type=vendor`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         });
         // console.log(res.data.data);
-        const data = res.data.data;
-        const categoryName = data?.map((cat) => cat.category_name);
-        setvendorCategories(categoryName);
+        setvendorCategories(res.data.data);
       } catch (error) {
         toast.error("Internal Server Error");
       }
@@ -42,15 +40,15 @@ const AddVendor = () => {
     try {
       const formData = {
         ...data,
-      }
-      const res = await axios.post(`/add-vendor`, formData,{
-        headers:{
-          Authorization: `Bearer ${token}`
-        }
+      };
+      const res = await axios.post(`/add-vendor`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
       toast.success("Venodr Added");
       // console.log(res.data);
-      navigate('/vendor');
+      navigate("/vendor");
     } catch (error) {
       toast.error("Internal Server Error");
     }
@@ -59,6 +57,7 @@ const AddVendor = () => {
   const cancle = () => {
     navigate(-1);
   };
+  
   return (
     <div className="max-w-7xl mx-auto mt-5 p-6 bg-white shadow-md rounded-md">
       <ToastContainer></ToastContainer>
@@ -110,6 +109,9 @@ const AddVendor = () => {
             <SelectInput
               id="category"
               label="Category"
+              valueField="_id"
+              keyField="_id"
+              displayField="category_name"
               options={vendorCategories}
               register={register}
               errors={errors}

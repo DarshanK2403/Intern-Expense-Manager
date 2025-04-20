@@ -24,12 +24,11 @@ const EditExpense = () => {
   const token = localStorage.getItem("Token");
   // const receipt = watch("receipt");
   const [filePreview, setFilePreview] = useState(null);
-  const [fileType, setFileType] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [expenseCategories, setexpenseCategories] = useState();
   const [vendorSuggestions, setvendorSuggestions] = useState([]);
-
+  const [PaymentType, setPaymentType] = useState([]);
 
   useEffect(() => {
     const getExpenseDetailbyId = async () => {
@@ -39,7 +38,7 @@ const EditExpense = () => {
             Authorization: `Bearer ${token}`,
           },
         });
-        // console.log(res.data);
+        console.log(res.data.receipt?.cloudinaryUrl);
         setValue("title", res.data.title);
         setValue("amount", res.data.amount);
         setValue("description", res.data.description);
@@ -49,7 +48,7 @@ const EditExpense = () => {
         setValue("vendor", res.data.vendor);
         setValue("receipt", res.data.receipt);
         // setValue("receiptFile", res.data.data.receipt); // Set the receipt file for preview
-        // setFilePreview(res.data.data.receipt); // Set the file preview URL
+        setFilePreview(res.data.receipt?.cloudinaryUrl); // Set the file preview URL
       } catch (error) {
         toast.error("Error fetching expense details:", error.message);
       }
@@ -58,6 +57,24 @@ const EditExpense = () => {
       getExpenseDetailbyId();
     }
   }, [token, id, setValue]);
+
+  const getPaymentType = async () => {
+    try {
+      const res = await axios.get("/payment", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      console.log(res.data.data);
+      setPaymentType(res.data.data);
+    } catch {
+      toast.error("Somthing went wrong");
+    }
+  };
+
+  useEffect(() => {
+    getPaymentType();
+  }, []);
 
   const handleFileChange = (event) => {
     const file = event.target.files[0] || null;
@@ -68,14 +85,6 @@ const EditExpense = () => {
     const fileURL = URL.createObjectURL(file);
     setFilePreview(fileURL);
 
-    if (file.type.startsWith("image/")) {
-      setFileType("image");
-    } else if (file.type === "application/pdf") {
-      setFileType("pdf");
-    } else {
-      setFileType("other");
-    }
-
     setValue("receiptFile", file); // Store file for form submission
     setIsUploading(false);
   };
@@ -83,7 +92,6 @@ const EditExpense = () => {
   // Remove uploaded file
   const handleRemoveFile = () => {
     setFilePreview(null);
-    setFileType(null);
     setValue("receiptFile", null);
   };
 
@@ -104,17 +112,30 @@ const EditExpense = () => {
     formData.append("vendor", data.vendor);
 
     // Ensure file is valid before appending
-    if (data.receiptFile && data.receiptFile instanceof File) {
+    if (data.receiptFile instanceof File) {
       formData.append("receipt", data.receiptFile);
+      formData.append("fileOriginalName", data.receiptFile.name);
+      formData.append("fileType", data.receiptFile.type);
     }
 
     try {
       setLoading(true);
-      const response = await axios.put(`/edit-expense/${id}`, formData, {
+      const res = await axios.put(`/edit-expense/${id}`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      console.log(response.data);
+      if (res.data.file) {
+        const { cloudinaryUrl, originalName, uniqueName, fileType } =
+          res.data.file;
+        console.log("Uploaded file details:", {
+          cloudinaryUrl,
+          originalName,
+          uniqueName,
+          fileType,
+        });
+      }
+
+      console.log(res.data);
       navigate("/expenses");
     } catch (error) {
       console.error(
@@ -144,11 +165,7 @@ const EditExpense = () => {
             Authorization: `Bearer ${token}`,
           },
         });
-        const categories = res.data.data;
-
-        if (categories.length > 0) {
-          setexpenseCategories(categories.map((cat) => cat.category_name)); // ✅ Set both states at once
-        }
+        setexpenseCategories(res.data.data);
       } catch {
         toast.error("Internal Server Error");
       }
@@ -189,7 +206,7 @@ const EditExpense = () => {
                       type="file"
                       className="hidden"
                       id="receipt"
-                      accept="image/*, application/pdf"
+                      accept="image/*"
                       {...register("receipt")}
                       onChange={handleFileChange}
                     />
@@ -202,7 +219,7 @@ const EditExpense = () => {
                     <p className="text-xs text-gray-500 mt-2 text-center">
                       Drag & drop or click to upload
                       <br />
-                      (Images or PDF only)
+                      (Images only)
                     </p>
                     {errors.receipt && (
                       <span className="text-red-500 text-xs mt-2">
@@ -219,25 +236,11 @@ const EditExpense = () => {
                     >
                       <AiOutlineDelete className="text-lg" />
                     </button>
-                    {fileType === "image" ? (
-                      <img
-                        src={filePreview}
-                        alt="Uploaded receipt"
-                        className="max-w-full max-h-full object-contain rounded-md"
-                      />
-                    ) : fileType === "pdf" ? (
-                      <div className="w-full h-full">
-                        <iframe
-                          src={filePreview}
-                          className="w-full h-full rounded-md"
-                          title="Uploaded PDF"
-                        ></iframe>
-                      </div>
-                    ) : (
-                      <p className="text-gray-600 font-medium">
-                        Unsupported file type
-                      </p>
-                    )}
+                    <img
+                      src={filePreview}
+                      alt="Uploaded receipt"
+                      className="max-w-full max-h-full object-contain rounded-md"
+                    />
                   </div>
                 )}
               </div>
@@ -308,9 +311,11 @@ const EditExpense = () => {
                   <SelectInput
                     id="category"
                     label="Expense Category"
+                    valueField="_id"
+                    keyField="_id"
+                    displayField="category_name"
                     options={expenseCategories}
                     register={register}
-                    errors={errors}
                   />
                 </div>
               </div>
@@ -320,7 +325,10 @@ const EditExpense = () => {
                 <SelectInput
                   id="paymentThrough"
                   label="Payment Through"
-                  options={["Cash"]}
+                  options={PaymentType}
+                  valueField="_id"
+                  keyField="_id"
+                  displayField="label"
                   register={register}
                   error={errors.paymentThrough?.message}
                   validation={{ required: "Select one" }}

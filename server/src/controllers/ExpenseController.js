@@ -28,13 +28,7 @@ const createExpense = async (req, res) => {
       vendor,
     } = req.body;
 
-    if (
-      !title ||
-      !amount ||
-      !expenseDate ||
-      !category ||
-      !paymentThrough
-    ) {
+    if (!title || !amount || !expenseDate || !category || !paymentThrough) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
@@ -83,14 +77,16 @@ const createExpense = async (req, res) => {
   }
 };
 
-// Get Expenses by User ID
 const getExpensebyUserId = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const expenses = await ExpenseModel.find({ userId }).sort({
-      expenseDate: -1,
-    });
+    const expenses = await ExpenseModel.find({ userId })
+      .sort({
+        expenseDate: -1,
+      })
+      .populate("category")
+      .populate("paymentThrough");
 
     res.status(200).json({ success: true, data: expenses });
   } catch (error) {
@@ -103,18 +99,10 @@ const getExpensebyUserId = async (req, res) => {
 
 const getExpenseDetailbyId = async (req, res) => {
   try {
-    const expense = await ExpenseModel.findById(req.params.id);
-    res.status(200).json({
-      title: expense.title,
-      description: expense.description,
-      amount: expense.amount,
-      expenseDate: expense.expenseDate,
-      category: expense.category,
-      paymentThrough: expense.paymentThrough,
-      vendor: expense.vendor,
-      createdAt: expense.createdAt,
-      updatedAt: expense.updatedAt,
-    });
+    const expense = await ExpenseModel.findById(req.params.id)
+      .populate("category")
+      .populate("paymentThrough");
+    res.status(200).json(expense);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -145,7 +133,15 @@ const UpdateExpensebyId = async (req, res) => {
       });
     });
 
-    const { title, amount, description, expenseDate, category, paymentThrough, vendor } = req.body;
+    const {
+      title,
+      amount,
+      description,
+      expenseDate,
+      category,
+      paymentThrough,
+      vendor,
+    } = req.body;
     const { id } = req.params; // ✅ Extract `id` from URL
 
     if (!id) {
@@ -161,7 +157,9 @@ const UpdateExpensebyId = async (req, res) => {
     expense.title = title || expense.title;
     expense.amount = amount ? parseFloat(amount) : expense.amount;
     expense.description = description || expense.description;
-    expense.expenseDate = expenseDate ? new Date(expenseDate) : expense.expenseDate;
+    expense.expenseDate = expenseDate
+      ? new Date(expenseDate)
+      : expense.expenseDate;
     expense.category = category || expense.category;
     expense.paymentThrough = paymentThrough || expense.paymentThrough;
     expense.vendor = vendor || expense.vendor;
@@ -169,7 +167,9 @@ const UpdateExpensebyId = async (req, res) => {
     if (req.file) {
       // ✅ If updating receipt, delete old Cloudinary file first
       if (expense.receipt?.uniqueName) {
-        await cloudinaryUtil.deleteFileFromCloudinary(expense.receipt.uniqueName);
+        await cloudinaryUtil.deleteFileFromCloudinary(
+          expense.receipt.uniqueName
+        );
       }
 
       // ✅ Upload new file to Cloudinary
@@ -198,27 +198,6 @@ const UpdateExpensebyId = async (req, res) => {
   }
 };
 
-const FakeExpense = async(req, res) =>{
-  try {
-    const { userId, count = 20, month, year } = req.body;
-
-    if (!userId) {
-      return res.status(400).json({ error: "userId is required" });
-    }
-
-    const fakeIncomes = generateFakeExpenses(userId, count, { month, year });
-
-    await Expense.insertMany(fakeIncomes);
-
-    res.status(201).json({
-      message: `${count} fake Expense generated successfully`,
-      data: fakeIncomes,
-    });
-  } catch (err) {
-    console.error("Error generating expenses:", err);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-}
 
 module.exports = {
   createExpense,
@@ -226,5 +205,4 @@ module.exports = {
   getExpenseDetailbyId,
   deleteExpensebyId,
   UpdateExpensebyId,
-  FakeExpense,
 };

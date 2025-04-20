@@ -34,6 +34,7 @@ const AddExpenseForm = () => {
   const [expenseCategories, setexpenseCategories] = useState([]);
   const [vendorSuggestions, setvendorSuggestions] = useState([]);
   const [PaymentType, setPaymentType] = useState([]);
+
   // Handle File Change
   const handleFileChange = (event) => {
     const file = event.target.files[0] || null;
@@ -126,6 +127,7 @@ const AddExpenseForm = () => {
   const saveandclose = () => {};
   const saveandnew = () => {};
 
+  // Expense Category
   const fetchExpenseCategories = async () => {
     try {
       const res = await axios.get("/category?type=expense", {
@@ -141,19 +143,22 @@ const AddExpenseForm = () => {
     }
   };
 
-  const getPaymentType = async() =>{
+  // GetPayment
+  const getPaymentType = async () => {
     try {
-      const res = await axios.get('/payment', {
-        headers:{
-          Authorization: `Bearer ${token}`
-        }
-      })
-      console.log(res.data.data)
-      setPaymentType(res.data.data)
+      const res = await axios.get("/payment", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      console.log(res.data.data);
+      setPaymentType(res.data.data);
     } catch (error) {
-      toast.error("Somthing went wrong")
+      toast.error("Somthing went wrong");
     }
-  }
+  };
+
+  // Venodr Suggest
   const VendorSuggest = async () => {
     const res = await axios.get(`/get-vendor`, {
       headers: {
@@ -180,9 +185,8 @@ const AddExpenseForm = () => {
         </div>
         <form onSubmit={handleSubmit(onSubmit)} className="pt-4 sm:pt-5">
           <div className="grid grid-cols-1 gap-4 sm:gap-6">
-            {/* Receipt Upload - Full width on mobile, side by side on larger screens */}
             <div className="lg:grid lg:grid-cols-5 lg:gap-6">
-              {/* Left Column - Receipt Upload */}
+              {/* Receipt Upload */}
               <div className="lg:col-span-2 mb-4 lg:mb-0">
                 <div
                   className={`border ${
@@ -202,7 +206,7 @@ const AddExpenseForm = () => {
                         type="file"
                         className="hidden"
                         id="receipt"
-                        accept="image/*, application/pdf"
+                        accept="image/*"
                         {...register("receipt")}
                         onChange={handleFileChange}
                       />
@@ -215,7 +219,7 @@ const AddExpenseForm = () => {
                       <p className="text-xs text-gray-500 mt-3 text-center">
                         Drag & drop or click to upload
                         <br />
-                        (Images or PDF only)
+                        (Images only)
                       </p>
                       {errors.receipt && (
                         <span className="text-red-500 text-xs mt-2 bg-red-50 px-2 py-1 rounded">
@@ -255,10 +259,11 @@ const AddExpenseForm = () => {
                   )}
                 </div>
               </div>
-              {/* Right Column - Form Fields */}
+
+              {/* Right Side - Form Fields */}
               <div className="lg:col-span-3 space-y-4 sm:space-y-6">
+                {/* Title & Amount  */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                  {/* Title */}
                   <div>
                     <Input
                       id="title"
@@ -270,7 +275,6 @@ const AddExpenseForm = () => {
                     />
                   </div>
 
-                  {/* Amount */}
                   <div>
                     <Input
                       id="amount"
@@ -302,8 +306,8 @@ const AddExpenseForm = () => {
                   />
                 </div>
 
+                {/* Expense Date & Category */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                  {/* Expense Date */}
                   <div>
                     <Input
                       id="expenseDate"
@@ -316,7 +320,6 @@ const AddExpenseForm = () => {
                     />
                   </div>
 
-                  {/* Category */}
                   <div>
                     <SelectInput
                       id="category"
@@ -330,6 +333,7 @@ const AddExpenseForm = () => {
                   </div>
                 </div>
 
+                {/* Payment & Vendor */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                   {/* Payment Through */}
                   <SelectInput

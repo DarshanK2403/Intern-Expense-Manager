@@ -27,7 +27,7 @@ const AddVendor = async (req, res) => {
 const GetVendor = async (req, res) => {
   const userId = req.user.id;
   try {
-    const getvendor = await Vendor.find({ userId });
+    const getvendor = await Vendor.find({ userId }).populate("category");
     res.status(200).json(getvendor);
   } catch (error) {
     res.status(500).json({ message: error.message });

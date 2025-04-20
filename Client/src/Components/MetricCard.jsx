@@ -1,3 +1,5 @@
+import { IndianRupee } from "lucide-react";
+
 /* eslint-disable react/prop-types */
 const MetricCard = ({
   icon,
@@ -14,7 +16,7 @@ const MetricCard = ({
         <h3 className="text-lg font-medium text-gray-700">{title}</h3>
       </div>
     </div>
-    <p className={`text-2xl font-bold ${textColor}`}>{value}</p>
+    <p className={`text-2xl font-bold ${textColor}`}><div className="flex items-center"><IndianRupee size={22}/> {value}</div></p>
     <p className="text-sm text-gray-500 mt-2">{description}</p>
   </div>
 );

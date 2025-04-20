@@ -1,6 +1,8 @@
 const { default: mongoose } = require("mongoose");
 const Expense = require("../models/ExpenseModel");
 const Income = require("../models/IncomeModel");
+const ReportModel = require("../models/ReportModel");
+const CategoryModel = require("../models/Category");
 
 const formatKey = (date, type) =>
   type === "year"
@@ -11,9 +13,8 @@ const getReport = async (req, res) => {
   try {
     const userId = req.user.id;
     const { type } = req.params;
-    const { start, end } = req.body;
+    const { start, end } = req.query;
     const offset = parseInt(req.query.offset) || 0;
-
     const today = new Date();
     let startDate, endDate, prevStartDate, prevEndDate;
 
@@ -24,7 +25,7 @@ const getReport = async (req, res) => {
       startDate.setDate(today.getDate() - daysToMonday - offset * 7);
       endDate = new Date(startDate);
       endDate.setDate(startDate.getDate() + 6);
-      
+
       // Previous week
       prevStartDate = new Date(startDate);
       prevStartDate.setDate(prevStartDate.getDate() - 7);
@@ -37,7 +38,7 @@ const getReport = async (req, res) => {
       endDate = new Date(
         Date.UTC(today.getFullYear(), today.getMonth() - offset + 1, 0)
       );
-      
+
       // Previous month
       prevStartDate = new Date(
         Date.UTC(today.getFullYear(), today.getMonth() - offset - 1, 1)
@@ -48,19 +49,38 @@ const getReport = async (req, res) => {
     } else if (type === "year") {
       startDate = new Date(Date.UTC(today.getFullYear() - offset, 0, 1));
       endDate = new Date(Date.UTC(today.getFullYear() - offset, 11, 31));
-      
+
       // Previous year
-      prevStartDate = new Date(Date.UTC(today.getFullYear() - offset - 1, 0, 1));
-      prevEndDate = new Date(Date.UTC(today.getFullYear() - offset - 1, 11, 31));
+      prevStartDate = new Date(
+        Date.UTC(today.getFullYear() - offset - 1, 0, 1)
+      );
+      prevEndDate = new Date(
+        Date.UTC(today.getFullYear() - offset - 1, 11, 31)
+      );
     } else if (type === "custom") {
+      // Check if start and end dates are provided
+      if (!start || !end) {
+        return res.status(400).json({
+          message: "Start and end dates are required for custom reports",
+        });
+      }
+
       startDate = new Date(start);
       endDate = new Date(end);
+
       if (isNaN(startDate) || isNaN(endDate)) {
         return res.status(400).json({ message: "Invalid date format" });
       }
-      
+
+      // Make sure end date is not before start date
+      if (endDate < startDate) {
+        return res
+          .status(400)
+          .json({ message: "End date cannot be before start date" });
+      }
+
       // For custom date range, calculate previous period with same duration
-      const duration = endDate - startDate;
+      const duration = endDate.getTime() - startDate.getTime();
       prevEndDate = new Date(startDate);
       prevEndDate.setDate(prevEndDate.getDate() - 1);
       prevStartDate = new Date(prevEndDate);
@@ -109,9 +129,9 @@ const getReport = async (req, res) => {
       .toFixed(2);
     const prevBalance = (prevTotalIncome - prevTotalExpense).toFixed(2);
     const prevSavingRate =
-      prevTotalIncome > 0 
-      ? Number(((prevBalance / prevTotalIncome) * 100).toFixed(2)) 
-      : 0;
+      prevTotalIncome > 0
+        ? Number(((prevBalance / prevTotalIncome) * 100).toFixed(2))
+        : 0;
 
     // Calculate percentage changes
     const calculateChange = (current, previous) => {
@@ -136,8 +156,8 @@ const getReport = async (req, res) => {
       expense: formatComparison(expenseChange),
       income: formatComparison(incomeChange),
       balance: formatComparison(balanceChange),
-      savingRate: formatComparison(savingRateChange)
-  };
+      savingRate: formatComparison(savingRateChange),
+    };
 
     const groupedData = {};
 
@@ -168,6 +188,9 @@ const getReport = async (req, res) => {
         dateLabel = currentDate.getDate();
       } else if (type === "year") {
         dateLabel = currentDate.toLocaleDateString("en-US", { month: "short" });
+      } else if (type === "custom") {
+        // For custom type, use ISO date format
+        dateLabel = currentDate.toISOString().split("T")[0];
       }
 
       formattedData.push({
@@ -186,11 +209,30 @@ const getReport = async (req, res) => {
       {
         $match: {
           userId: new mongoose.Types.ObjectId(userId),
-          incomeDate: { $gte: startDate, $lte: endDate },
+          incomeDate: { $gte: new Date(startDate), $lte: new Date(endDate) },
         },
       },
-      { $group: { _id: "$category", value: { $sum: "$amount" } } },
-      { $sort: { value: -1 } },
+      // Join with CategoryModel
+      {
+        $lookup: {
+          from: "categories", // make sure this matches your actual MongoDB collection name
+          localField: "category",
+          foreignField: "_id",
+          as: "categoryInfo",
+        },
+      },
+      {
+        $unwind: "$categoryInfo",
+      },
+      {
+        $group: {
+          _id: "$categoryInfo.category_name", // Group by category name
+          value: { $sum: "$amount" },
+        },
+      },
+      {
+        $sort: { value: -1 },
+      },
     ]);
 
     const expenseByCategory = await Expense.aggregate([
@@ -200,8 +242,26 @@ const getReport = async (req, res) => {
           expenseDate: { $gte: startDate, $lte: endDate },
         },
       },
-      { $group: { _id: "$category", value: { $sum: "$amount" } } },
-      { $sort: { value: -1 } },
+      {
+        $lookup: {
+          from: "categories", // Name of the collection where the categories are stored
+          localField: "category", // Field in the Expense collection
+          foreignField: "_id", // Field in the Category collection
+          as: "categoryDetails", // Alias for the joined data
+        },
+      },
+      {
+        $unwind: "$categoryDetails", // Unwind the array that comes from the lookup
+      },
+      {
+        $group: {
+          _id: "$categoryDetails.category_name", // Group by the category_name field
+          value: { $sum: "$amount" }, // Sum the amount for each category
+        },
+      },
+      {
+        $sort: { value: -1 }, // Sort by value in descending order
+      },
     ]);
 
     const recentIncomes = await Income.find({
@@ -243,4 +303,144 @@ const getReport = async (req, res) => {
   }
 };
 
-module.exports = { getReport };
+const saveReport = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const {
+      totalIncome,
+      totalExpense,
+      balance,
+      savingRate,
+      comparisons,
+      startDate,
+      endDate,
+      prevStartDate,
+      prevEndDate,
+      type,
+      offset,
+      formatted,
+      incomeSources,
+      expenseByCategory,
+      transaction,
+    } = req.body;
+
+    // 🔁 Convert category names to ObjectIds
+    const updatedExpenseByCategory = await Promise.all(
+      expenseByCategory.map(async (item) => {
+        const category = await CategoryModel.findOne({ name: item._id }); // _id is name in req.body
+        return {
+          _id: category ? category._id : null, // fallback if not found
+          totalAmount: item.totalAmount,
+          count: item.count,
+        };
+      })
+    );
+
+    // Optionally filter out null categories
+    const filteredExpenseByCategory = updatedExpenseByCategory.filter(
+      (item) => item._id
+    );
+
+    const newReport = new ReportModel({
+      userId,
+      totalIncome,
+      totalExpense,
+      balance,
+      savingRate,
+      comparisons,
+      startDate,
+      endDate,
+      prevStartDate,
+      prevEndDate,
+      type,
+      offset,
+      formatted,
+      incomeSources,
+      expenseByCategory: filteredExpenseByCategory, // ✅ Safe version
+      transaction,
+    });
+
+    const savedReport = await newReport.save();
+
+    res.status(201).json({
+      message: "Report successfully generated and stored",
+      report: savedReport,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: "Error generating and storing the report",
+      error: error.message,
+    });
+  }
+};
+
+const getSavedReport = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const report = await ReportModel.find({ userId });
+
+    // Check if the report exists
+    if (!report) {
+      return res.status(404).json({ message: "Report not found" });
+    }
+
+    // Return the report data
+    return res.status(200).json(report);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+const getSavedReportById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+    // console.log(id);
+
+    const report = await ReportModel.findById(id);
+
+    if (!report) {
+      return res
+        .status(404)
+        .json({ message: "Report not found or unauthorized" });
+    }
+
+    return res.status(200).json(report);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+const deleteReportById = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const reportId = req.params.id;
+
+    const report = await ReportModel.findOneAndDelete({
+      _id: reportId,
+      userId,
+    });
+
+    if (!report) {
+      return res
+        .status(404)
+        .json({ message: "Report not found or unauthorized" });
+    }
+
+    return res.status(200).json({ message: "Report deleted successfully" });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+module.exports = {
+  getReport,
+  saveReport,
+  getSavedReport,
+  getSavedReportById,
+  deleteReportById,
+};

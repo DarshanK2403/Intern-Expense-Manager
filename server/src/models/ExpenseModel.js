@@ -25,11 +25,13 @@ const ExpenseSchema = new Schema(
       required: true,
     },
     category: {
-      type: String,
+      type: mongoose.Schema.ObjectId,
+      required: true,
+      ref: "Category",
     },
     paymentThrough: {
-      type: String,
-      required: true,
+      type: mongoose.Schema.ObjectId,
+      ref: "Payment"
     },
     vendor: {
       type: String,
@@ -48,7 +50,10 @@ const ExpenseSchema = new Schema(
   }
 );
 
-ExpenseSchema.index({ userId: 1, title: 1, amount: 1, expenseDate: 1 }, { unique: true });
+ExpenseSchema.index(
+  { userId: 1, title: 1, amount: 1, expenseDate: 1 },
+  { unique: true }
+);
 
 const Expense = mongoose.model("Expense", ExpenseSchema);
 

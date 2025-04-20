@@ -1,37 +1,39 @@
-/* eslint-disable react/prop-types */ 
+/* eslint-disable react/prop-types */
 import { AiOutlineTag } from "react-icons/ai";
 
-const SelectInput = ({ 
-  id, 
-  label, 
-  options = [], 
-  register, 
+const SelectInput = ({
+  id,
+  label,
+  options = [],
+  register,
   errors,
-  keyField = "",           // Default key field
-  valueField = "",         // Default value field (what gets submitted)
-  displayField = "",      // Default display field (what user sees)
-  icon: Icon = AiOutlineTag   // Allow custom icon
+  keyField = "", // Default key field
+  valueField = "", // Default value field (what gets submitted)
+  displayField = "", // Default display field (what user sees)
+  icon: Icon = AiOutlineTag, // Allow custom icon
 }) => {
   return (
     <div className="mb-4">
       {/* Label */}
-      <label htmlFor={id} className="block text-gray-700 font-medium mb-2">
+      <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">
         {label}
       </label>
-      
+
       <div className="relative">
         {/* Left Icon */}
         <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
           <Icon className="h-5 w-5 text-gray-400" />
         </div>
-        
+
         {/* Select Dropdown */}
         <select
           id={id}
           className="block w-full pl-10 pr-10 py-2 text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 appearance-none"
           {...register(id)}
         >
-          <option value="" disabled>Select {label}</option>
+          <option value="" disabled>
+            Select {label}
+          </option>
           {options.length > 0 ? (
             options.map((option) => (
               <option key={option[keyField]} value={option[valueField]}>
@@ -42,20 +44,27 @@ const SelectInput = ({
             <option disabled>Loading...</option>
           )}
         </select>
-        
+
         {/* Dropdown Arrow */}
         <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-          <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+          <svg
+            className="h-5 w-5 text-gray-400"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fillRule="evenodd"
+              d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+              clipRule="evenodd"
+            />
           </svg>
         </div>
       </div>
-      
+
       {/* Error Message */}
       {errors?.[id] && (
-        <p className="mt-1 text-sm text-red-600">
-          {errors[id].message}
-        </p>
+        <p className="mt-1 text-sm text-red-600">{errors[id].message}</p>
       )}
     </div>
   );

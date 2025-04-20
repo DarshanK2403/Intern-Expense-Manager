@@ -117,7 +117,7 @@ const Dashboard = () => {
             Authorization: `Bearer ${token}`,
           },
         });
-        // console.log(res.data);
+        console.log(res.data);
         setIncomeData(res.data);
       } catch (error) {
         toast.error("Internal Server Error");
@@ -145,17 +145,17 @@ const Dashboard = () => {
   ];
 
   // Format data with colors assigned
-  const formatPieChartData = (expenseData) => {
-    return expenseData.map((item, index) => ({
-      id: item._id,
+  const formatPieChartData = (data) => {
+    return data.map((item, index) => ({
+      id: item.category_id, // still useful for keys
       value: item.total,
-      label: item._id,
+      label: item.category_name, // display the actual category name
       color: chartColors[index % chartColors.length],
     }));
   };
-
+  
   return (
-    <div className="p-4">
+    <div className="p-4 h-full">
       <ToastContainer></ToastContainer>
       <div className="flex space-x-6">
         {/* Financial Metrics - Horizontal Layout */}
@@ -342,7 +342,7 @@ const Dashboard = () => {
                     }
                   `}
                       >
-                        {transaction.category}
+                        {transaction.category?.category_name}
                       </span>
                     </td>
                   </tr>
@@ -365,7 +365,7 @@ const Dashboard = () => {
       </div>
 
       {/* Expense by Category */}
-      <div className="mt-6 p-6 bg-white shadow-md rounded-lg border border-gray-300">
+      <div className="mt-6 p-6 bg-white shadow-md rounded-lg border h-[50%] border-gray-300">
         <div className="py-2">
           <h2 className="text-lg font-semibold">
             Category-wise Financial Overview
@@ -404,7 +404,7 @@ const Dashboard = () => {
                       alignItems: "center",
                       justifyContent: "center",
                       position: "relative",
-                      height: 350,
+                      height: 250,
                     }}
                   >
                     <PieChart
@@ -491,126 +491,105 @@ const Dashboard = () => {
           )}
 
           {/* Income by Category*/}
-          <div className="bg-white shadow-md rounded-lg p-4 border border-gray-300">
-            <h3 className="text-md font-semibold mb-2">Earnings by Category</h3>
-            {incomeData.length > 0 ? (
-              <Box
+          {incomeData.length > 0 ? (
+            <div style={{ width: "100%", height: 150 }}>
+              <Paper
+                elevation={2}
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  position: "relative",
-                  height: 350,
+                  p: 3,
+                  borderRadius: 2,
+                  bgcolor: "background.paper",
+                  overflow: "hidden",
                 }}
               >
-                <PieChart
-                  series={[
-                    {
-                      data: formatPieChartData(incomeData),
-                      innerRadius: 60,
-                      outerRadius: 120,
-                      paddingAngle: 2,
-                      cornerRadius: 4,
-                      startAngle: -90,
-                      endAngle: 270,
-                      highlightScope: {
-                        faded: "global",
-                        highlighted: "item",
-                      },
-                      faded: {
-                        innerRadius: 50,
-                        additionalRadius: -20,
-                        color: "gray",
-                        opacity: 0.3,
-                      },
-
-                      arcLabelRadius: 0.7,
-                      arcLabelsSkipAngle: 10,
-                    },
-                  ]}
-                  slotProps={{
-                    legend: {
-                      direction: "column",
-                      position: {
-                        vertical: "middle",
-                        horizontal: "right",
-                      },
-                      padding: 8,
-                      itemMarkWidth: 12,
-                      itemMarkHeight: 12,
-                      markGap: 8,
-                      itemGap: 12,
-                      labelStyle: {
-                        fontSize: 13,
-                        fontWeight: 500,
-                        fill: theme.palette.text.secondary,
-                      },
-                    },
-                  }}
-                  height={350}
-                  margin={{ top: 10, bottom: 10, left: 10, right: 120 }}
+                <Typography
+                  variant="h6"
+                  component="h2"
+                  gutterBottom
                   sx={{
-                    [".MuiChartsLegend-root"]: {
-                      borderLeft: `1px solid ${theme.palette.divider}`,
-                      pl: 2,
-                    },
-                    [".MuiChartsLegend-mark"]: {
-                      borderRadius: "50%",
-                      rx: 0,
-                    },
+                    fontWeight: 600,
+                    mb: 2,
+                    color: theme.palette.text.primary,
                   }}
-                />
-              </Box>
-            ) : (
-              // <div style={{ width: "100%", height: 350 }}>
-              //   <PieChart
-              //     series={[
-              //       {
-              //         data: formatPieChartData(incomeData),
-              //         highlightScope: { faded: "global", highlighted: "item" },
-              //         faded: {
-              //           innerRadius: 30,
-              //           additionalRadius: -30,
-              //           color: "gray",
-              //         },
-              //       },
-              //     ]}
-              //     height={350}
-              //     margin={{ top: 0, bottom: 0, left: 0, right: 0 }}
-              //     slotProps={{
-              //       legend: {
-              //         direction: "row",
-              //         position: { vertical: "bottom", horizontal: "middle" },
-              //         itemMarkWidth: 20,
-              //         itemMarkHeight: 20,
-              //         markGap: 5,
-              //         itemGap: 15,
-              //       },
-              //     }}
-              //   />
-              // </div>
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  height: 200,
-                  color: theme.palette.text.secondary,
-                  bgcolor: theme.palette.background.default,
-                  borderRadius: 1,
-                }}
-              >
-                <Typography variant="body2">
-                  No income data available
+                >
+                  Income Distribution
                 </Typography>
-              </Box>
-            )}
-          </div>
+
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    position: "relative",
+                    height: 250,
+                  }}
+                >
+                  <PieChart
+                    series={[
+                      {
+                        data: formatPieChartData(incomeData),
+                        innerRadius: 60,
+                        outerRadius: 120,
+                        paddingAngle: 2,
+                        cornerRadius: 4,
+                        startAngle: -90,
+                        endAngle: 270,
+                        highlightScope: {
+                          faded: "global",
+                          highlighted: "item",
+                        },
+                        faded: {
+                          innerRadius: 50,
+                          additionalRadius: -20,
+                          color: "gray",
+                          opacity: 0.3,
+                        },
+                        arcLabelRadius: 0.7,
+                        arcLabelsSkipAngle: 10,
+                      },
+                    ]}
+                    slotProps={{
+                      legend: {
+                        direction: "column",
+                        position: {
+                          vertical: "middle",
+                          horizontal: "right",
+                        },
+                        padding: 8,
+                        itemMarkWidth: 12,
+                        itemMarkHeight: 12,
+                        markGap: 8,
+                        itemGap: 12,
+                        labelStyle: {
+                          fontSize: 13,
+                          fontWeight: 500,
+                          fill: theme.palette.text.secondary,
+                        },
+                      },
+                    }}
+                    height={350}
+                    margin={{ top: 10, bottom: 10, left: 10, right: 120 }}
+                    sx={{
+                      [".MuiChartsLegend-root"]: {
+                        borderLeft: `1px solid ${theme.palette.divider}`,
+                        pl: 2,
+                      },
+                      [".MuiChartsLegend-mark"]: {
+                        borderRadius: "50%",
+                        rx: 0,
+                      },
+                    }}
+                  />
+                </Box>
+              </Paper>
+            </div>
+          ) : (
+            <div className="flex justify-center items-center h-64 text-gray-500">
+              No Income Data
+            </div>
+          )}
         </div>
       </div>
-
-      {/* Financial Overview */}
-      <div></div>
     </div>
   );
 };

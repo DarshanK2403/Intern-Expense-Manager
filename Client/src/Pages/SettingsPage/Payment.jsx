@@ -30,23 +30,23 @@ const Payment = () => {
   // TYPE: id, name  setPaymentTypes
   // Payment: id, name, typeId, detail setPaymentMethods
 
+  const getPayment = async () => {
+    const res = await axios.get("/payment", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    console.log("Label", res.data);
+    setPaymentMethods(res.data.data); // label/payment title
+  };
+
+  const getPaymentType = async () => {
+    const res = await axios.get("/payment-type", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    setPaymentTypes(res.data.data);
+    console.log("Types", res.data);
+  };
+
   useEffect(() => {
-    const getPayment = async () => {
-      const res = await axios.get("/payment", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      console.log("Label", res.data);
-      setPaymentMethods(res.data.data); // label/payment title
-    };
-
-    const getPaymentType = async () => {
-      const res = await axios.get("/payment-type", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setPaymentTypes(res.data.data);
-      console.log("Types", res.data);
-    };
-
     getPayment();
     getPaymentType();
   }, []);
@@ -60,7 +60,8 @@ const Payment = () => {
       });
       console.log(res);
       toast.success("Successfully Added");
-      setShowForm(false)
+      setShowForm(false);
+      getPayment();
     } catch {
       toast.error("Internal server error");
     }
@@ -75,58 +76,58 @@ const Payment = () => {
       });
       console.log(res);
       toast.success("Successfully Added");
-      setShowTypeForm(false)
+      setShowTypeForm(false);
+      getPaymentType();
     } catch {
       toast.error("Somthing went wrong");
     }
   };
 
   const handleDeletePayment = async (id) => {
-    // if (
-    //   window.confirm("Are you sure you want to delete this payment method?")
-    // ) {
-    //   setIsLoading(true);
-    //   try {
-    //     // Replace with actual API call
-    //     // await fetch(`/api/payment-methods/${id}`, { method: 'DELETE' });
-    //     // Mock deletion
-    //     setPaymentMethods(paymentMethods.filter((method) => method._id !== id));
-    //     toast.success("Payment method deleted successfully");
-    //   } catch (error) {
-    //     toast.error("Failed to delete payment method");
-    //     console.error(error);
-    //   } finally {
-    //     setIsLoading(false);
-    //   }
-    // }
+    if (window.confirm("Are you sure you want to delete this payment label?")) {
+      setIsLoading(true);
+
+      try {
+        const res = await axios.delete(`/payment/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        toast.success(res.data.message || "Payment label deleted successfully");
+        getPayment();
+        // Remove the deleted item from local state
+      } catch (error) {
+        console.error("Delete payment label error:", error);
+        toast.error(
+          error.response?.data?.message || "Failed to delete payment label"
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    }
   };
 
   const handleDeletePaymentType = async (id) => {
-    // Check if any payment methods use this type
-    const methodsUsingType = paymentMethods.filter(
-      (method) => method.typeId === id || method.typeId?._id === id
-    );
-
-    if (methodsUsingType.length > 0) {
-      toast.error(
-        `Cannot delete this payment type because ${methodsUsingType.length} payment method(s) are using it`
-      );
-      return;
-    }
-
     if (window.confirm("Are you sure you want to delete this payment type?")) {
       setIsLoading(true);
 
       try {
-        // Replace with actual API call
-        // await fetch(`/api/payment-types/${id}`, { method: 'DELETE' });
+        const res = await axios.delete(`/payment-type/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-        // Mock deletion
-        setPaymentTypes(paymentTypes.filter((type) => type.id !== id));
-        toast.success("Payment type deleted successfully");
+        toast.success(res.data.message || "Payment type deleted successfully");
+        getPaymentType();
+
+        // Update local state to remove the deleted type
       } catch (error) {
-        toast.error("Failed to delete payment type");
-        console.error(error);
+        console.error("Delete payment type error:", error);
+        toast.error(
+          error.response?.data?.message || "Failed to delete payment type"
+        );
       } finally {
         setIsLoading(false);
       }
@@ -141,7 +142,7 @@ const Payment = () => {
 
   return (
     <div className="space-y-8 w-full max-w-7xl mx-auto my-6">
-      <ToastContainer autoClose={1500}/>
+      <ToastContainer autoClose={1500} />
       {/* Payment Methods Section */}
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -222,7 +223,7 @@ const Payment = () => {
                     )}
                   </div>
                   <button
-                    onClick={() => handleDeletePayment(method.id)}
+                    onClick={() => handleDeletePayment(method._id)}
                     className="text-red-500 hover:text-red-700 focus:outline-none"
                     aria-label="Delete payment method"
                   >
@@ -340,7 +341,7 @@ const Payment = () => {
                       </svg>
                     </button>
                     <button
-                      onClick={() => handleDeletePaymentType(type.id)}
+                      onClick={() => handleDeletePaymentType(type._id)}
                       className="text-red-500 hover:text-red-700 focus:outline-none"
                       aria-label="Delete payment type"
                     >

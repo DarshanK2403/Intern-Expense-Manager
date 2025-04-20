@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import MetricCard from "../../Components/MetricCard";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   PieChart,
   Pie,
@@ -29,67 +29,65 @@ import {
   Home,
   BarChart2,
   User,
+  IndianRupee,
+  TrendingDown,
 } from "lucide-react";
+import axios from "axios";
+import { toast, ToastContainer } from "react-toastify";
 
 const AdminPage = () => {
+  const token = localStorage.getItem("Token");
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [TotalUser, setTotaluser] = useState(0);
-  const [TotalExpense, setTotalExpense] = useState(0);
-  const [AvgExpense, setAvgExpense] = useState(0);
+  const [stats, setStats] = useState([]);
+  const [monthlyData, setmonthlyData] = useState([]);
+  const [topUser, setTopUser] = useState([]);
 
-  // Sample data for charts and metrics
-  const userData = [
-    {
-      id: 1,
-      name: "John Doe",
-      email: "john@example.com",
-      totalExpenses: 2450,
-      lastActive: "2 hours ago",
-    },
-    {
-      id: 2,
-      name: "Sarah Smith",
-      email: "sarah@example.com",
-      totalExpenses: 1890,
-      lastActive: "1 day ago",
-    },
-    {
-      id: 3,
-      name: "Mike Johnson",
-      email: "mike@example.com",
-      totalExpenses: 3200,
-      lastActive: "5 hours ago",
-    },
-    {
-      id: 4,
-      name: "Emily Davis",
-      email: "emily@example.com",
-      totalExpenses: 1540,
-      lastActive: "Just now",
-    },
-    {
-      id: 5,
-      name: "Robert Wilson",
-      email: "robert@example.com",
-      totalExpenses: 2780,
-      lastActive: "3 days ago",
-    },
-  ];
+  const getUserData = async () => {
+    try {
+      if (token) {
+        const res = await axios.get("admin/user-details", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setTotaluser(res.data.length);
+      } else {
+        toast.error("Not found User");
+      }
+    } catch (error) {
+      toast.error("Somthing goes wrong");
+    }
+  };
 
-  const monthlyExpenseData = [
-    { name: "Jan", value: 4000 },
-    { name: "Feb", value: 3000 },
-    { name: "Mar", value: 2000 },
-    { name: "Apr", value: 2780 },
-    { name: "May", value: 1890 },
-    { name: "Jun", value: 2390 },
-    { name: "Jul", value: 3490 },
-    { name: "Aug", value: 4000 },
-    { name: "Sep", value: 3200 },
-    { name: "Oct", value: 2500 },
-    { name: "Nov", value: 3700 },
-    { name: "Dec", value: 4500 },
-  ];
+  const getTotalExpenseorIncome = async () => {
+    try {
+      const res = await axios.get("/admin/get-total-expense-or-income");
+
+      console.log(res.data.monthlyData);
+      setmonthlyData(res.data.monthlyData);
+      setStats(res.data.stats);
+    } catch {
+      toast.error("Internal Server Error");
+    }
+  };
+
+  // Top User
+  const TopUser = async () => {
+    try {
+      const res = await axios.get("/admin/top-user");
+      console.log(res.data);
+      setTopUser(res.data);
+    } catch (error) {
+      toast.error("Somthing went wrong");
+    }
+  };
+
+  useEffect(() => {
+    getUserData();
+    getTotalExpenseorIncome();
+    TopUser();
+  }, []);
 
   const categoryData = [
     { name: "Food", value: 400 },
@@ -99,25 +97,12 @@ const AdminPage = () => {
     { name: "Utilities", value: 150 },
   ];
 
-  const userGrowthData = [
-    { name: "Jan", activeUsers: 40, newUsers: 24 },
-    { name: "Feb", activeUsers: 45, newUsers: 13 },
-    { name: "Mar", activeUsers: 58, newUsers: 22 },
-    { name: "Apr", activeUsers: 75, newUsers: 28 },
-    { name: "May", activeUsers: 90, newUsers: 15 },
-    { name: "Jun", activeUsers: 102, newUsers: 17 },
-  ];
-
   const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8"];
-
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <ToastContainer></ToastContainer>
       <div className="flex">
-     
         {/* Main Content */}
         <main
           className={`flex-1 p-6 ${
@@ -135,6 +120,7 @@ const AdminPage = () => {
 
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+            {/* Total User */}
             <div className="bg-white rounded-xl shadow-sm p-6 flex items-center border border-gray-100">
               <div className="p-3 rounded-full bg-blue-100 text-blue-600 mr-4">
                 <Users size={24} />
@@ -143,54 +129,63 @@ const AdminPage = () => {
                 <h3 className="text-sm font-medium text-gray-500">
                   Total Users
                 </h3>
-                <p className="text-2xl font-bold text-gray-800">143</p>
+                <p className="text-2xl font-bold text-gray-800">{TotalUser}</p>
                 <p className="text-xs text-green-600 mt-1">
                   ↑ 12% from last month
                 </p>
               </div>
             </div>
 
+            {/* Total Expense */}
             <div className="bg-white rounded-xl shadow-sm p-6 flex items-center border border-gray-100">
-              <div className="p-3 rounded-full bg-green-100 text-green-600 mr-4">
-                <DollarSign size={24} />
+              <div className="p-3 rounded-full bg-red-100 text-red-600 mr-4">
+                <TrendingUp size={24} />
               </div>
               <div>
                 <h3 className="text-sm font-medium text-gray-500">
                   Total Expenses
                 </h3>
-                <p className="text-2xl font-bold text-gray-800">$48,759</p>
+                <p className="text-2xl font-bold text-gray-800">
+                  {stats.currentExpense}
+                </p>
                 <p className="text-xs text-green-600 mt-1">
-                  ↑ 8% from last month
+                  {stats.expenseTrend} from last month
                 </p>
               </div>
             </div>
 
+            {/* Total Income */}
             <div className="bg-white rounded-xl shadow-sm p-6 flex items-center border border-gray-100">
-              <div className="p-3 rounded-full bg-purple-100 text-purple-600 mr-4">
-                <User size={24} />
+              <div className="p-3 rounded-full bg-green-100 text-green-600 mr-4">
+                <TrendingDown size={24} />
               </div>
               <div>
                 <h3 className="text-sm font-medium text-gray-500">
-                  Active Users
+                  Total Income
                 </h3>
-                <p className="text-2xl font-bold text-gray-800">102</p>
+                <p className="text-2xl font-bold text-gray-800">
+                  {stats.currentIncome}
+                </p>
                 <p className="text-xs text-green-600 mt-1">
-                  ↑ 5% from last month
+                  {stats.incomeTrend} from last month
                 </p>
               </div>
             </div>
 
+            {/* Avg Expense */}
             <div className="bg-white rounded-xl shadow-sm p-6 flex items-center border border-gray-100">
               <div className="p-3 rounded-full bg-yellow-100 text-yellow-600 mr-4">
-                <TrendingUp size={24} />
+                <DollarSign size={24} />
               </div>
               <div>
                 <h3 className="text-sm font-medium text-gray-500">
                   Avg. Expense
                 </h3>
-                <p className="text-2xl font-bold text-gray-800">$341</p>
+                <p className="text-2xl font-bold text-gray-800">
+                  {stats.averageExpense}
+                </p>
                 <p className="text-xs text-red-600 mt-1">
-                  ↓ 3% from last month
+                  {stats.avgExpenseTrend} from last month
                 </p>
               </div>
             </div>
@@ -198,26 +193,36 @@ const AdminPage = () => {
 
           {/* Charts Section */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            {/* Monthly Expense */}
             <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">
                 Monthly Expenses
               </h3>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={monthlyExpenseData}
-                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                  >
+              <div className="w-full h-96">
+                <ResponsiveContainer width="100%" height={400}>
+                  <BarChart data={monthlyData}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
+                    <XAxis dataKey="month" />
                     <YAxis />
                     <Tooltip />
-                    <Bar dataKey="value" fill="#4F46E5" />
+                    <Legend />
+                    <Bar
+                      dataKey="totalExpense"
+                      fill="#f87171"
+                      name="Total Expense"
+                    />
+                    {/* Use "totalIncome" with another bar if you want both */}
+                    <Bar
+                      dataKey="totalIncome"
+                      fill="#60a5fa"
+                      name="Total Income"
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
             </div>
 
+            {/* Expense Category */}
             <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">
                 Expense Categories
@@ -250,48 +255,14 @@ const AdminPage = () => {
               </div>
             </div>
           </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                User Growth
-              </h3>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart
-                    data={userGrowthData}
-                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Line
-                      type="monotone"
-                      dataKey="activeUsers"
-                      stroke="#4F46E5"
-                      strokeWidth={2}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="newUsers"
-                      stroke="#10B981"
-                      strokeWidth={2}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
+          
+          {/* Top User */}
+          <div className="grid grid-cols-1 lg:grid-cols-1 gap-6 mb-6">
             <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold text-gray-800">
                   Top Users
                 </h3>
-                <button className="text-sm text-blue-600 hover:text-blue-800">
-                  View All
-                </button>
               </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
@@ -313,13 +284,13 @@ const AdminPage = () => {
                         scope="col"
                         className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                       >
-                        Last Active
+                        Toal Income
                       </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {userData.map((user) => (
-                      <tr key={user.id}>
+                    {topUser.map((user) => (
+                      <tr key={user.userId}>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="flex-shrink-0 h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-800 font-medium">
@@ -336,13 +307,16 @@ const AdminPage = () => {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">
-                            ${user.totalExpenses}
+                          <div className="text-sm text-gray-600 flex items-center">
+                            <IndianRupee size={16} />
+                            {user.totalExpense}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-sm text-gray-500">
-                            {user.lastActive}
+                          <span className="text-sm text-gray-600 flex items-center">
+                            <IndianRupee size={16} />
+
+                            {user.totalIncome}
                           </span>
                         </td>
                       </tr>

@@ -8,12 +8,11 @@ const Navbar = () => {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
-  const { user, loading } = useContext(AuthContext);
+  const { user, loading, setUser } = useContext(AuthContext);
 
   const menuRef = useRef(null);
   const profileMenuRef = useRef(null);
 
-  
   // Close menus when clicking outside
   useEffect(() => {
     function handleClickOutside(event) {
@@ -41,9 +40,9 @@ const Navbar = () => {
   }, [location.pathname]);
 
   const handleLogout = () => {
-    // Show confirmation dialog
     if (window.confirm("Are you sure you want to logout?")) {
       localStorage.removeItem("Token");
+      setUser(null);
       navigate("/signin");
     }
   };
@@ -113,8 +112,12 @@ const Navbar = () => {
                 onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
                 className="flex items-center space-x-2 text-gray-700 hover:text-blue-600 focus:outline-none"
               >
-                <div className="bg-blue-100 text-blue-600 p-1 rounded-full">
-                  <User className="h-5 w-5" />
+                <div className="bg-blue-100 text-blue-600 p-1 rounded-full w-8 h-8 flex items-center justify-center">
+                  <img
+                    src={user.img}
+                    alt=""
+                    className="w-full h-full rounded-full object-cover"
+                  />
                 </div>
                 {user && (
                   <span className="text-sm font-medium">{user.firstName}</span>
@@ -126,7 +129,7 @@ const Navbar = () => {
               {isProfileMenuOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 border border-gray-200">
                   <Link
-                    to="/profile"
+                    to="/settings/profile"
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
                     My Profile
@@ -137,6 +140,17 @@ const Navbar = () => {
                   >
                     Settings
                   </Link>
+                  {user?.role?.name === "admin" ? (
+                    <Link
+                      to="/admin/dashboard"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Admin Dashboard
+                    </Link>
+                  ) : (
+                    " "
+                  )}
+
                   <div className="border-t border-gray-100 my-1"></div>
                   <button
                     onClick={handleLogout}

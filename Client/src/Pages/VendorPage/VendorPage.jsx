@@ -89,7 +89,7 @@ const VendorPage = () => {
                   <td className="px-6 py-4 whitespace-nowrap">{entry.phone}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                      {entry.category}
+                      {entry.category.category_name}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">

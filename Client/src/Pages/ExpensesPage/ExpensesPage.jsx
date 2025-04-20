@@ -278,8 +278,13 @@ const ExpensesPage = () => {
                           </span>
                         </div>
                       </TableCell>
-                      <TableCell>${item.amount}</TableCell>
-                      <TableCell>{item.category}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center">
+                          <IndianRupee size={16} />
+                          {item.amount}
+                        </div>
+                      </TableCell>
+                      <TableCell>{item.category.category_name}</TableCell>
                       <TableCell>
                         {format(new Date(item.expenseDate), "dd MMM yyyy")}
                       </TableCell>

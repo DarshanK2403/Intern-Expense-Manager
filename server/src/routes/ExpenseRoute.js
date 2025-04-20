@@ -1,12 +1,10 @@
 const express = require("express");
 const ExpenseController = require("../controllers/ExpenseController");
 const Expense = require("../models/ExpenseModel");
-const generateFakeExpenses = require("../utils/FakeTransactionGenerator");
+const generateFakeExpenses = require("../utils/FakeExpense");
 const authMiddleware = require("../middleware/authMiddleware");
 
 const router = express.Router();
-
-router.post("/fake-expense", ExpenseController.FakeExpense);
 
 // POST
 router.post("/add-expense",authMiddleware, ExpenseController.createExpense);

@@ -192,7 +192,7 @@ const DetailExpense = () => {
             <div className="border border-dashed rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center h-80 lg:h-96">
               {expenseData.receipt ? (
                 <img
-                  src={expenseData.receipt}
+                  src={expenseData.receipt?.cloudinaryUrl}
                   alt="Receipt"
                   className="max-w-full max-h-full object-contain"
                 />
@@ -244,7 +244,7 @@ const DetailExpense = () => {
                   <Tag className="h-4 w-4" />
                   Category
                 </p>
-                <p className="text-gray-900">{expenseData.category || "-"}</p>
+                <p className="text-gray-900">{expenseData.category.category_name || "-"}</p>
               </div>
 
               {/* Expense Date */}
@@ -275,7 +275,7 @@ const DetailExpense = () => {
                   Payment Through
                 </p>
                 <p className="text-gray-900">
-                  {expenseData.paymentThrough || "-"}
+                  {expenseData.paymentThrough.label || "-"}
                 </p>
               </div>
 

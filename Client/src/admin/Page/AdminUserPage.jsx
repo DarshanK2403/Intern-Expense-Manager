@@ -27,22 +27,27 @@ const AdminUserPage = () => {
     direction: null,
   });
 
-  useEffect(() => {
-    const id = localStorage.getItem("id");
-    const getTotalUserCount = async () => {
-      try {
-        if (id) {
-          const res = await axios.get("admin/user-details");
-          setUsersData(res.data);
-          setOriginal(res.data);
-        } else {
-          toast.error("Not found User");
-        }
-      } catch (error) {
-        toast.error("Somthing goes wrong");
+  const token = localStorage.getItem("Token");
+  const getUserData = async () => {
+    try {
+      if (token) {
+        const res = await axios.get("admin/user-details", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setUsersData(res.data);
+        setOriginal(res.data);
+      } else {
+        toast.error("Not found User");
       }
-    };
-    getTotalUserCount();
+    } catch (error) {
+      toast.error("Somthing goes wrong");
+    }
+  };
+
+  useEffect(() => {
+    getUserData();
   }, []);
 
   useEffect(() => {
@@ -103,23 +108,51 @@ const AdminUserPage = () => {
     setUsersData(sorted);
   };
 
-  const applyFilter = useCallback((term) => {
-    let filteredData = [...original];
-  
-    // Search Filter
-    if (term) {
-      filteredData = filteredData.filter(
-        (item) =>
-          item.email.toLowerCase().includes(term.toLowerCase()) ||
-          item.firstName.toLowerCase().includes(term.toLowerCase()) ||
-          item.lastName.toLowerCase().includes(term.toLowerCase())
-      );
-    }
-  
-    setUsersData(filteredData);
-  }, [original, setUsersData]);
+  const applyFilter = useCallback(
+    (term) => {
+      let filteredData = [...original];
 
-  
+      // Search Filter
+      if (term) {
+        filteredData = filteredData.filter(
+          (item) =>
+            item.email.toLowerCase().includes(term.toLowerCase()) ||
+            item.firstName.toLowerCase().includes(term.toLowerCase()) ||
+            item.lastName.toLowerCase().includes(term.toLowerCase())
+        );
+      }
+
+      setUsersData(filteredData);
+    },
+    [original, setUsersData]
+  );
+
+  // Add this function to your component
+  const toggleUserRole = async (userId, currentRole) => {
+    const newRole = currentRole === "admin" ? "user" : "admin";
+    window.confirm(
+      `Are you sure you want to change this user's role to ${newRole}?`
+    );
+    try {
+      const res = await axios.patch(
+        `/admin/users/${userId}/role`,
+        { roleName: newRole },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      toast.success("User role updated");
+      getUserData();
+      // You can refresh users list here if needed
+    } catch (error) {
+      console.error("Error updating role:", error);
+      toast.error("Failed to update role");
+    }
+  };
+
   return (
     <div className="p-4">
       {/* Totast Message Show */}
@@ -311,18 +344,18 @@ const AdminUserPage = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-800 font-medium overflow-hidden">
-                        {user.profileImg ? (
+                        {user?.profileImg ? (
                           <img src={user.profileImg} alt="" />
                         ) : (
-                          user.firstName.charAt(0)
+                          user?.firstName.charAt(0)
                         )}
                       </div>
                       <div className="ml-4">
                         <div className="text-sm font-medium text-gray-900">
-                          {user.firstName} {user.lastName}
+                          {user?.firstName} {user?.lastName}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {user.email}
+                          {user?.email}
                         </div>
                       </div>
                     </div>
@@ -370,14 +403,31 @@ const AdminUserPage = () => {
 
                   {/* Actions */}
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button className="text-indigo-600 hover:text-indigo-900 mr-3">
-                      Edit
-                    </button>
-                    <button className="text-gray-400 hover:text-gray-600">
-                      <MoreVertical size={16} />
-                    </button>
-                  </td>
+                    <div className="flex items-center justify-end space-x-3">
+                      {/* Role toggle button */}
+                      <button
+                        onClick={() => toggleUserRole(user._id, user.role.name)}
+                        className={`px-2 py-1 rounded text-xs font-medium ${
+                          user.role.name.toLowerCase() === "admin"
+                            ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
+                            : "bg-purple-100 text-purple-800 hover:bg-purple-200"
+                        }`}
+                      >
+                        Make{" "}
+                        {user.role.name.toLowerCase() === "admin"
+                          ? "User"
+                          : "Admin"}
+                      </button>
 
+                      {/* <button className="text-indigo-600 hover:text-indigo-900">
+                        Edit
+                      </button> */}
+
+                      <button className="text-gray-400 hover:text-gray-600">
+                        <MoreVertical size={16} />
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>

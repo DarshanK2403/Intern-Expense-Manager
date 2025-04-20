@@ -25,6 +25,8 @@ import UpdateVendor from "./Pages/VendorPage/UpdateVendor";
 import EditExpense from "./Pages/ExpensesPage/EditExpense";
 import EditIncome from "./Pages/IncomePage/EditIncome";
 import DetailIncome from "./Pages/IncomePage/DetailIncome";
+import SavedReport from "./Pages/ReportsPage/SavedReport";
+import ReportDetail from "./Pages/ReportsPage/ReportDetail";
 const Home = lazy(() => import("./common/Home"));
 const ReportLayout = lazy(() => import("./Layouts/ReportLayout"));
 const SettingLayout = lazy(() => import("./Layouts/SettingLayout"));
@@ -38,9 +40,9 @@ const IncomeLayout = lazy(() => import("./Layouts/IncomeLayout"));
 const IncomePage = lazy(() => import("./Pages/IncomePage/IncomePage"));
 const AdminPage = lazy(() => import("./admin/Page/AdminPage"));
 const AdminLayout = lazy(() => import("./admin/Layout/AdminLayout"));
-const AdminReportPage = lazy(() => import("./admin/Page/AdminReportPage"));
 const AdminUserPage = lazy(() => import("./admin/Page/AdminUserPage"));
 const AdminSettingPage = lazy(() => import("./admin/Page/AdminSettingPage"));
+
 function App() {
   axios.defaults.baseURL = "http://localhost:3000/";
   return (
@@ -95,14 +97,18 @@ function App() {
                 <Route path="account" element={<Account />} />
                 <Route path="payment" element={<Payment />} />
                 <Route path="currency" element={<Currency />} />
-                <Route path="profile/change-password" element={<ChangePassword />} />
+                <Route
+                  path="profile/change-password"
+                  element={<ChangePassword />}
+                />
               </Route>
               {/* Report Route */}
 
               <Route path="/reports" element={<ReportLayout />}>
-                <Route index element={<ReportsPage />} />
-                
-                
+                <Route index element={<Navigate to="generate" replace />} />
+                <Route path="generate" element={<ReportsPage />} />
+                <Route path="saved" element={<SavedReport />} />
+                <Route path="detail/:id" element={<ReportDetail />} />
               </Route>
 
               {/* Expense Route */}
@@ -111,16 +117,7 @@ function App() {
             <Route element={<AdminRoute />}>
               <Route path="/" element={<AdminLayout />}>
                 <Route index path="admin/dashboard" element={<AdminPage />} />
-                {/* <Route
-                  index
-                  path="admin/expenses"
-                  element={<AdminExpensePage />}
-                /> */}
-                <Route
-                  index
-                  path="admin/reports"
-                  element={<AdminReportPage />}
-                />
+
                 <Route index path="admin/users" element={<AdminUserPage />} />
 
                 <Route
