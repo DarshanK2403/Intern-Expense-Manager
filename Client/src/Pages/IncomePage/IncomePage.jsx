@@ -59,7 +59,7 @@ const IncomePage = () => {
         },
       });
       setIncomeData(res.data);
-      console.log(res.data);
+      // console.log(res.data);
     } catch (error) {
       toast.error("Failed to fetch income data");
     } finally {

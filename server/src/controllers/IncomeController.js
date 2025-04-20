@@ -1,105 +1,162 @@
 const Income = require("../models/IncomeModel");
+const multer = require("multer");
+const cloudinaryUtil = require("../utils/CloudinaryUtil");
+const { resolve } = require("path");
+const { rejects } = require("assert");
+
+const storage = multer.memoryStorage();
+const upload = multer({ storage }).single("receipt");
 
 const AddIncome = async (req, res) => {
   try {
+    await new Promise((resolve, reject) => {
+      upload(req, res, (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+
     const userId = req.user.id;
-    const { title, amount, incomeDate, category, notes, receipt } = req.body;
-    let errors = {};
-    if (!title) errors.title = { param: "title", message: "Title is required" };
-    if (!amount)
-      errors.amount = { param: "amount", message: "Amount is required" };
-    if (!incomeDate)
-      errors.incomeDate = {
-        param: "incomeDate",
-        message: "Income Date is required",
-      };
-    if (!category)
-      errors.category = { param: "category", message: "Select Category" };
-    if (Object.keys(errors).length > 0) {
-      return res.status(400).json({ errors });
+    const { title, amount, incomeDate, category, paymentThrough, notes } =
+      req.body;
+
+    if (!title || !amount || !incomeDate || !category || !paymentThrough) {
+      return res.status(400).json({ message: "Missing required fields" });
     }
-    const data = {
+
+    const IncomeData = {
       title,
-      amount,
-      incomeDate,
+      amount: parseFloat(amount),
+      incomeDate: new Date(incomeDate),
       category,
+      paymentThrough,
       notes,
-      receipt,
       userId,
     };
-    const IncomeResponse = (await Income.create(data));
-    res.status(200).json(IncomeResponse);
+
+    if (req.file) {
+      const cloudinaryResponse = await cloudinaryUtil.uploadFileToCloudinary(
+        req.file.buffer,
+        req.file.originalname
+      );
+
+      console.log("Cloudinary Response:", cloudinaryResponse);
+
+      if (cloudinaryResponse?.cloudinaryUrl) {
+        IncomeData.receipt = {
+          cloudinaryUrl: cloudinaryResponse.cloudinaryUrl,
+          originalName: cloudinaryResponse.originalName,
+          uniqueName: cloudinaryResponse.uniqueName,
+          fileType: cloudinaryResponse.fileType,
+        };
+      }
+    }
+
+    const newIncome = new Income(IncomeData);
+    await newIncome.save();
+
+    res.status(200).json(newIncome);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-const getIncomebyUserId = async(req, res) =>{
+const getIncomebyUserId = async (req, res) => {
   const userId = req.user.id;
   try {
-    const getincome = await Income.find({userId}).sort({incomeDate: -1}).populate("category");
-    if(getincome.length > 0){
+    const getincome = await Income.find({ userId })
+      .sort({ incomeDate: -1 })
+      .populate("category");
+    if (getincome.length > 0) {
       res.status(200).json(getincome);
-    }
-    else{
-      res.status(200).json("No Income Yet")
+    } else {
+      res.status(200).json("No Income Yet");
     }
   } catch (error) {
-    res.status(500).json({message: error.message})
+    res.status(500).json({ message: error.message });
   }
-}
+};
 
-const getIncomebyId = async(req, res) =>{
-  const {id} = req.params;
+const getIncomebyId = async (req, res) => {
+  const { id } = req.params;
   try {
     const getIncome = await Income.findById(id);
-    if(getIncome){
-      res.status(200).json(getIncome)
-    }
-    else{
+    if (getIncome) {
+      res.status(200).json(getIncome);
+    } else {
       res.status(200).json("Invalid ID");
     }
   } catch (error) {
-    res.status(500).json({message: error.message})
+    res.status(500).json({ message: error.message });
   }
-}
+};
 
-const EditIncomebyId = async(req, res) =>{
-  const {id} = req.params;
-  const {title, amount, incomeDate, category, notes} = req.body;
-
+const EditIncomebyId = async (req, res) => {
   try {
-    const editIncome = await Income.findByIdAndUpdate(
-      id,
-      {title, amount, incomeDate, category, notes},
-      {new: true}
-    );
-    if(editIncome){
-      res.status(200).json(editIncome);
-    }
-    else{
-      res.status(200).json("Invalid ID")
-    }
-  } catch (error) {
-    res.status(500).json({message: error.message})
-  }
-}
+    await new Promise((resolve, reject) => {
+      upload(req, res, (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
 
-const deleteIncomebyId = async (req, res) =>{
+    const { id } = req.params;
+    const { title, amount, incomeDate, category, paymentThrough, notes } = req.body;
+
+    let income = await Income.findById(id);
+    if (!income) {
+      return res.status(404).json({ message: "Income not found" });
+    }
+
+    income.title = title || income.title;
+    income.amount = amount ? parseFloat(amount) : income.amount;
+    income.incomeDate = incomeDate ? new Date(incomeDate) : income.incomeDate;
+    income.category = category || income.category;
+    income.paymentThrough = paymentThrough || income.paymentThrough;
+    income.notes = notes || income.notes;
+
+    if (req.file) {
+      if (income.receipt?.uniqueName) {
+        await cloudinaryUtil.deleteFileFromCloudinary(
+          income.receipt.uniqueName
+        );
+      }
+
+      const cloudinaryResponse = await cloudinaryUtil.uploadFileToCloudinary(
+        req.file.buffer,
+        req.file.originalname
+      );
+
+      if (cloudinaryResponse?.cloudinaryUrl) {
+        income.receipt = {
+          cloudinaryUrl: cloudinaryResponse.cloudinaryUrl,
+          originalName: cloudinaryResponse.originalName,
+          uniqueName: cloudinaryResponse.uniqueName,
+          fileType: cloudinaryResponse.fileType,
+        };
+      }
+    }
+
+    await income.save();
+    res.status(200).json({ message: "Income updated successfully", income });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+    console.log(error);
+  }
+};
+
+const deleteIncomebyId = async (req, res) => {
   try {
     const deleteIncome = await Income.findByIdAndDelete(req.params.id);
-    if(deleteIncome){
-      res.status(200).json({message: "Income Deleted"})
-    }
-    else{
-      res.status(200).json({message: "Somthing Wrong"})
+    if (deleteIncome) {
+      res.status(200).json({ message: "Income Deleted" });
+    } else {
+      res.status(200).json({ message: "Somthing Wrong" });
     }
   } catch (error) {
-    res.status(500).json({message: error.message})
+    res.status(500).json({ message: error.message });
   }
-}
-
-
+};
 
 module.exports = {
   AddIncome,

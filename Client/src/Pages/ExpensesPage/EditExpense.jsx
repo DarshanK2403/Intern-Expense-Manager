@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import {
   AiOutlineCalendar,
@@ -26,8 +26,8 @@ const EditExpense = () => {
   const [filePreview, setFilePreview] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [expenseCategories, setexpenseCategories] = useState();
-  const [vendorSuggestions, setvendorSuggestions] = useState([]);
+  const [expenseCategories, setExpenseCategories] = useState();
+  const [vendorSuggestions, setVendorSuggestions] = useState([]);
   const [PaymentType, setPaymentType] = useState([]);
 
   useEffect(() => {
@@ -58,23 +58,22 @@ const EditExpense = () => {
     }
   }, [token, id, setValue]);
 
-  const getPaymentType = async () => {
+  const getPaymentType = useCallback(async () => {
     try {
       const res = await axios.get("/payment", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      console.log(res.data.data);
       setPaymentType(res.data.data);
     } catch {
-      toast.error("Somthing went wrong");
+      toast.error("Something went wrong");
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     getPaymentType();
-  }, []);
+  }, [getPaymentType]);
 
   const handleFileChange = (event) => {
     const file = event.target.files[0] || null;
@@ -147,33 +146,38 @@ const EditExpense = () => {
     }
   };
 
-  const VendorSuggest = async () => {
-    const res = await axios.get(`/get-vendor`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    const vendor = res.data.map((data) => data.name);
-    setvendorSuggestions(vendor);
-  };
+  const VendorSuggest = useCallback(async () => {
+    try {
+      const res = await axios.get(`/get-vendor`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const vendor = res.data.map((data) => data.name);
+      setVendorSuggestions(vendor);
+    } catch (error) {
+      console.error("Error fetching vendor data:", error);
+    }
+  }, [token]);
+
+  const fetchExpenseCategories = useCallback(async () => {
+    try {
+      const res = await axios.get("/category?type=expense", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      setExpenseCategories(res.data.data);
+    } catch {
+      toast.error("Internal Server Error");
+    }
+  }, [token]);
 
   useEffect(() => {
-    const fetchExpenseCategories = async () => {
-      try {
-        const res = await axios.get(`/category?type=expense`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        setexpenseCategories(res.data.data);
-      } catch {
-        toast.error("Internal Server Error");
-      }
-    };
-
     fetchExpenseCategories();
     VendorSuggest();
-  }, [token]);
+  }, [fetchExpenseCategories, VendorSuggest]);
 
   const closeForm = () => {
     navigate("/expenses");

@@ -1,5 +1,5 @@
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import SelectInput from "../../Components/Select";
@@ -17,71 +17,121 @@ const EditIncome = () => {
   } = useForm();
   const [isUploading, setIsUploading] = useState(false);
   const [filePreview, setFilePreview] = useState(null);
-  const [fileType, setFileType] = useState(null);
   const { id } = useParams();
   const [incomeCategories, setincomeCategories] = useState();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [PaymentType, setPaymentType] = useState([]);
 
-  useEffect(() => {
-    const getIncome = async () => {
-      const res = await axios.get(`/get-income-by-id/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      setValue("title", res.data.title);
-      setValue("amount", res.data.amount);
-      setValue("incomeDate", res.data.incomeDate.split("T")[0]);
-      setValue("category", res.data.category);
-      setValue("notes", res.data.notes);
-    };
-    if (id) {
-      getIncome();
-    }
-  }, [id, setValue]);
-
-  const getIncomeCategory = async () => {
-    try {
-      const res = await axios.get(`/category?type=income`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      setincomeCategories(res.data.data);
-    } catch {
-      toast.error("Internal Server Error");
-    }
-  };
-
-  useEffect(() => {
-    if (token) getIncomeCategory();
-  }, [token]);
-
-  const onSubmit = async (data) => {
-    try {
-      const res = await axios.put(
-        `/edit-income/${id}`,
-        {
-          ...data,
-        },
-        {
+  const getIncome = useCallback(
+    async (callback) => {
+      try {
+        const res = await axios.get(`/get-income-by-id/${id}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
+        });
+
+        setValue("title", res.data.title);
+        setValue("amount", res.data.amount);
+        setValue("incomeDate", res.data.incomeDate.split("T")[0]);
+        setValue("category", res.data.category);
+        setValue("notes", res.data.notes);
+        setValue("receipt", res.data.receipt);
+        setFilePreview(res.data.receipt?.cloudinaryUrl);
+
+        if (callback) {
+          callback(res.data);
         }
-      );
-      if (res.status === 200) {
-        toast.success("Income Updated Successfully");
-        navigate("/income");
-      } else {
-        toast.error("Failed to update income");
+      } catch (error) {
+        console.error("Error fetching income:", error);
+        toast.error("Failed to fetch income data");
       }
+    },
+    [id, token, setValue]
+  );
+
+  const onSubmit = async (data) => {
+    const formData = new FormData();
+    formData.append("title", data.title);
+    formData.append("amount", data.amount);
+    formData.append("incomeDate", data.incomeDate);
+    formData.append("category", data.category);
+    formData.append("notes", data.notes);
+    if (data.receiptFile instanceof File) {
+      formData.append("receipt", data.receiptFile);
+      formData.append("fileOriginalName", data.receiptFile.name);
+      formData.append("fileType", data.receiptFile.type);
+    }
+    try {
+      setLoading(true);
+      const res = await axios.put(`/edit-income/${id}`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (res.data.file) {
+        const { cloudinaryUrl, originalName, uniqueName, fileType } =
+          res.data.file;
+        console.log("Uploaded file details:", {
+          cloudinaryUrl,
+          originalName,
+          uniqueName,
+          fileType,
+        });
+      }
+      toast.success("Income Updated Successfully");
+      navigate("/income");
     } catch {
       toast.error("Internal Server Error");
     }
+    setLoading(false);
   };
 
-  // Handle File Change
+  const getIncomeCategory = useCallback(
+    async (callback) => {
+      try {
+        const res = await axios.get(`/category?type=income`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        setincomeCategories(res.data.data);
+
+        if (callback) {
+          callback(res.data.data);
+        }
+      } catch {
+        toast.error("Internal Server Error");
+      }
+    },
+    [token]
+  );
+
+  const getPaymentType = useCallback(
+    async (callback) => {
+      try {
+        const res = await axios.get("/payment", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        setPaymentType(res.data.data);
+
+        if (callback) {
+          callback(res.data.data);
+        }
+      } catch {
+        toast.error("Something went wrong");
+      }
+    },
+    [token]
+  );
+
   const handleFileChange = (event) => {
     const file = event.target.files[0] || null;
     if (!file) return;
@@ -91,20 +141,22 @@ const EditIncome = () => {
     const fileURL = URL.createObjectURL(file);
     setFilePreview(fileURL);
 
-    if (file.type.startsWith("image/")) {
-      setFileType("image");
-    }
-
     setValue("receiptFile", file); // Store file for form submission
     setIsUploading(false);
   };
 
-  // Remove uploaded file
   const handleRemoveFile = () => {
     setFilePreview(null);
-    setFileType(null);
     setValue("receiptFile", null);
   };
+
+  useEffect(() => {
+    if (token && id) {
+      getIncome();
+      getIncomeCategory();
+      getPaymentType();
+    }
+  }, [token, id, getIncome, getIncomeCategory, getPaymentType]);
 
   return (
     <div className="max-w-7xl mx-auto py-6 bg-gray-50">
@@ -163,25 +215,11 @@ const EditIncome = () => {
                     >
                       <AiOutlineDelete className="text-lg" />
                     </button>
-                    {fileType === "image" ? (
-                      <img
-                        src={filePreview}
-                        alt="Uploaded receipt"
-                        className="max-w-full max-h-full object-contain rounded-md shadow-sm"
-                      />
-                    ) : fileType === "pdf" ? (
-                      <div className="w-full h-full">
-                        <iframe
-                          src={filePreview}
-                          className="w-full h-full rounded-md shadow-sm"
-                          title="Uploaded PDF"
-                        ></iframe>
-                      </div>
-                    ) : (
-                      <p className="text-gray-600 font-medium">
-                        Unsupported file type
-                      </p>
-                    )}
+                    <img
+                      src={filePreview}
+                      alt="Uploaded receipt"
+                      className="max-w-full max-h-full object-contain rounded-md shadow-sm"
+                    />
                   </div>
                 )}
               </div>
@@ -238,6 +276,18 @@ const EditIncome = () => {
                 </div>
               </div>
               <div className="flex flex-col">
+                <SelectInput
+                  id="paymentThrough"
+                  label="Payment Through"
+                  options={PaymentType}
+                  valueField="_id"
+                  keyField="_id"
+                  displayField="label"
+                  register={register}
+                  error={errors.paymentThrough?.message}
+                  validation={{ required: "Select one" }}
+                />
+
                 <Input
                   id={"notes"}
                   type="text"
@@ -246,11 +296,20 @@ const EditIncome = () => {
                   placeholder="Add notes here"
                 />
               </div>
-              <input
+              <button
                 type="submit"
-                className="bg-blue-600 py-2 px-4 rounded-lg my-2 text-white"
-                value="Save"
-              />
+                name="save"
+                className="w-full sm:flex-1 bg-blue-600 text-white py-2 sm:py-3 px-4 sm:px-6 rounded-md font-medium text-sm hover:bg-blue-700 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-sm"
+              >
+                {loading ? (
+                  <span className="flex items-center justify-center">
+                    <span className="animate-spin h-4 w-4 mr-2 border-b-2 border-white rounded-full"></span>
+                    Saving...
+                  </span>
+                ) : (
+                  "Save Changes"
+                )}
+              </button>
             </div>
           </div>
         </form>

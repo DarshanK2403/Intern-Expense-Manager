@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import Subnav from "../../Components/Subnav";
 import Input from "../../Components/Input";
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast, ToastContainer } from "react-toastify";
 import SelectInput from "../../Components/Select";
 import { useNavigate } from "react-router-dom";
@@ -22,10 +22,18 @@ const AddIncome = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [filePreview, setFilePreview] = useState(null);
   const [fileType, setFileType] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [PaymentType, setPaymentType] = useState([]);
 
   // On Submit
   const submitHandler = async (data) => {
-    // console.log(data);
+    console.log(data);
+
+    if (data.receiptFile && !(data.receiptFile instanceof File)) {
+      console.error("Invalid file format");
+      return;
+    }
+
     const formData = new FormData();
     formData.append("title", data.title);
     formData.append("amount", data.amount);
@@ -39,10 +47,12 @@ const AddIncome = () => {
     }
 
     try {
+      setLoading(true);
+
       const res = await axios.post(`/add-income`, formData, {
         headers: {
+          "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
         },
       });
 
@@ -56,12 +66,12 @@ const AddIncome = () => {
           fileType,
         });
       }
-      
-      // console.log(res);
-      navigate(-1);
+      console.log("Form Data Sent:", res.data);
+      navigate("/income");
     } catch (error) {
       console.log(error);
     }
+    setLoading(false);
   };
 
   // Handle File Change
@@ -89,26 +99,48 @@ const AddIncome = () => {
     setValue("receiptFile", null);
   };
 
-  // Get Income category
-  useEffect(() => {
-    const fetchIncomeCategories = async () => {
+  const getPaymentType = useCallback(
+    async (callback) => {
       try {
-        const res = await axios.get(`/category?type=income`, {
+        const res = await axios.get("/payment", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setPaymentType(res.data.data);
+        if (callback) callback(res.data.data);
+      } catch (error) {
+        toast.error("Something went wrong");
+      }
+    },
+    [token]
+  );
+
+  // ✅ Fetch Income Categories (with optional callback)
+  const fetchIncomeCategories = useCallback(
+    async (callback) => {
+      try {
+        const res = await axios.get("/category?type=income", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
         setincomeCategories(res.data.data);
-        // console.log(res.data.data);
+        if (callback) callback(res.data.data);
       } catch (error) {
         toast.error("Internal Server Error");
       }
-    };
+    },
+    [token]
+  );
+
+  // ✅ useEffect to call both safely
+  useEffect(() => {
     if (token) {
       fetchIncomeCategories();
+      getPaymentType();
     }
-  }, [token]);
-
+  }, [token, fetchIncomeCategories, getPaymentType]);
   return (
     <div className="max-w-7xl mx-auto py-6 bg-gray-50">
       <ToastContainer></ToastContainer>
@@ -166,25 +198,11 @@ const AddIncome = () => {
                     >
                       <AiOutlineDelete className="text-lg" />
                     </button>
-                    {fileType === "image" ? (
-                      <img
-                        src={filePreview}
-                        alt="Uploaded receipt"
-                        className="max-w-full max-h-full object-contain rounded-md shadow-sm"
-                      />
-                    ) : fileType === "pdf" ? (
-                      <div className="w-full h-full">
-                        <iframe
-                          src={filePreview}
-                          className="w-full h-full rounded-md shadow-sm"
-                          title="Uploaded PDF"
-                        ></iframe>
-                      </div>
-                    ) : (
-                      <p className="text-gray-600 font-medium">
-                        Unsupported file type
-                      </p>
-                    )}
+                    <img
+                      src={filePreview}
+                      alt="Uploaded receipt"
+                      className="max-w-full max-h-full object-contain rounded-md shadow-sm"
+                    />
                   </div>
                 )}
               </div>
@@ -241,6 +259,18 @@ const AddIncome = () => {
                 </div>
               </div>
               <div className="flex flex-col">
+                <SelectInput
+                  id="paymentThrough"
+                  label="Payment Through"
+                  options={PaymentType}
+                  valueField="_id"
+                  keyField="_id"
+                  displayField="label"
+                  register={register}
+                  error={errors.paymentThrough?.message}
+                  validation={{ required: "Select one" }}
+                />
+
                 <Input
                   id={"notes"}
                   type="text"
@@ -249,11 +279,20 @@ const AddIncome = () => {
                   placeholder="Add notes here"
                 />
               </div>
-              <input
+              <button
                 type="submit"
-                className="bg-blue-600 py-2 px-4 rounded-lg my-2 text-white"
-                value="Add Income"
-              />
+                name="save"
+                className="w-full sm:flex-1 bg-blue-600 text-white py-2 sm:py-3 px-4 sm:px-6 rounded-md font-medium text-sm hover:bg-blue-700 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-sm"
+              >
+                {loading ? (
+                  <span className="flex items-center justify-center">
+                    <span className="animate-spin h-4 w-4 mr-2 border-b-2 border-white rounded-full"></span>
+                    Adding...
+                  </span>
+                ) : (
+                  "Add Income"
+                )}
+              </button>
             </div>
           </div>
         </form>

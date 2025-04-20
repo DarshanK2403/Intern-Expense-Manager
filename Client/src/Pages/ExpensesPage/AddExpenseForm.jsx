@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import axios from "axios";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import {
   AiOutlineUpload,
@@ -31,8 +31,8 @@ const AddExpenseForm = () => {
   const navigate = useNavigate();
   const [isUploading, setIsUploading] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [expenseCategories, setexpenseCategories] = useState([]);
-  const [vendorSuggestions, setvendorSuggestions] = useState([]);
+  const [expenseCategories, setExpenseCategories] = useState([]);
+  const [vendorSuggestions, setVendorSuggestions] = useState([]);
   const [PaymentType, setPaymentType] = useState([]);
 
   // Handle File Change
@@ -128,7 +128,7 @@ const AddExpenseForm = () => {
   const saveandnew = () => {};
 
   // Expense Category
-  const fetchExpenseCategories = async () => {
+  const fetchExpenseCategories = useCallback(async () => {
     try {
       const res = await axios.get("/category?type=expense", {
         headers: {
@@ -136,47 +136,44 @@ const AddExpenseForm = () => {
         },
       });
 
-      setexpenseCategories(res.data.data);
-      console.log(res.data.data);
+      setExpenseCategories(res.data.data);
     } catch (error) {
       toast.error("Internal Server Error");
     }
-  };
+  }, [token]);
 
-  // GetPayment
-  const getPaymentType = async () => {
+  const getPaymentType = useCallback(async () => {
     try {
       const res = await axios.get("/payment", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      console.log(res.data.data);
       setPaymentType(res.data.data);
     } catch (error) {
-      toast.error("Somthing went wrong");
-    }
-  };
-
-  // Venodr Suggest
-  const VendorSuggest = async () => {
-    const res = await axios.get(`/get-vendor`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    const vendor = res.data.map((data) => data.name);
-    setvendorSuggestions(vendor);
-  };
-
-  useEffect(() => {
-    if (token) {
-      fetchExpenseCategories();
-      VendorSuggest();
-      getPaymentType();
+      toast.error("Something went wrong");
     }
   }, [token]);
 
+  const VendorSuggest = useCallback(async () => {
+    try {
+      const res = await axios.get(`/get-vendor`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const vendor = res.data.map((data) => data.name);
+      setVendorSuggestions(vendor);
+    } catch (error) {
+      console.error("Error fetching vendor data:", error);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    fetchExpenseCategories();
+    VendorSuggest();
+    getPaymentType();
+  }, [fetchExpenseCategories, VendorSuggest, getPaymentType]);
   return (
     <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-2 sm:py-4">
       <div className="bg-white rounded-lg shadow-md p-3 sm:p-6 border border-gray-100">

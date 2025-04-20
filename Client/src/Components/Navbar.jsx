@@ -112,7 +112,7 @@ const Navbar = () => {
                 onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
                 className="flex items-center space-x-2 text-gray-700 hover:text-blue-600 focus:outline-none"
               >
-                <div className="bg-blue-100 text-blue-600 p-1 rounded-full w-8 h-8 flex items-center justify-center">
+                <div className="bg-blue-100 text-blue-600 rounded-full w-8 h-8 flex items-center justify-center">
                   <img
                     src={user.img}
                     alt=""

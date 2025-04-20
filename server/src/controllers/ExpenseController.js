@@ -9,7 +9,6 @@ const upload = multer({ storage }).single("receipt");
 
 const createExpense = async (req, res) => {
   try {
-    // ✅ Ensure file upload completes before processing
     await new Promise((resolve, reject) => {
       upload(req, res, (err) => {
         if (err) reject(err);
@@ -44,7 +43,6 @@ const createExpense = async (req, res) => {
     };
 
     if (req.file) {
-      // ✅ Upload file to Cloudinary with correct parameters
       const cloudinaryResponse = await cloudinaryUtil.uploadFileToCloudinary(
         req.file.buffer,
         req.file.originalname
@@ -66,7 +64,6 @@ const createExpense = async (req, res) => {
     const newExpense = new ExpenseModel(expenseData);
     await newExpense.save();
 
-    // console.log("Saved Expense:", newExpense); // ✅ Full console log of saved expense
     res.status(201).json({
       message: "Expense added successfully",
       expense: newExpense,

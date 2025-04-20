@@ -25,6 +25,10 @@ const IncomeSchema = new Schema(
       required: true,
       ref: "Category",
     },
+    paymentThrough: {
+      type: mongoose.Schema.ObjectId,
+      ref: "Payment",
+    },
     notes: {
       type: String,
       trim: true,
