@@ -14,7 +14,6 @@ const CreateCategory = async (req, res) => {
       category_description,
     });
 
-
     if (existCategory) {
       return res.status(409).json({ message: "Already exists" });
     }
@@ -52,6 +51,70 @@ const GetCategory = async (req, res) => {
   }
 };
 
+const GetCategoryById = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { id } = req.params;
+
+    const category = await CategoryModel.findOne({
+      _id: id,
+      userId,
+    });
+
+    if (!category) {
+      return res.status(404).json({ message: "Category not found" });
+    }
+
+    res.status(200).json({ message: "Success", data: category });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const UpdateCategory = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { id } = req.params;
+    console.log(id);
+    const { category_name, category_description, category_type } = req.body;
+
+    // Check if the category exists
+    const existing = await CategoryModel.findOne({ _id: id, userId });
+
+    if (!existing) {
+      return res.status(404).json({ message: "Category not found" });
+    }
+
+    // for duplicate
+    const duplicate = await CategoryModel.findOne({
+      _id: { $ne: id },
+      userId,
+      category_type,
+      category_name,
+      category_description,
+    });
+
+    if (duplicate) {
+      return res.status(409).json({ message: "Category already exists" });
+    }
+
+    // Update
+    const updatedCategory = await CategoryModel.findByIdAndUpdate(
+      id,
+      {
+        category_name,
+        category_description,
+        category_type,
+      },
+      { new: true }
+    );
+
+    res.status(200).json({ message: "Updated", data: updatedCategory });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // Generic Delete Category
 const DeleteCategory = async (req, res) => {
   try {
@@ -68,5 +131,7 @@ const DeleteCategory = async (req, res) => {
 module.exports = {
   CreateCategory,
   GetCategory,
+  GetCategoryById,
+  UpdateCategory,
   DeleteCategory,
 };

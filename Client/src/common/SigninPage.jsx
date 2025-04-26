@@ -43,8 +43,6 @@ const SigninPage = () => {
         toast.error("Login Failed");
       }
     } catch (error) {
-      console.error("Sign in failed:", error);
-
       // Handle error response
       if (error.response) {
         setServerError(
@@ -70,7 +68,6 @@ const SigninPage = () => {
       headers: { Authorization: `Bearer ${token}` },
     });
     setUser(userRes.data);
-    console.log(userRes.data);
   };
   useEffect(() => {
     if (token) {

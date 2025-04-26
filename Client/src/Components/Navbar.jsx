@@ -114,7 +114,7 @@ const Navbar = () => {
               >
                 <div className="bg-blue-100 text-blue-600 rounded-full w-8 h-8 flex items-center justify-center">
                   <img
-                    src={user.img}
+                    src={user?.img || 'logo.png'}
                     alt=""
                     className="w-full h-full rounded-full object-cover"
                   />

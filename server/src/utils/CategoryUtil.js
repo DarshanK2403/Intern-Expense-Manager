@@ -104,7 +104,6 @@ const createDefaultCategoriesForUser = async (userId) => {
   }));
 
   await CategoryModel.insertMany(categoriesToInsert);
-  console.log(`✅ Default categories created for user: ${userId}`);
 };
 
 module.exports = { createDefaultCategoriesForUser };

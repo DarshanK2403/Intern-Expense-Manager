@@ -7,7 +7,7 @@ router.post("/add-vendor", authMiddleware, VendorController.AddVendor);
 
 router.get("/get-vendor", authMiddleware, VendorController.GetVendor);
 
-router.delete("/delete-vendor/:id", VendorController.DeleteVendor);
+router.delete("/delete-vendors",authMiddleware, VendorController.DeleteVendors);
 
 router.get("/get-vendor-by-id/:id", VendorController.GetVendorbyId);
 

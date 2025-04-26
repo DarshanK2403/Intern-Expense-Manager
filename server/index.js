@@ -57,6 +57,9 @@ app.use("/", PaymentRoute)
 const FakeRoute = require("./src/routes/FakeRoute")
 app.use('/', FakeRoute);
 
+const exportRoutes = require('./src/routes/ExportRoutes');
+app.use('/', exportRoutes);
+
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });

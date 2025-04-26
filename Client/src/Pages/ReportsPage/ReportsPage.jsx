@@ -126,11 +126,10 @@ const ReportPage = () => {
         },
         params: requestData,
       });
-      console.log("Res" ,res.data);
+      console.log(res.data);
       setData(res.data);
       setFormatedData(res.data.formatted);
       setincomeSourceData(res.data.incomeSources);
-      console.log(res.data.incomeSources)
       setcategoryExpenseData(res.data.expenseByCategory);
       setAllTransactions(res.data.transaction);
       setExpenseCategory(res.data.expenseByCategory.map((cat) => cat._id));
@@ -294,18 +293,66 @@ const ReportPage = () => {
     }));
   }, [formatedData, filters.type]);
 
-  const saveReport = async () =>{
+  const saveReport = async () => {
+    console.log("Save Data", data);
     try {
-      const res = await axios.post("/save-report", data,{
-        headers:{
-          Authorization: `Bearer ${token}`
-        }
-      })
+      const res = await axios.post("/save-report", data, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      // console.log(res)
       toast.success("Report Saved");
     } catch (error) {
-      toast("Report Save Failed")
+      toast("Report Save Failed");
     }
-  }
+  };
+
+  // Line Charts
+  const processedData = useMemo(() => {
+    return formatedData.map((item) => {
+      // For each period type, ensure we have a label field for the X axis
+      let label;
+      if (period === "week") {
+        // Use day of week when in weekly view
+        label = item.day || item.month; // Fallback to month if day not available
+      } else if (period === "month") {
+        // Use date number when in monthly view
+        label = item.date || item.month; // Fallback to month if date not available
+      } else {
+        // Use month name for yearly and custom views
+        label = item.month;
+      }
+
+      return {
+        label,
+        income: parseFloat(item.income || 0),
+        expense: parseFloat(item.expense || 0),
+      };
+    });
+  }, [formatedData, period]);
+
+  // Find min and max values for Y axis
+  const allValues = processedData.flatMap((item) => [
+    item.income,
+    item.expense,
+  ]);
+  const minValue = Math.min(...allValues);
+  const maxValue = Math.max(...allValues);
+
+  // Add padding to ensure values don't touch the edges
+  const padding = (maxValue - minValue) * 0.1;
+  const yAxisDomain = [Math.max(0, minValue - padding), maxValue + padding];
+
+  // Format currency values
+  const formatCurrency = (value) => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "INR",
+      minimumFractionDigits: 2,
+    }).format(value);
+  };
+
   return (
     <div className="w-full p-2 md:p-4 xl:p-6 min-h-screen bg-gray-50">
       <ToastContainer></ToastContainer>
@@ -406,11 +453,13 @@ const ReportPage = () => {
                 <span>Export</span>
               </button>
 
-              <button className="flex items-center justify-center gap-2 bg-green-100 hover:bg-green-200 text-green-700 font-medium px-4 py-2 rounded-md w-full sm:w-auto shadow-sm" onClick={saveReport}>
+              <button
+                className="flex items-center justify-center gap-2 bg-green-100 hover:bg-green-200 text-green-700 font-medium px-4 py-2 rounded-md w-full sm:w-auto shadow-sm"
+                onClick={saveReport}
+              >
                 <Save size={16} />
                 <span>Save</span>
               </button>
-
             </div>
           </div>
         </div>
@@ -544,6 +593,7 @@ const ReportPage = () => {
 
           {/* Summary Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-6">
+            {/* Total income */}
             <div className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
               <div className="flex justify-between items-start">
                 <div>
@@ -567,6 +617,7 @@ const ReportPage = () => {
               </div>
             </div>
 
+            {/* total expense */}
             <div className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
               <div className="flex justify-between items-start">
                 <div>
@@ -589,6 +640,7 @@ const ReportPage = () => {
               </div>
             </div>
 
+            {/* net balance */}
             <div className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
               <div className="flex justify-between items-start">
                 <div>
@@ -610,6 +662,7 @@ const ReportPage = () => {
               </div>
             </div>
 
+            {/* saving rate */}
             <div className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
               <div className="flex justify-between items-start">
                 <div>
@@ -654,49 +707,70 @@ const ReportPage = () => {
                     <SpinnerLoader size="large" color="blue" />
                   </div>
                 ) : (
-                  <div className="h-80">
+                  <div className="w-full h-64 md:h-80">
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart
-                        data={filteredChartData}
-                        margin={{ top: 10, right: 20, bottom: 10, left: 0 }}
+                        data={processedData}
+                        margin={{ top: 10, right: 30, left: 20, bottom: 10 }}
                       >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis
-                          dataKey={
-                            period === "week"
-                              ? "day"
-                              : period === "month"
-                              ? "date"
-                              : period === "year"
-                              ? "month"
-                              : "week"
-                          }
-                          tickFormatter={(value) =>
-                            period === "month"
-                              ? value.toString().padStart(2, "0")
-                              : value
-                          }
-                          tick={{ fontSize: 12 }}
-                        />
+                        <CartesianGrid strokeDasharray="3 3" stroke="#c8c8c8" />
+                        <XAxis dataKey="label" tick={{ fontSize: 12 }} />
                         <YAxis
+                          domain={yAxisDomain}
                           tick={{ fontSize: 12 }}
-                          domain={["auto", "auto"]} // Dynamically adjusts min/max
-                          allowDataOverflow={false} // Prevents drawing outside area
+                          tickFormatter={(value) =>
+                            formatCurrency(value).replace(".00", "")
+                          }
+                          width={80}
                         />
-                        <Tooltip />
-                        <Legend wrapperStyle={{ fontSize: "12px" }} />
+                        <Tooltip
+                          content={({ active, payload, label }) => {
+                            if (active && payload && payload.length) {
+                              return (
+                                <div className="bg-white p-3 border border-gray-200 rounded shadow-md">
+                                  <p className="text-gray-600 font-medium mb-1">
+                                    {label}
+                                  </p>
+                                  {payload.map((entry, index) => (
+                                    <p
+                                      key={`item-${index}`}
+                                      style={{
+                                        color:
+                                          entry.name === "Income"
+                                            ? "#4ade80"
+                                            : "#f87171",
+                                      }}
+                                      className="text-sm font-medium"
+                                    >
+                                      {entry.name}:{" "}
+                                      {formatCurrency(entry.value)}
+                                    </p>
+                                  ))}
+                                </div>
+                              );
+                            }
+                            return null;
+                          }}
+                        />
+
+                        <Legend wrapperStyle={{ paddingTop: 10 }} />
                         <Line
                           type="monotone"
                           dataKey="income"
-                          stroke="#3b82f6"
-                          activeDot={{ r: 8 }}
+                          stroke="#4ade80"
                           strokeWidth={2}
+                          dot={{ r: 4 }}
+                          activeDot={{ r: 6 }}
+                          name="Income"
                         />
                         <Line
                           type="monotone"
                           dataKey="expense"
-                          stroke="#ef4444"
+                          stroke="#f87171"
                           strokeWidth={2}
+                          dot={{ r: 4 }}
+                          activeDot={{ r: 6 }}
+                          name="Expense"
                         />
                       </LineChart>
                     </ResponsiveContainer>

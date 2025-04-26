@@ -4,6 +4,7 @@ import axios from "axios";
 import {
   ArrowDownLeft,
   ArrowUpRight,
+  Briefcase,
   ChevronRight,
   CreditCard,
   DollarSign,
@@ -104,7 +105,7 @@ const Dashboard = () => {
           },
         });
         setExpenseData(res.data);
-        console.log(res.data);
+        // console.log(res.data);
       } catch (error) {
         toast.error("Internal Server Error");
       }
@@ -117,7 +118,7 @@ const Dashboard = () => {
             Authorization: `Bearer ${token}`,
           },
         });
-        console.log(res.data);
+        // console.log(res.data);
         setIncomeData(res.data);
       } catch (error) {
         toast.error("Internal Server Error");
@@ -153,13 +154,13 @@ const Dashboard = () => {
       color: chartColors[index % chartColors.length],
     }));
   };
-  
+
   return (
-    <div className="p-4 h-full">
+    <div className="p-4 h-auto">
       <ToastContainer></ToastContainer>
-      <div className="flex space-x-6">
+      <div className="space-x-6 space-y-6">
         {/* Financial Metrics - Horizontal Layout */}
-        <div className="flex space-x-6 flex-grow">
+        <div className="flex space-x-6 flex-grow mx-auto">
           <MetricCard
             icon={<TrendingUp className="h-6 w-6 text-green-600" />}
             title="Total Income"
@@ -177,8 +178,8 @@ const Dashboard = () => {
             textColor="text-red-600"
           />
           <MetricCard
-            icon={<DollarSign className="h-6 w-6 text-blue-600" />}
-            title="Current Balance"
+            icon={<IndianRupee className="h-6 w-6 text-blue-600" />}
+            title="Net Balance"
             value={currentBalance}
             description="Net income - expenses"
             bgColor="bg-blue-100"
@@ -187,7 +188,24 @@ const Dashboard = () => {
         </div>
 
         {/* Quick Actions - Vertical Layout */}
-        <div className="w-72 flex flex-col space-y-4">
+        <div className="w-full flex flex-row space-x-4">
+          {/* Add Income */}
+          <Link
+            to="/income/add"
+            className="w-full flex items-center justify-between p-4 bg-white rounded-lg shadow hover:bg-gray-50 transition-colors"
+          >
+            <div className="flex items-center">
+              <PlusCircle className="h-5 w-5 mr-2 text-green-600" />
+              <div>
+                <p className={`font-medium text-start  text-green-600`}>
+                  Add Income
+                </p>
+                <p className="text-xs text-gray-500">Record a new income</p>
+              </div>
+            </div>
+            <ArrowUpRight className="h-5 w-5 text-gray-400" />
+          </Link>
+
           {/* Add Expense */}
           <Link
             to="/expenses/add"
@@ -205,20 +223,35 @@ const Dashboard = () => {
             <ArrowUpRight className="h-5 w-5 text-gray-400" />
           </Link>
 
-          {/* Add Income */}
+          {/* Add Vendor */}
           <Link
-            to="/income/add"
+            to="/vendor/add"
             className="w-full flex items-center justify-between p-4 bg-white rounded-lg shadow hover:bg-gray-50 transition-colors"
           >
             <div className="flex items-center">
-              <PlusCircle className="h-5 w-5 mr-2 text-green-600" />
+              <Briefcase className="h-5 w-5 mr-2 text-blue-600" />
               <div>
-                <p className={`font-medium text-start  text-green-600`}>
-                  Add Income
+                <p className={`font-medium text-start  text-blue-600`}>
+                  Add Vendor
                 </p>
-                <p className="text-xs text-gray-500">
-                  Record a new income source
+                <p className="text-xs text-gray-500">Add a new vendor</p>
+              </div>
+            </div>
+            <ArrowUpRight className="h-5 w-5 text-gray-400" />
+          </Link>
+
+          {/* Report Genarte */}
+          <Link
+            to="/reports/generate"
+            className="w-full flex items-center justify-between p-4 bg-white rounded-lg shadow hover:bg-gray-50 transition-colors"
+          >
+            <div className="flex items-center">
+              <FileText className="h-5 w-5 mr-2 text-purple-600" />
+              <div>
+                <p className={`font-medium text-start  text-purple-600`}>
+                  Generate your financial report
                 </p>
+                <p className="text-xs text-gray-500">Generate Report</p>
               </div>
             </div>
             <ArrowUpRight className="h-5 w-5 text-gray-400" />
@@ -365,7 +398,7 @@ const Dashboard = () => {
       </div>
 
       {/* Expense by Category */}
-      <div className="mt-6 p-6 bg-white shadow-md rounded-lg border h-[50%] border-gray-300">
+      <div className="my-6 p-6 bg-white shadow-md rounded-lg border h-[50%] border-gray-300">
         <div className="py-2">
           <h2 className="text-lg font-semibold">
             Category-wise Financial Overview

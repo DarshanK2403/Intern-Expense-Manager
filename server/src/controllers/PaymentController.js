@@ -111,10 +111,12 @@ const CreatePayment = async (req, res) => {
 const GetPayment = async (req, res) => {
   try {
     const userId = req.user.id;
+    if (!userId) return res.status(400).json({ message: "User ID is missing" });
 
     const payments = await PaymentModel.find({ userId })
       .populate("paymentTypeId")
-      .sort({ label: 1 });
+      .sort({ label: 1 })
+      .lean();
 
     return res.status(200).json({
       message: "Payment labels fetched successfully.",
@@ -129,7 +131,7 @@ const GetPayment = async (req, res) => {
 const DeletePayment = async (req, res) => {
   try {
     const userId = req.user.id;
-    const id  = req.params.id;
+    const id = req.params.id;
 
     if (!id) {
       return res.status(400).json({ message: "Payment ID is required." });

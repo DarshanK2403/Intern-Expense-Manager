@@ -327,17 +327,31 @@ const saveReport = async (req, res) => {
     // 🔁 Convert category names to ObjectIds
     const updatedExpenseByCategory = await Promise.all(
       expenseByCategory.map(async (item) => {
-        const category = await CategoryModel.findOne({ name: item._id }); // _id is name in req.body
+        const category = await CategoryModel.findOne({ name: item._id });
         return {
-          _id: category ? category._id : null, // fallback if not found
+          _id: category ? category._id : null,
           totalAmount: item.totalAmount,
           count: item.count,
         };
       })
     );
 
-    // Optionally filter out null categories
     const filteredExpenseByCategory = updatedExpenseByCategory.filter(
+      (item) => item._id
+    );
+
+    // 🔁 Convert income source names to ObjectIds
+    const updatedIncomeSources = await Promise.all(
+      incomeSources.map(async (item) => {
+        const source = await Income.findOne({ name: item._id });
+        return {
+          _id: source ? source._id : null,
+          value: item.value,
+        };
+      })
+    );
+
+    const filteredIncomeSources = updatedIncomeSources.filter(
       (item) => item._id
     );
 
@@ -355,8 +369,8 @@ const saveReport = async (req, res) => {
       type,
       offset,
       formatted,
-      incomeSources,
-      expenseByCategory: filteredExpenseByCategory, // ✅ Safe version
+      incomeSources: filteredIncomeSources, // ✅ Fixed
+      expenseByCategory: filteredExpenseByCategory,
       transaction,
     });
 

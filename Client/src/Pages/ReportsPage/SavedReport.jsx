@@ -9,24 +9,23 @@ const SavedReport = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const fetchSavedReports = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get("/saved-report", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setReports(response.data);
+      setLoading(false);
+    } catch (err) {
+      setError("Failed to load saved reports");
+      setLoading(false);
+      console.error("Error fetching saved reports:", err);
+    }
+  };
   useEffect(() => {
-    const fetchSavedReports = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.get("/saved-report", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        setReports(response.data);
-        setLoading(false);
-      } catch (err) {
-        setError("Failed to load saved reports");
-        setLoading(false);
-        console.error("Error fetching saved reports:", err);
-      }
-    };
-
     fetchSavedReports();
   }, []);
 
@@ -55,6 +54,7 @@ const SavedReport = () => {
         }
       });
       toast.success('Report Deleted',);
+      fetchSavedReports();
     } catch {
       toast.error('Internal Server Error');
     }

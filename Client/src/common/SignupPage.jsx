@@ -25,7 +25,6 @@ const SignupPage = () => {
     setLoading(true);
     try {
       const response = await axios.post("/signup", data);
-      console.log(response.data);
       setLoading(false);
     } catch (error) {
       if (error.response && error.response.data.errors) {

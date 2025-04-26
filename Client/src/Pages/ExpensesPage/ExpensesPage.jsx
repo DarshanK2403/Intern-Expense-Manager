@@ -44,8 +44,8 @@ const ExpensesPage = () => {
   const [expenses, setExpenses] = useState([]);
   const { searchValue } = useOutletContext();
   const [selected, setSelected] = useState([]);
-
-  // Pagination states
+  const [order, setOrder] = useState("desc");
+  const [orderBy, setOrderBy] = useState("expenseDate");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5); // default 5 per page
 
@@ -173,8 +173,6 @@ const ExpensesPage = () => {
     setPage(0);
   };
 
-  const [order, setOrder] = useState("desc");
-  const [orderBy, setOrderBy] = useState("expenseDate");
 
   // Hanlde Sort
   const handleSort = (property) => {
@@ -191,7 +189,7 @@ const ExpensesPage = () => {
   const filteredExpenses = expenses.filter(
     (item) =>
       item.title.toLowerCase().includes(lowerSearch) ||
-      item.category.toLowerCase().includes(lowerSearch) ||
+      item.category.category_name.toLowerCase().includes(lowerSearch) ||
       item.amount.toString().includes(lowerSearch)
   );
 

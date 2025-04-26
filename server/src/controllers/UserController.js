@@ -6,6 +6,7 @@ const jwt = require("jsonwebtoken");
 const multer = require("multer");
 const { resolve } = require("path");
 const { rejects } = require("assert");
+const PaymentUtil = require("../utils/PaymentUtil.js");
 
 // Configure multer to store the file in memory
 const storage = multer.memoryStorage();
@@ -73,6 +74,8 @@ const Signup = async (req, res) => {
       role: "67c1d766244df2991d6959b0",
     });
 
+    await PaymentUtil.createDefaultPaymentsForUser(newUser._id);
+    
     await CategoryUtil.createDefaultCategoriesForUser(newUser._id);
 
     const htmlContent = `

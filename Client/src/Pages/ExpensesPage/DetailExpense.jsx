@@ -22,6 +22,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 
 const DetailExpense = () => {
+  const token = localStorage.getItem("Token");
   const { id } = useParams();
   const [expenseData, setExpenseData] = useState({});
   const [isLoading, setIsLoading] = useState(true);
@@ -90,6 +91,42 @@ const DetailExpense = () => {
     );
   }
 
+  const ExportAsPDF = async () => {
+    const preload = [
+      {
+        title: expenseData.title,
+        category: expenseData.category?.category_name,
+        paymentThrough: expenseData.paymentThrough?.label,
+        amount: expenseData.amount,
+        vendor: expenseData.vendor,
+        date: expenseData.expenseDate,
+        description: expenseData.description,
+      },
+    ];
+    console.log("Preload", preload)
+
+    try {
+      const res = await axios.post("/export/expenses", preload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        responseType: "blob",
+      });
+
+      // Trigger download
+      const blob = new Blob([res.data], { type: "application/pdf" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "expense-report.pdf";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      toast.warn("Failed to export PDF");
+      console.log(error);
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       <ToastContainer position="top-right" autoClose={3000} />
@@ -112,8 +149,10 @@ const DetailExpense = () => {
               </h1>
               <p className="text-sm text-gray-500">
                 Created on{" "}
-                {format(new Date(expenseData.createdAt), "dd MMM yyyy, hh:mm a") || "-"}
-                
+                {format(
+                  new Date(expenseData.createdAt),
+                  "dd MMM yyyy, hh:mm a"
+                ) || "-"}
               </p>
             </div>
           </div>
@@ -150,7 +189,10 @@ const DetailExpense = () => {
                       </button>
                     </li>
                     <li className="px-1">
-                      <button className="w-full flex items-center gap-2 rounded-md text-left px-3 py-2 text-gray-700 hover:bg-gray-50 transition-colors">
+                      <button
+                        className="w-full flex items-center gap-2 rounded-md text-left px-3 py-2 text-gray-700 hover:bg-gray-50 transition-colors"
+                        onClick={() => ExportAsPDF()}
+                      >
                         <Download className="h-4 w-4 text-gray-500" />
                         <span>Download PDF</span>
                       </button>
@@ -244,7 +286,9 @@ const DetailExpense = () => {
                   <Tag className="h-4 w-4" />
                   Category
                 </p>
-                <p className="text-gray-900">{expenseData.category.category_name || "-"}</p>
+                <p className="text-gray-900">
+                  {expenseData.category.category_name || "-"}
+                </p>
               </div>
 
               {/* Expense Date */}
@@ -286,7 +330,11 @@ const DetailExpense = () => {
                 </p>
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <p className="text-gray-800 whitespace-pre-line">
-                    {expenseData.description || <span className="text-gray-600">No description provided.</span>}
+                    {expenseData.description || (
+                      <span className="text-gray-600">
+                        No description provided.
+                      </span>
+                    )}
                   </p>
                 </div>
               </div>

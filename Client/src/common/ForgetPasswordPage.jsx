@@ -100,7 +100,7 @@ const ForgetPasswordPage = () => {
                 {/* Email Input */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email Address
+                    Email
                   </label>
                   <input
                     type="email"

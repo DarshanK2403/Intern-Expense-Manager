@@ -12,12 +12,10 @@ const AddVendor = async (req, res) => {
       return res.status(400).json({ message: "Vendor alredy exist" });
     }
     const data = {
-        ...req.body,
-        userId,
-    }
-    const createVendor = await Vendor.create(
-      data
-    );
+      ...req.body,
+      userId,
+    };
+    const createVendor = await Vendor.create(data);
     res.status(200).json(createVendor);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -34,14 +32,25 @@ const GetVendor = async (req, res) => {
   }
 };
 
-const DeleteVendor = async (req, res) => {
-  const { id } = req.params;
+const DeleteVendors = async (req, res) => {
+  const { ids } = req.body; // Expecting an array of vendor IDs
   try {
-    const vendor = await Vendor.findByIdAndDelete(id);
-    if (!vendor) {
-      return res.status(404).json({ message: "Vendor not found" });
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ message: "No vendor IDs provided" });
     }
-    res.status(200).json({ message: "Vendor deleted successfully" });
+
+    const result = await Vendor.deleteMany({ _id: { $in: ids } });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ message: "No vendors were deleted" });
+    }
+
+    res
+      .status(200)
+      .json({
+        message: "Vendors deleted successfully",
+        deletedCount: result.deletedCount,
+      });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -61,7 +70,7 @@ const UpdateVendor = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
-}
+};
 
 const GetVendorbyId = async (req, res) => {
   const { id } = req.params;
@@ -70,16 +79,24 @@ const GetVendorbyId = async (req, res) => {
     if (!vendor) {
       return res.status(404).json({ message: "Vendor not found" });
     }
-    res.status(200).json({name: vendor.name, email:vendor.email, phone:vendor.phone, category:vendor.category, notes: vendor.notes});
+    res
+      .status(200)
+      .json({
+        name: vendor.name,
+        email: vendor.email,
+        phone: vendor.phone,
+        category: vendor.category,
+        notes: vendor.notes,
+      });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
-}
+};
 
 module.exports = {
   AddVendor,
   GetVendor,
   GetVendorbyId,
-  DeleteVendor,
+  DeleteVendors,
   UpdateVendor,
 };

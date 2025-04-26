@@ -29,26 +29,26 @@ const reportSchema = new mongoose.Schema({
   ],
   incomeSources: [
     {
-      _id: { type: mongoose.Schema.Types.ObjectId, ref: "IncomeSource" },
+      _id: { type: mongoose.Schema.ObjectId, ref: "IncomeSource" },
       value: { type: Number },
     },
   ],
   expenseByCategory: [
     {
-      _id: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
+      _id: { type: mongoose.Schema.ObjectId, ref: "Category" },
       value: { type: Number },
     },
   ],
   transaction: [
     {
-      _id: { type: mongoose.Schema.Types.ObjectId, ref: "Transaction" },
+      _id: { type: mongoose.Schema.ObjectId, ref: "Transaction" },
       title: { type: String },
       description: { type: String },
       amount: { type: Number },
       expenseDate: { type: Date },
       incomeDate: { type: Date },
-      category: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
-      paymentThrough: { type: mongoose.Schema.Types.ObjectId, ref: "PaymentMethod" },
+      category: { type: mongoose.Schema.ObjectId, ref: "Category" },
+      paymentThrough: { type: mongoose.Schema.ObjectId, ref: "PaymentMethod" },
       vendor: { type: String },
     },
   ],

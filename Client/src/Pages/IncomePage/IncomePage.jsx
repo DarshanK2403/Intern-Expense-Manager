@@ -169,7 +169,7 @@ const filteredIncomes = Array.isArray(incomeData)
   ? incomeData.filter(
       (item) =>
         item.title.toLowerCase().includes(lowerSearch) ||
-        item.category.toLowerCase().includes(lowerSearch) ||
+        item.category.category_name.toLowerCase().includes(lowerSearch) ||
         item.amount.toString().includes(lowerSearch)
     )
   : [];
