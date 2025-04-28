@@ -3,9 +3,10 @@ const multer = require("multer");
 const cloudinaryUtil = require("../utils/CloudinaryUtil");
 const { resolve } = require("path");
 const { rejects } = require("assert");
-
+const logActivity = require("../utils/logActivity");
 const storage = multer.memoryStorage();
 const upload = multer({ storage }).single("receipt");
+const CategoryModel = require("../models/Category");
 
 const createExpense = async (req, res) => {
   try {
@@ -64,6 +65,14 @@ const createExpense = async (req, res) => {
     const newExpense = new ExpenseModel(expenseData);
     await newExpense.save();
 
+    const cat = await newExpense.populate("category");
+
+    await logActivity(
+      userId,
+      "CREATE_EXPENSE",
+      `Created an expense of ₹${amount} under '${cat.category.category_name}'`
+    );
+
     res.status(201).json({
       message: "Expense added successfully",
       expense: newExpense,
@@ -106,15 +115,32 @@ const getExpenseDetailbyId = async (req, res) => {
 };
 
 const deleteExpensebyId = async (req, res) => {
-  // const userId = req.user.id
+  const userId = req.user.id;
   const expenseId = req.params.id;
+
   try {
-    const deleteExpense = await ExpenseModel.findByIdAndDelete(expenseId);
-    if (deleteExpense) {
-      res.status(200).json({ message: "Expense Deleted" });
-    } else {
-      res.status(200).json({ message: "Somthing Wrong" });
+    const deleteExpense = await ExpenseModel.findOneAndDelete({
+      _id: expenseId,
+      userId: userId,
+    });
+
+    if (!deleteExpense) {
+      return res
+        .status(404)
+        .json({ message: "Expense not found or not authorized" });
     }
+
+    const cat = await CategoryModel.findById(deleteExpense.category);
+
+    await logActivity(
+      userId,
+      "DELETE_EXPENSE",
+      `Deleted an expense of ₹${deleteExpense.amount} under '${
+        cat?.category_name || "Unknown Category"
+      }'`
+    );
+
+    res.status(200).json({ message: "Expense Deleted", deleteExpense });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -130,6 +156,7 @@ const UpdateExpensebyId = async (req, res) => {
       });
     });
 
+    const userId = req.user.id;
     const {
       title,
       amount,
@@ -150,7 +177,6 @@ const UpdateExpensebyId = async (req, res) => {
       return res.status(404).json({ message: "Expense not found" });
     }
 
-    // ✅ Update expense data
     expense.title = title || expense.title;
     expense.amount = amount ? parseFloat(amount) : expense.amount;
     expense.description = description || expense.description;
@@ -187,6 +213,15 @@ const UpdateExpensebyId = async (req, res) => {
 
     await expense.save();
 
+    const cat = await CategoryModel.findById(expense.category);
+    await logActivity(
+      userId,
+      "UPDATE_EXPENSE",
+      `Updated an expense of ₹${expense.amount} under '${
+        cat?.category_name || "Unknown Category"
+      }'`
+    );
+
     // console.log("Updated Expense:", expense); // ✅ Log full updated data
     res.status(200).json({ message: "Expense updated successfully", expense });
   } catch (error) {
@@ -194,7 +229,6 @@ const UpdateExpensebyId = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
 
 module.exports = {
   createExpense,

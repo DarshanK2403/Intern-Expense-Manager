@@ -3,9 +3,10 @@ const multer = require("multer");
 const cloudinaryUtil = require("../utils/CloudinaryUtil");
 const { resolve } = require("path");
 const { rejects } = require("assert");
-
+const logActivity = require("../utils/logActivity");
 const storage = multer.memoryStorage();
 const upload = multer({ storage }).single("receipt");
+const CategoryModel = require("../models/Category");
 
 const AddIncome = async (req, res) => {
   try {
@@ -55,6 +56,14 @@ const AddIncome = async (req, res) => {
     const newIncome = new Income(IncomeData);
     await newIncome.save();
 
+    const cat = await newIncome.populate("category");
+
+    await logActivity(
+      userId,
+      "CREATE_INCOME",
+      `Created an expense of ₹${amount} under '${cat.category.category_name}'`
+    );
+
     res.status(200).json(newIncome);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -99,9 +108,10 @@ const EditIncomebyId = async (req, res) => {
         else resolve();
       });
     });
-
+    const userId = req.user.id;
     const { id } = req.params;
-    const { title, amount, incomeDate, category, paymentThrough, notes } = req.body;
+    const { title, amount, incomeDate, category, paymentThrough, notes } =
+      req.body;
 
     let income = await Income.findById(id);
     if (!income) {
@@ -138,6 +148,14 @@ const EditIncomebyId = async (req, res) => {
     }
 
     await income.save();
+    const cat = await CategoryModel.findById(income.category);
+    await logActivity(
+      userId,
+      "UPDATE_INCOME",
+      `Updated an income of ₹${income.amount} under '${
+        cat?.category_name || "Unknown Category"
+      }'`
+    );
     res.status(200).json({ message: "Income updated successfully", income });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -146,13 +164,31 @@ const EditIncomebyId = async (req, res) => {
 };
 
 const deleteIncomebyId = async (req, res) => {
+  const userId = req.user.id;
+
   try {
-    const deleteIncome = await Income.findByIdAndDelete(req.params.id);
-    if (deleteIncome) {
-      res.status(200).json({ message: "Income Deleted" });
-    } else {
-      res.status(200).json({ message: "Somthing Wrong" });
+    const deleteIncome = await Income.findOneAndDelete({
+      _id: req.params.id,
+      userId: userId,
+    });
+
+    if (!deleteIncome) {
+      return res
+        .status(404)
+        .json({ message: "Income not found or not authorized" });
     }
+
+    const cat = await CategoryModel.findById(deleteIncome.category);
+
+    await logActivity(
+      userId,
+      "DELETE_INCOME",
+      `Deleted an income of ₹${deleteIncome.amount} under '${
+        cat?.category_name || "Unknown Category"
+      }'`
+    );
+
+    res.status(200).json({ message: "Income Deleted", deleteIncome });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

@@ -70,19 +70,8 @@ const Navbar = () => {
               className="flex items-center space-x-2 cursor-pointer"
               onClick={() => navigate("/dashboard")}
             >
-              <div className="bg-blue-600 text-white p-2 rounded-lg">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm3 1h6v4H7V5zm8 8v2h1v1H4v-1h1v-2H4v-1h12v1h-1z"
-                    clipRule="evenodd"
-                  />
-                </svg>
+              <div className="w-8 h-8 bg-blue-600 rounded-md flex items-center justify-center">
+                <span className="text-white font-bold">F</span>
               </div>
               <h1 className="text-xl font-bold text-blue-600 hidden sm:block">
                 FinanceTrack
@@ -114,7 +103,7 @@ const Navbar = () => {
               >
                 <div className="bg-blue-100 text-blue-600 rounded-full w-8 h-8 flex items-center justify-center">
                   <img
-                    src={user?.img || 'logo.png'}
+                    src={user?.img || "logo.png"}
                     alt=""
                     className="w-full h-full rounded-full object-cover"
                   />

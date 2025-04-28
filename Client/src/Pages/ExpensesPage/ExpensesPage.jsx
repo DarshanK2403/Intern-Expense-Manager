@@ -48,14 +48,7 @@ const ExpensesPage = () => {
   const [orderBy, setOrderBy] = useState("expenseDate");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5); // default 5 per page
-
-  const isImage = (fileName) => {
-    return /\.(jpg|jpeg|png|gif|webp)$/i.test(fileName);
-  };
   const navigate = useNavigate();
-  const isPDF = (fileName) => {
-    return /\.pdf$/i.test(fileName);
-  };
 
   useEffect(() => {
     if (token) {
@@ -99,27 +92,31 @@ const ExpensesPage = () => {
   // Delete Expense API
   const deleteExpense = async (id) => {
     try {
-      await axios.delete(`/delete-expense/${id}`);
+      await axios.delete(`/delete-expense/${id}`,{
+        headers:{
+          Authorization: `Bearer ${token}`
+        }
+      });
       toast.success("Expense Deleted");
       getExpense();
     } catch (error) {
+      console.log(error)
       toast.error("Expense Delete Failed");
     }
   };
 
   // Handle Delete
   const handleDelete = () => {
-    // Call your deleteExpense function here
     deleteExpense(selected);
-    setSelected([]); // Clear selection after deletion
+    setSelected([]); 
   };
 
   // Handle Selct All Click
   const handleSelectAllClick = (event) => {
     if (event.target.checked) {
-      setSelected(sortedData.map((n) => n._id)); // Select all rows
+      setSelected(sortedData.map((n) => n._id));
     } else {
-      setSelected([]); // Deselect all
+      setSelected([]); 
     }
   };
 
@@ -148,7 +145,6 @@ const ExpensesPage = () => {
       let aValue = a[orderBy];
       let bValue = b[orderBy];
 
-      // Fix: Convert incomeDate string to Date object for correct comparison
       if (orderBy === "expenseDate") {
         aValue = new Date(aValue);
         bValue = new Date(bValue);
@@ -173,7 +169,6 @@ const ExpensesPage = () => {
     setPage(0);
   };
 
-
   // Hanlde Sort
   const handleSort = (property) => {
     const isAsc = orderBy === property && order === "asc";
@@ -184,12 +179,10 @@ const ExpensesPage = () => {
   // Sorted Data
   const sortedData = [...expenses].sort(getComparator(order, orderBy));
   const lowerSearch = searchValue.toLowerCase();
-  // console.log(lowerSearch);
-  // Filtered Expense
   const filteredExpenses = expenses.filter(
     (item) =>
       item.title.toLowerCase().includes(lowerSearch) ||
-      item.category.category_name.toLowerCase().includes(lowerSearch) ||
+      item.category?.category_name.toLowerCase().includes(lowerSearch) ||
       item.amount.toString().includes(lowerSearch)
   );
 
@@ -282,7 +275,7 @@ const ExpensesPage = () => {
                           {item.amount}
                         </div>
                       </TableCell>
-                      <TableCell>{item.category.category_name}</TableCell>
+                      <TableCell>{item.category?.category_name}</TableCell>
                       <TableCell>
                         {format(new Date(item.expenseDate), "dd MMM yyyy")}
                       </TableCell>

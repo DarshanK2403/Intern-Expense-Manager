@@ -7,6 +7,7 @@ const multer = require("multer");
 const { resolve } = require("path");
 const { rejects } = require("assert");
 const PaymentUtil = require("../utils/PaymentUtil.js");
+const logActivity = require("../utils/logActivity");
 
 // Configure multer to store the file in memory
 const storage = multer.memoryStorage();
@@ -75,7 +76,7 @@ const Signup = async (req, res) => {
     });
 
     await PaymentUtil.createDefaultPaymentsForUser(newUser._id);
-    
+
     await CategoryUtil.createDefaultCategoriesForUser(newUser._id);
 
     const htmlContent = `
@@ -120,7 +121,10 @@ const Login = async (req, res) => {
     return res.status(400).json({ message: "Invalid Password" });
   }
 
-  const Token = await jwt.sign({id: user._id.toString()}, process.env.JWt_SECRET);
+  const Token = await jwt.sign(
+    { id: user._id.toString() },
+    process.env.JWt_SECRET
+  );
   // console.log(Token);
 
   res.status(200).json({ message: "Login Success", Token });
@@ -251,6 +255,16 @@ const UpdateProfile = async (req, res) => {
     if (!updateData) {
       return res.status(404).json({ message: "User not found" });
     }
+
+    // Log the profile update activity
+    await logActivity(
+      userId,
+      "UPDATE_PROFILE",
+      `Updated profile information (Name: ${firstName} ${lastName}, Phone: ${
+        phone || "N/A"
+      }).`
+    );
+
     res.status(200).json({ message: "Profile Updated" });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -301,14 +315,9 @@ const ChangePassword = async (req, res) => {
 };
 
 const ChangeProfilePicture = async (req, res) => {
+  const userId = req.user.id;
+
   try {
-    const { id } = req.params; // Get user ID from URL params
-
-    if (!id) {
-      return res.status(400).json({ message: "User ID is required" });
-    }
-
-    // ✅ Ensure Multer processes the file
     await new Promise((resolve, reject) => {
       upload(req, res, (err) => {
         if (err) {
@@ -319,12 +328,10 @@ const ChangeProfilePicture = async (req, res) => {
       });
     });
 
-    // console.log("File Received:", req.file);
     if (!req.file) {
       return res.status(400).json({ message: "No image uploaded" });
     }
 
-    // ✅ Upload image to Cloudinary
     const cloudinaryResponse = await CloudinaryUtil.uploadFileToCloudinary(
       req.file.buffer,
       req.file.originalname
@@ -334,10 +341,9 @@ const ChangeProfilePicture = async (req, res) => {
       return res.status(500).json({ message: "Image upload failed" });
     }
 
-    // ✅ Update user's profileImg field in the database
     const updatedUser = await UserModel.findByIdAndUpdate(
-      id,
-      { profileImg: cloudinaryResponse.cloudinaryUrl }, // Updating profile image
+      userId,
+      { profileImg: cloudinaryResponse.cloudinaryUrl },
       { new: true }
     );
 
@@ -345,6 +351,8 @@ const ChangeProfilePicture = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    await logActivity(userId, "UPDATE_PROFILE", "Updated profile picture.");
+    console.log(updatedUser)
     res.status(200).json({
       message: "Profile image updated successfully",
       user: updatedUser,

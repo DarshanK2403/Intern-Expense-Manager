@@ -107,20 +107,12 @@ const Profile = () => {
     formData.append("profileImg", file);
 
     try {
-      const res = await axios.put(
-        `/change-profile-picture`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      const res = await axios.put(`/change-profile-picture`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
         },
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+      });
       // console.log("Profile updated:", res.data);
       setProfileImg(res.data.user?.profileImg); // Update UI with new image
     } catch (error) {
@@ -144,11 +136,7 @@ const Profile = () => {
           <div className="flex items-center mb-6">
             <div className="h-16 w-16 rounded-full bg-blue-100 overflow-hidden flex items-center justify-center mr-4">
               <span className="text-blue-600 font-medium text-xl">
-                {user?.img ? (
-                  <img src={user?.img} />
-                ) : (
-                  <img src="/logo.png" />
-                )}{" "}
+                {user?.img ? <img src={user?.img} /> : <img src="/logo.png" />}{" "}
               </span>
             </div>
             <div>
@@ -234,7 +222,6 @@ const Profile = () => {
             </div>
           </div>
 
-      
           {/* Buttons */}
           <div className="mt-6 flex justify-between">
             <Link

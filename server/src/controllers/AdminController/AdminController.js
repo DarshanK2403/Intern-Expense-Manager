@@ -4,6 +4,7 @@ const Income = require("../../models/IncomeModel");
 const Role = require("../../models/RoleModel");
 const mongoose = require("mongoose");
 const MonthSats = require("../../utils/MonthSatetUtil");
+const Category = require("../../models/Category");
 
 const UserDetails = async (req, res) => {
   try {
@@ -305,9 +306,57 @@ const GetTopUser = async (req, res) => {
   }
 };
 
+const ExpenseByCategory = async (req, res) => {
+  try {
+    const expenses = await Expense.aggregate([
+      {
+        $match: { expenseDate: { $exists: true } },
+      },
+      {
+        $group: {
+          _id: "$category",
+          totalAmount: { $sum: "$amount" },
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $lookup: {
+          from: "categories",
+          localField: "_id",
+          foreignField: "_id",
+          as: "category",
+        },
+      },
+      { $unwind: "$category" },
+      {
+        $project: {
+          _id: 0,
+          categoryId: "$category._id",
+          categoryName: "$category.category_name",
+          totalAmount: {
+            $divide: [
+              { $round: [{ $multiply: ["$totalAmount", 100] }, 0] },
+              100,
+            ],
+          },
+          count: 1,
+        },
+      },
+      { $sort: { totalAmount: -1 } },
+      { $limit: 8 }, // <-- LIMIT here (optional)
+    ]);
+
+    res.status(200).json(expenses);
+  } catch (error) {
+    console.error("Error getting all expenses by category:", error);
+    res.status(500).json({ message: "Server Error" });
+  }
+};
+
 module.exports = {
   UserDetails,
   UpdateUserRole,
   GetAllUserMonthTotalExpenseorIncome,
   GetTopUser,
+  ExpenseByCategory,
 };

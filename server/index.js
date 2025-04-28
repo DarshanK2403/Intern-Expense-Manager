@@ -60,6 +60,9 @@ app.use('/', FakeRoute);
 const exportRoutes = require('./src/routes/ExportRoutes');
 app.use('/', exportRoutes);
 
+const AcitivityRoute = require('./src/routes/AcitivityRoute');
+app.use('/', AcitivityRoute);
+
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });

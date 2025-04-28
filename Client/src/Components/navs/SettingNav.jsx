@@ -1,4 +1,4 @@
-import { CreditCard, TagIcon, User } from "lucide-react";
+import { Clock, CreditCard, TagIcon, User } from "lucide-react";
 import "react";
 import { Link, useLocation } from "react-router-dom";
 
@@ -13,6 +13,7 @@ const SettingNav = () => {
     { icon: User, label: "Profile Settings", path: "/settings/profile" },
     { icon: TagIcon, label: "Category Management", path: "/settings/category" },
     { icon: CreditCard, label: "Payment Through", path: "/settings/payment" },
+    { icon: Clock, label: "History", path: "/settings/history" },
   ];
   return (
     <div className="w-64 border-r bg-white border-gray-200 max-h-screen md:sticky md:top-0">

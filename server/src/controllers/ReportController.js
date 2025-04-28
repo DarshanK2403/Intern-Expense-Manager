@@ -3,6 +3,8 @@ const Expense = require("../models/ExpenseModel");
 const Income = require("../models/IncomeModel");
 const ReportModel = require("../models/ReportModel");
 const CategoryModel = require("../models/Category");
+const logActivity = require("../utils/logActivity");
+const { format } = require("date-fns");
 
 const formatKey = (date, type) =>
   type === "year"
@@ -375,7 +377,12 @@ const saveReport = async (req, res) => {
     });
 
     const savedReport = await newReport.save();
-
+    await logActivity(
+      userId,
+      "GENERATE_REPORT",
+      `Generated a report from ${format(new Date(startDate), "dd MMM yyyy")} to ${format(new Date(endDate), "dd MMM yyyy")}`
+    );
+  
     res.status(201).json({
       message: "Report successfully generated and stored",
       report: savedReport,
@@ -443,6 +450,13 @@ const deleteReportById = async (req, res) => {
         .status(404)
         .json({ message: "Report not found or unauthorized" });
     }
+
+    // ✅ Log Activity after successful delete
+    await logActivity(
+      userId,
+      "DELETE_REPORT",
+      `Deleted a report from ${format(new Date(report.startDate), "dd MMM yyyy")} to ${format(new Date(report.endDate), "dd MMM yyyy")}`
+    );
 
     return res.status(200).json({ message: "Report deleted successfully" });
   } catch (error) {

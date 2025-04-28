@@ -42,7 +42,7 @@ const AdminPage = () => {
   const [stats, setStats] = useState([]);
   const [monthlyData, setmonthlyData] = useState([]);
   const [topUser, setTopUser] = useState([]);
-
+  const [categoryData, setCategoryData] = useState([]);
   const getUserData = async () => {
     try {
       if (token) {
@@ -62,9 +62,12 @@ const AdminPage = () => {
 
   const getTotalExpenseorIncome = async () => {
     try {
-      const res = await axios.get("/admin/get-total-expense-or-income");
+      const res = await axios.get("/admin/get-total-expense-or-income", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-      console.log(res.data.monthlyData);
       setmonthlyData(res.data.monthlyData);
       setStats(res.data.stats);
     } catch {
@@ -72,14 +75,37 @@ const AdminPage = () => {
     }
   };
 
-  // Top User
   const TopUser = async () => {
     try {
-      const res = await axios.get("/admin/top-user");
-      console.log(res.data);
+      const res = await axios.get("/admin/top-user", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       setTopUser(res.data);
     } catch (error) {
       toast.error("Somthing went wrong");
+    }
+  };
+
+  const ExpenseByCategory = async () => {
+    try {
+      const res = await axios("/admin/expense-by-category", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = res.data;
+
+      const transformedData = data.map(item => ({
+        name: item.categoryName,   // PieChart expects 'name'
+        value: item.totalAmount    // PieChart expects 'value'
+      }));
+
+      setCategoryData(transformedData);
+    } catch (error) {
+      console.log(error);
+      toast.error("Not Found");
     }
   };
 
@@ -87,15 +113,8 @@ const AdminPage = () => {
     getUserData();
     getTotalExpenseorIncome();
     TopUser();
+    ExpenseByCategory();
   }, []);
-
-  const categoryData = [
-    { name: "Food", value: 400 },
-    { name: "Transport", value: 300 },
-    { name: "Entertainment", value: 300 },
-    { name: "Shopping", value: 200 },
-    { name: "Utilities", value: 150 },
-  ];
 
   const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8"];
 
@@ -255,7 +274,7 @@ const AdminPage = () => {
               </div>
             </div>
           </div>
-          
+
           {/* Top User */}
           <div className="grid grid-cols-1 lg:grid-cols-1 gap-6 mb-6">
             <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">

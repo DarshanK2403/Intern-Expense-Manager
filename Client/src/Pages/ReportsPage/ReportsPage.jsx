@@ -2,18 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast, ToastContainer } from "react-toastify";
 import axios from "axios";
-import {
-  CalendarDays,
-  BarChart3,
-  FileText,
-  Filter,
-  TrendingUp,
-  Calendar,
-  Tag,
-  CreditCard,
-  IndianRupee,
-  Save,
-} from "lucide-react";
+import { Filter, TrendingUp, IndianRupee, Save } from "lucide-react";
 
 import {
   PieChart,
@@ -29,7 +18,6 @@ import {
   Legend,
   ResponsiveContainer,
   Cell,
-  ReferenceLine,
 } from "recharts";
 
 import {
@@ -43,40 +31,29 @@ import {
   LineChart as LineChartIcon,
 } from "lucide-react";
 
-import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { getISOWeek, startOfWeek, endOfWeek, format } from "date-fns";
+import { format } from "date-fns";
 import WeeklyCalendar from "../../Components/Calendar/WeeklyCalendar";
 import MonthlyCalendar from "../../Components/Calendar/MonthlyCalendar";
 import YearlyCalendar from "../../Components/Calendar/YearlyCalendar";
 import DateCalender from "../../Components/Calendar/DateCalender";
 import SpinnerLoader from "../../Components/Loader/SpinnerLoader";
-import { Link } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
 
 const ReportPage = () => {
   const [loading, setLoading] = useState(false);
-  const [customRange, setCustomRange] = useState({ from: "", to: "" });
   const [data, setData] = useState([]);
   const [Offset, setOffset] = useState(0);
   const [formatedData, setFormatedData] = useState([]);
   const [incomeSourceData, setincomeSourceData] = useState([]);
   const [categoryExpenseData, setcategoryExpenseData] = useState([]);
   const [allTransactions, setAllTransactions] = useState([]);
-  const incomeSum = formatedData?.reduce(
-    (sum, item) => sum + (item.income || 0),
-    0
-  );
 
-  const expenseSum = formatedData?.reduce(
-    (sum, item) => sum + (item.expense || 0),
-    0
-  );
   const [activeFilters, setActiveFilters] = useState(false);
   const [period, setPeriod] = useState("week");
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const [ExpenseCategory, setExpenseCategory] = useState([]);
   const [IncomeCategory, setIncomeCategory] = useState([]);
+  // eslint-disable-next-line no-unused-vars
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredTransactions, setFilteredTransactions] = useState([]);
   const [visibleTransactions, setVisibleTransactions] =
@@ -134,7 +111,7 @@ const ReportPage = () => {
       setAllTransactions(res.data.transaction);
       setExpenseCategory(res.data.expenseByCategory.map((cat) => cat._id));
       setIncomeCategory(res.data.incomeSources.map((cat) => cat._id));
-    } catch (error) {
+    } catch {
       toast.error("Error fetching report data");
     } finally {
       setLoading(false);
@@ -235,36 +212,40 @@ const ReportPage = () => {
     });
 
     setVisibleTransactions(filtered);
-    setFilteredTransactions(filtered); // Optional if used elsewhere
-    // console.log(filtered);
+    setFilteredTransactions(filtered);
 
-    // ⬇️ Update category chart data
     const filteredIncome = filtered.filter((item) => item.incomeDate);
     const filteredExpense = filtered.filter((item) => item.expenseDate);
 
+    // Income Source
     const incomeSources = filteredIncome.reduce((acc, curr) => {
-      acc[curr.category] = (acc[curr.category] || 0) + curr.amount;
+      const categoryName = curr.title;
+      acc[categoryName] = (acc[categoryName] || 0) + curr.amount;
       return acc;
     }, {});
     setincomeSourceData(
-      Object.entries(incomeSources).map(([cat, value]) => ({
-        _id: cat,
+      Object.entries(incomeSources).map(([categoryName, value]) => ({
+        _id: categoryName,
+        name: categoryName,
         value,
       }))
     );
 
+    // Expense by Category
     const expenseByCategory = filteredExpense.reduce((acc, curr) => {
-      acc[curr.category] = (acc[curr.category] || 0) + curr.amount;
+      const categoryName = curr.title;
+      acc[categoryName] = (acc[categoryName] || 0) + curr.amount;
       return acc;
     }, {});
     setcategoryExpenseData(
-      Object.entries(expenseByCategory).map(([cat, value]) => ({
-        _id: cat,
+      Object.entries(expenseByCategory).map(([categoryName, value]) => ({
+        _id: categoryName,
+        name: categoryName,
         value,
       }))
     );
 
-    // ⬇️ Update totals
+    // Update totals
     const totalIncome = filteredIncome
       .reduce((sum, i) => sum + i.amount, 0)
       .toFixed(2);
@@ -285,25 +266,16 @@ const ReportPage = () => {
     }));
   };
 
-  const filteredChartData = useMemo(() => {
-    return formatedData.map((entry) => ({
-      ...entry,
-      income: filters.type === "expense" ? 0 : entry.income,
-      expense: filters.type === "income" ? 0 : entry.expense,
-    }));
-  }, [formatedData, filters.type]);
-
   const saveReport = async () => {
     console.log("Save Data", data);
     try {
-      const res = await axios.post("/save-report", data, {
+      await axios.post("/save-report", data, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      // console.log(res)
       toast.success("Report Saved");
-    } catch (error) {
+    } catch {
       toast("Report Save Failed");
     }
   };
@@ -311,16 +283,12 @@ const ReportPage = () => {
   // Line Charts
   const processedData = useMemo(() => {
     return formatedData.map((item) => {
-      // For each period type, ensure we have a label field for the X axis
       let label;
       if (period === "week") {
-        // Use day of week when in weekly view
-        label = item.day || item.month; // Fallback to month if day not available
+        label = item.day || item.month;
       } else if (period === "month") {
-        // Use date number when in monthly view
-        label = item.date || item.month; // Fallback to month if date not available
+        label = item.date || item.month;
       } else {
-        // Use month name for yearly and custom views
         label = item.month;
       }
 
@@ -332,7 +300,6 @@ const ReportPage = () => {
     });
   }, [formatedData, period]);
 
-  // Find min and max values for Y axis
   const allValues = processedData.flatMap((item) => [
     item.income,
     item.expense,
@@ -340,7 +307,6 @@ const ReportPage = () => {
   const minValue = Math.min(...allValues);
   const maxValue = Math.max(...allValues);
 
-  // Add padding to ensure values don't touch the edges
   const padding = (maxValue - minValue) * 0.1;
   const yAxisDomain = [Math.max(0, minValue - padding), maxValue + padding];
 

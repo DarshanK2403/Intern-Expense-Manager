@@ -14,9 +14,9 @@ router.get("/get-expense", authMiddleware, ExpenseController.getExpensebyUserId)
 router.get("/expense-details/:id", ExpenseController.getExpenseDetailbyId);
 
 // DELETE
-router.delete("/delete-expense/:id", ExpenseController.deleteExpensebyId);
+router.delete("/delete-expense/:id", authMiddleware, ExpenseController.deleteExpensebyId);
 
 // PUT
-router.put("/edit-expense/:id", ExpenseController.UpdateExpensebyId);
+router.put("/edit-expense/:id", authMiddleware, ExpenseController.UpdateExpensebyId);
 
 module.exports = router;

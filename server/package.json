@@ -22,6 +22,7 @@
     "bcrypt": "^5.1.1",
     "cloudinary": "^2.5.1",
     "cors": "^2.8.5",
+    "date-fns": "^4.1.0",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
@@ -35,7 +36,7 @@
     "nodemon": "^3.1.10",
     "path": "^0.12.7",
     "pdfkit": "^0.17.0",
-    "pdfmake": "^0.2.18",
+    "pdfmake": "^0.2.19",
     "server": "file:",
     "streamifier": "^0.1.1"
   }

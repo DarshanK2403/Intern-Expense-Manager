@@ -2,11 +2,11 @@ import { lazy, Suspense } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import "./App.css";
 import axios from "axios";
-import SkeletonLoader from "./Components/SkeletonLoader";
 const SigninPage = lazy(() => import("./common/SigninPage"));
 const SignupPage = lazy(() => import("./common/SignupPage"));
-const Dashboard = lazy(() => import("./Pages/DashboardPage/Dashboard"));
 const DashboardLayout = lazy(() => import("./Layouts/DashboardLayout"));
+const Dashboard = lazy(() => import("./Pages/DashboardPage/Dashboard"));
+const SkeletonLoader = lazy(() => import("./Components/SkeletonLoader"));
 const ExpensesPage = lazy(() => import("./Pages/ExpensesPage/ExpensesPage"));
 const ReportsPage = lazy(() => import("./Pages/ReportsPage/ReportsPage"));
 const AddExpenseForm = lazy(() =>
@@ -14,19 +14,25 @@ const AddExpenseForm = lazy(() =>
 );
 const ExpenseLayout = lazy(() => import("./Layouts/ExpenseLayout"));
 import { PrivateRoute, AdminRoute } from "./hooks/PrivateRoute";
-import AddIncome from "./Pages/IncomePage/AddIncome";
-import RecentTransactios from "./Pages/DashboardPage/RecentTransactios";
-import ForgetPasswordPage from "./common/ForgetPasswordPage";
-import VendorLayout from "./Layouts/VendorLayout";
-import AddVendor from "./Pages/VendorPage/AddVendor";
-import VendorPage from "./Pages/VendorPage/VendorPage";
-import ChangePassword from "./Pages/SettingsPage/ChangePassword";
-import UpdateVendor from "./Pages/VendorPage/UpdateVendor";
-import EditExpense from "./Pages/ExpensesPage/EditExpense";
-import EditIncome from "./Pages/IncomePage/EditIncome";
-import DetailIncome from "./Pages/IncomePage/DetailIncome";
-import SavedReport from "./Pages/ReportsPage/SavedReport";
-import ReportDetail from "./Pages/ReportsPage/ReportDetail";
+const AddIncome = lazy(() => import("./Pages/IncomePage/AddIncome"));
+const RecentTransactios = lazy(() =>
+  import("./Pages/DashboardPage/RecentTransactios")
+);
+const ForgetPasswordPage = lazy(() => import("./common/ForgetPasswordPage"));
+const VendorLayout = lazy(() => import("./Layouts/VendorLayout"));
+const AddVendor = lazy(() => import("./Pages/VendorPage/AddVendor"));
+const VendorPage = lazy(() => import("./Pages/VendorPage/VendorPage"));
+const ChangePassword = lazy(() =>
+  import("./Pages/SettingsPage/ChangePassword")
+);
+const UpdateVendor = lazy(() => import("./Pages/VendorPage/UpdateVendor"));
+const EditExpense = lazy(() => import("./Pages/ExpensesPage/EditExpense"));
+const EditIncome = lazy(() => import("./Pages/IncomePage/EditIncome"));
+const DetailIncome = lazy(() => import("./Pages/IncomePage/DetailIncome"));
+const SavedReport = lazy(() => import("./Pages/ReportsPage/SavedReport"));
+const ReportDetail = lazy(() => import("./Pages/ReportsPage/ReportDetail"));
+const NotFound = lazy(() => import("./Pages/NotFound"));
+const History = lazy(() => import("./Pages/SettingsPage/History"));
 const Home = lazy(() => import("./common/Home"));
 const ReportLayout = lazy(() => import("./Layouts/ReportLayout"));
 const SettingLayout = lazy(() => import("./Layouts/SettingLayout"));
@@ -43,15 +49,15 @@ const AdminLayout = lazy(() => import("./admin/Layout/AdminLayout"));
 const AdminUserPage = lazy(() => import("./admin/Page/AdminUserPage"));
 const AdminSettingPage = lazy(() => import("./admin/Page/AdminSettingPage"));
 
+axios.defaults.baseURL = "http://localhost:3000/";
 function App() {
-  axios.defaults.baseURL = "http://localhost:3000/";
   return (
     <>
       <BrowserRouter>
         <Suspense fallback={<SkeletonLoader />}>
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/*" element={<Home />} />
+            <Route path="/*" element={<NotFound />} />
             <Route path="/signin" element={<SigninPage />} />
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/forget-password" element={<ForgetPasswordPage />} />
@@ -89,7 +95,6 @@ function App() {
                 <Route path="edit/:id" element={<UpdateVendor />} />
               </Route>
 
-              {/* Settings Route */}
               <Route path="/settings" element={<SettingLayout />}>
                 <Route index element={<Navigate to="profile" replace />} />
                 <Route path="profile" element={<Profile />} />
@@ -101,8 +106,8 @@ function App() {
                   path="profile/change-password"
                   element={<ChangePassword />}
                 />
+                <Route path="history" element={<History />} />
               </Route>
-              {/* Report Route */}
 
               <Route path="/reports" element={<ReportLayout />}>
                 <Route index element={<Navigate to="generate" replace />} />
@@ -110,19 +115,17 @@ function App() {
                 <Route path="saved" element={<SavedReport />} />
                 <Route path="detail/:id" element={<ReportDetail />} />
               </Route>
-
-              {/* Expense Route */}
             </Route>
 
             <Route element={<AdminRoute />}>
-              <Route path="/" element={<AdminLayout />}>
-                <Route index path="admin/dashboard" element={<AdminPage />} />
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route index path="dashboard" element={<AdminPage />} />
 
-                <Route index path="admin/users" element={<AdminUserPage />} />
+                <Route path="users" element={<AdminUserPage />} />
 
                 <Route
                   index
-                  path="admin/settings"
+                  path="settings"
                   element={<AdminSettingPage />}
                 />
               </Route>

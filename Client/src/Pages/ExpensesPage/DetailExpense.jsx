@@ -37,7 +37,6 @@ const DetailExpense = () => {
           setIsLoading(true);
           const res = await axios.get(`/expense-details/${id}`);
           setExpenseData(res.data);
-          // console.log(res.data)
         }
       } catch (error) {
         toast.error("Failed to load expense details");
@@ -103,7 +102,6 @@ const DetailExpense = () => {
         description: expenseData.description,
       },
     ];
-    console.log("Preload", preload)
 
     try {
       const res = await axios.post("/export/expenses", preload, {
@@ -123,9 +121,12 @@ const DetailExpense = () => {
       document.body.removeChild(link);
     } catch (error) {
       toast.warn("Failed to export PDF");
-      console.log(error);
     }
   };
+
+  const EditExpense = () =>{
+    navigate(`/expenses/edit-expense/${id}`)
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -159,7 +160,7 @@ const DetailExpense = () => {
 
           {/* Action Buttons */}
           <div className="flex items-center gap-2">
-            <button className="flex items-center gap-1 px-3 py-2 bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 transition-colors">
+            <button className="flex items-center gap-1 px-3 py-2 bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 transition-colors" onClick={()=>EditExpense()}>
               <Edit className="h-4 w-4" />
               <span className="hidden sm:inline">Edit</span>
             </button>

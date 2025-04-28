@@ -1,93 +1,269 @@
-const PDFDocument = require('pdfkit');
-const moment = require('moment');
-const Expense = require('../models/ExpenseModel'); // Adjust as needed
-const Income = require('../models/IncomeModel');   // Adjust as needed
+// src/utils/pdf.util.js
 
-const generatePDF = (res, title, data, type) => {
-  const doc = new PDFDocument();
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', `attachment; filename=${type}_report.pdf`);
-  doc.pipe(res);
+const PdfPrinter = require("pdfmake/src/printer");
+const fs = require("fs");
+const path = require("path");
 
-  doc.fontSize(20).text(title, { align: 'center' });
-  doc.moveDown();
-
-  data.forEach((item, index) => {
-    doc.fontSize(12).text(
-      `${index + 1}. Title: ${item.title}\n   Amount: ₹${item.amount}\n   Category: ${item.category.name}\n   Date: ${moment(item.date).format("YYYY-MM-DD")}\n`,
-      { lineGap: 6 }
-    );
-    doc.moveDown();
-  });
-
-  doc.end();
-};
-
-const exportExpensePDF = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const expenses = await Expense.find({ userId }).populate('category');
-    generatePDF(res, 'Expense Report', expenses.map(e => ({ ...e._doc, date: e.expenseDate })), 'expense');
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to generate expense PDF' });
+class PDFGenerator {
+  constructor() {
+    this.fonts = {
+      Roboto: {
+        normal: path.join(__dirname, "..", "fonts", "TextaRegular.ttf"),
+        bold: path.join(__dirname,".." ,"fonts", "TextaBold.ttf"),
+        italics: path.join(__dirname,"..","fonts","TextaLight.ttf"),
+        bolditalics: path.join(__dirname,"..","fonts","TextaHeavy.ttf")
+      }
+    };
+    this.printer = new PdfPrinter(this.fonts);
   }
-};
 
-const exportIncomePDF = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const incomes = await Income.find({ userId }).populate('category');
-    generatePDF(res, 'Income Report', incomes.map(i => ({ ...i._doc, date: i.incomeDate })), 'income');
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to generate income PDF' });
-  }
-};
+  generateExpensePDF(expenseData) {
+    const docDefinition = {
+      content: [
+        {
+          text: "Expense Report",
+          style: "header",
+        },
+        {
+          columns: [
+            [{ text: "Date", style: "subheader" }, { text: expenseData.date }],
+            [
+              { text: "Category", style: "subheader" },
+              { text: expenseData.category },
+            ],
+            [
+              { text: "Amount", style: "subheader" },
+              { text: `$${expenseData.amount}` },
+            ],
+            [
+              { text: "Description", style: "subheader" },
+              { text: expenseData.description },
+            ],
+          ],
+        },
+      ],
+      styles: {
+        header: {
+          fontSize: 18,
+          bold: true,
+          margin: [0, 0, 0, 10],
+        },
+        subheader: {
+          fontSize: 14,
+          bold: true,
+          margin: [0, 10, 0, 5],
+        },
+      },
+      defaultStyle: {
+        font: "Roboto",
+      },
+    };
 
-const exportCustomReportPDF = async (req, res) => {
-  try {
-    const { startDate, endDate } = req.body;
-    const userId = req.user._id;
-
-    const expenses = await Expense.find({
-      userId,
-      expenseDate: { $gte: new Date(startDate), $lte: new Date(endDate) }
-    }).populate('category');
-
-    const incomes = await Income.find({
-      userId,
-      incomeDate: { $gte: new Date(startDate), $lte: new Date(endDate) }
-    }).populate('category');
-
-    const allData = [
-      ...expenses.map(e => ({ ...e._doc, date: e.expenseDate, type: 'Expense' })),
-      ...incomes.map(i => ({ ...i._doc, date: i.incomeDate, type: 'Income' }))
-    ].sort((a, b) => new Date(a.date) - new Date(b.date));
-
-    const doc = new PDFDocument();
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename=custom_report.pdf`);
-    doc.pipe(res);
-
-    doc.fontSize(20).text('Custom Financial Report', { align: 'center' });
-    doc.moveDown();
-
-    allData.forEach((item, index) => {
-      doc.fontSize(12).text(
-        `${index + 1}. [${item.type}] ${item.title}\n   Amount: ₹${item.amount}\n   Category: ${item.category.name}\n   Date: ${moment(item.date).format("YYYY-MM-DD")}`,
-        { lineGap: 6 }
-      );
-      doc.moveDown();
+    return new Promise((resolve, reject) => {
+      try {
+        const pdfDoc = this.printer.createPdfKitDocument(docDefinition);
+        const chunks = [];
+        
+        pdfDoc.on('data', (chunk) => {
+          chunks.push(chunk);
+        });
+        
+        pdfDoc.on('end', () => {
+          resolve(Buffer.concat(chunks));
+        });
+        
+        pdfDoc.end();
+      } catch (error) {
+        reject(error);
+      }
     });
-
-    doc.end();
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to generate custom report PDF' });
   }
-};
 
-module.exports = {
-    exportExpensePDF,
-    exportIncomePDF,
-    exportCustomReportPDF,
-  };
-  
+  generateIncomePDF(incomeData) {
+    const docDefinition = {
+      content: [
+        {
+          text: "Income Report",
+          style: "header",
+        },
+        {
+          columns: [
+            [{ text: "Date", style: "subheader" }, { text: incomeData.date }],
+            [
+              { text: "Source", style: "subheader" },
+              { text: incomeData.source },
+            ],
+            [
+              { text: "Amount", style: "subheader" },
+              { text: `$${incomeData.amount}` },
+            ],
+            [
+              { text: "Description", style: "subheader" },
+              { text: incomeData.description },
+            ],
+          ],
+        },
+      ],
+      styles: {
+        header: {
+          fontSize: 18,
+          bold: true,
+          margin: [0, 0, 0, 10],
+        },
+        subheader: {
+          fontSize: 14,
+          bold: true,
+          margin: [0, 10, 0, 5],
+        },
+      },
+      defaultStyle: {
+        font: "Roboto",
+      },
+    };
+
+    return new Promise((resolve, reject) => {
+      try {
+        const pdfDoc = this.printer.createPdfKitDocument(docDefinition);
+        const chunks = [];
+        
+        pdfDoc.on('data', (chunk) => {
+          chunks.push(chunk);
+        });
+        
+        pdfDoc.on('end', () => {
+          resolve(Buffer.concat(chunks));
+        });
+        
+        pdfDoc.end();
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+
+  generateVendorPDF(vendorData) {
+    const docDefinition = {
+      content: [
+        {
+          text: "Vendor Information",
+          style: "header",
+        },
+        {
+          columns: [
+            [
+              { text: "Vendor Name", style: "subheader" },
+              { text: vendorData.name },
+            ],
+            [
+              { text: "Contact Person", style: "subheader" },
+              { text: vendorData.contactPerson },
+            ],
+            [{ text: "Email", style: "subheader" }, { text: vendorData.email }],
+            [{ text: "Phone", style: "subheader" }, { text: vendorData.phone }],
+          ],
+        },
+      ],
+      styles: {
+        header: {
+          fontSize: 18,
+          bold: true,
+          margin: [0, 0, 0, 10],
+        },
+        subheader: {
+          fontSize: 14,
+          bold: true,
+          margin: [0, 10, 0, 5],
+        },
+      },
+      defaultStyle: {
+        font: "Roboto",
+      },
+    };
+
+    return new Promise((resolve, reject) => {
+      try {
+        const pdfDoc = this.printer.createPdfKitDocument(docDefinition);
+        const chunks = [];
+        
+        pdfDoc.on('data', (chunk) => {
+          chunks.push(chunk);
+        });
+        
+        pdfDoc.on('end', () => {
+          resolve(Buffer.concat(chunks));
+        });
+        
+        pdfDoc.end();
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+
+  generateReportPDF(reportData) {
+    const docDefinition = {
+      content: [
+        {
+          text: "General Report",
+          style: "header",
+        },
+        {
+          columns: [
+            [
+              { text: "Report Date", style: "subheader" },
+              { text: reportData.date },
+            ],
+            [
+              { text: "Report Type", style: "subheader" },
+              { text: reportData.type },
+            ],
+            [
+              { text: "Total Amount", style: "subheader" },
+              { text: `$${reportData.totalAmount}` },
+            ],
+            [
+              { text: "Description", style: "subheader" },
+              { text: reportData.description },
+            ],
+          ],
+        },
+      ],
+      styles: {
+        header: {
+          fontSize: 18,
+          bold: true,
+          margin: [0, 0, 0, 10],
+        },
+        subheader: {
+          fontSize: 14,
+          bold: true,
+          margin: [0, 10, 0, 5],
+        },
+      },
+      defaultStyle: {
+        font: "Roboto",
+      },
+    };
+
+    return new Promise((resolve, reject) => {
+      try {
+        const pdfDoc = this.printer.createPdfKitDocument(docDefinition);
+        const chunks = [];
+        
+        pdfDoc.on('data', (chunk) => {
+          chunks.push(chunk);
+        });
+        
+        pdfDoc.on('end', () => {
+          resolve(Buffer.concat(chunks));
+        });
+        
+        pdfDoc.end();
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+}
+
+module.exports = PDFGenerator;

@@ -398,12 +398,7 @@ const Dashboard = () => {
       </div>
 
       {/* Expense by Category */}
-      <div className="my-6 p-6 bg-white shadow-md rounded-lg border h-[50%] border-gray-300">
-        <div className="py-2">
-          <h2 className="text-lg font-semibold">
-            Category-wise Financial Overview
-          </h2>
-        </div>
+       
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 rounded-md">
           {/* Expenses by Category*/}
           {expenseData.length > 0 ? (
@@ -623,7 +618,6 @@ const Dashboard = () => {
           )}
         </div>
       </div>
-    </div>
   );
 };
 

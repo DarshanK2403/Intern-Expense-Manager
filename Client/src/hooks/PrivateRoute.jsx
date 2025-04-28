@@ -1,6 +1,7 @@
 import axios from "axios";
 import { useState, useEffect } from "react";
 import { Navigate, Outlet } from "react-router-dom";
+import SkeletonLoader from "../Components/SkeletonLoader";
 
 const useAuth = () => {
   const [auth, setAuth] = useState(null); // User is authenticated or not
@@ -43,7 +44,12 @@ const PrivateRoute = () => {
   const { auth } = useAuth();
 
   if (auth === null) {
-    return <div>Loading...</div>;
+    return (
+      <div>
+        {" "}
+        <SkeletonLoader />
+      </div>
+    );
   }
 
   return auth ? <Outlet /> : <Navigate to="/signin" replace />;
@@ -54,7 +60,11 @@ const AdminRoute = () => {
   const { auth, isAdmin } = useAuth();
 
   if (auth === null) {
-    return <div>Loading...</div>;
+    return (
+      <div>
+        <SkeletonLoader />
+      </div>
+    );
   }
 
   return auth && isAdmin ? <Outlet /> : <Navigate to="/signin" replace />;

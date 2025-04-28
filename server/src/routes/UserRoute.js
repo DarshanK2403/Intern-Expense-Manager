@@ -17,7 +17,7 @@ router.put("/update-profile",authMiddleware, UserController.UpdateProfile);
 
 router.put("/change-password",authMiddleware, UserController.ChangePassword);
 
-router.put("/change-profile-picture/:id", UserController.ChangeProfilePicture);
+router.put("/change-profile-picture", authMiddleware, UserController.ChangeProfilePicture);
 
 
 module.exports = router;

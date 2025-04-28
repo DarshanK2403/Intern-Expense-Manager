@@ -54,7 +54,6 @@ const Category = () => {
       category_type: activeTab,
     };
 
-    // console.log(categoryData);
     try {
       const res = await axios.post(
         `/category?type=${activeTab}`,
@@ -65,7 +64,6 @@ const Category = () => {
           },
         }
       );
-      console.log("API RES", res);
       if (res.data.message === "Created") {
         toast.success(
           `${
@@ -125,7 +123,6 @@ const Category = () => {
   };
 
   const onSubmit = async (data) => {
-    console.log(data);
     try {
       const id = editId; // Get the ID from state
       const res = await axios.put(`/update-category/${id}`, data, {
@@ -133,7 +130,6 @@ const Category = () => {
           Authorization: `Bearer ${token}`,
         },
       });
-      console.log(res.data.message);
       if (res.data.message === "Updated") {
         toast.success("Catgey Updated");
         fetchCategories(activeTab);

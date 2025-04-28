@@ -43,8 +43,8 @@ const EditExpense = () => {
         setValue("amount", res.data.amount);
         setValue("description", res.data.description);
         setValue("expenseDate", res.data.expenseDate.split("T")[0]);
-        setValue("category", res.data.category);
-        setValue("paymentThrough", res.data.paymentThrough);
+        setValue("category", res.data.category._id);
+        setValue("paymentThrough", res.data.paymentThrough._id);
         setValue("vendor", res.data.vendor);
         setValue("receipt", res.data.receipt);
         // setValue("receiptFile", res.data.data.receipt); // Set the receipt file for preview
@@ -120,7 +120,9 @@ const EditExpense = () => {
     try {
       setLoading(true);
       const res = await axios.put(`/edit-expense/${id}`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+        headers: { "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`
+         },
       });
 
       if (res.data.file) {
