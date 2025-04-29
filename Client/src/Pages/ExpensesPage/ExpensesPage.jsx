@@ -262,7 +262,7 @@ const ExpensesPage = () => {
                         <Checkbox checked={isSelected} />
                       </TableCell>
                       <TableCell onClick={() => expenseDetail(item._id)}>
-                        <div className="grid grid-rows-2">
+                        <div className="grid">
                           {item.title}
                           <span className="text-gray-600">
                             {item.description}
