@@ -23,6 +23,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import { useContext } from "react";
 import { AuthContext } from "../../context/AuthContext";
+import PDFExportModal from "../../Components/Export/PDFExportModal";
+import { renderExpensePreview } from "../../Components/Export/renderExpensePreview";
 
 const DetailExpense = () => {
   const token = localStorage.getItem("Token");
@@ -31,7 +33,7 @@ const DetailExpense = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
-  const dropdownRef = useRef(null); // Added the missing dropdownRef
+  const dropdownRef = useRef(null); 
   const { user } = useContext(AuthContext);
   const [sidebar, setSidebar] = useState(false);
 
@@ -139,8 +141,6 @@ const DetailExpense = () => {
       receipt: expenseData.receipt?.cloudinaryUrl || "-",
     },
   };
-
-  console.log(PDFData)
 
   const ExportAsPDF = async () => {
     try {
@@ -312,7 +312,7 @@ const DetailExpense = () => {
                       {typeof expenseData.amount === "number"
                         ? new Intl.NumberFormat("en-US", {
                             style: "currency",
-                            currency: "USD",
+                            currency: "INR",
                           }).format(expenseData.amount)
                         : expenseData.amount || "0.00"}
                     </p>
@@ -396,241 +396,17 @@ const DetailExpense = () => {
         </div>
       </div>
 
-      <div
-        className={`w-full transition-all duration-500 ease-in-out
-            fixed inset-0 z-50 flex items-center justify-center
-            bg-black bg-opacity-10
-            ${sidebar ? "opacity-100 visible" : "opacity-0 invisible"}`}
-      >
-        <div
-          className={`w-full bg-white rounded-md shadow-lg border border-gray-200
-              p-6 w-full max-w-5xl h-[90vh] 
-              transform transition-transform duration-500 flex
-              ${sidebar ? "scale-100" : "scale-95"}`}
-        >
-          {/* Left Side - Options */}
-          <div className="w-96 pr-6 border-r border-gray-200 overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-lg font-semibold">Export PDF</h2>
-              <button
-                onClick={() => setSidebar(false)}
-                className="text-gray-500 hover:text-gray-800"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Field Selection */}
-            <div className="mb-6">
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="text-md font-medium">Fields to Include</h3>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => toggleAllFields(true)}
-                    className="text-xs text-blue-600 hover:text-blue-800 flex items-center"
-                  >
-                    <Eye size={14} className="mr-1" /> Select All
-                  </button>
-                  <button
-                    onClick={() => toggleAllFields(false)}
-                    className="text-xs text-blue-600 hover:text-blue-800 flex items-center"
-                  >
-                    <EyeOff size={14} className="mr-1" /> Deselect All
-                  </button>
-                </div>
-              </div>
-
-              <div className="space-y-2 mt-3">
-                {Object.entries(fields).map(([key, value]) => (
-                  <div key={key} className="flex items-center">
-                    <input
-                      type="checkbox"
-                      id={key}
-                      checked={value}
-                      onChange={() => handleFieldToggle(key)}
-                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <label
-                      htmlFor={key}
-                      className="ml-2 block text-sm text-gray-700"
-                    >
-                      {key
-                        .replace(/([A-Z])/g, " $1")
-                        .replace(/^./, (str) => str.toUpperCase())}
-                    </label>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Export Options */}
-          
-
-            {/* Action Buttons */}
-            <div className="flex space-x-4 mt-8">
-              <button
-                onClick={() => setSidebar(false)}
-                className="flex-1 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                Cancel
-              </button>
-              <button className="flex-1 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center justify-center" onClick={()=>ExportAsPDF()}>
-                <Download size={16} className="mr-2" /> Export PDF
-              </button>
-            </div>
-          </div>
-
-          {/* Right Side - PDF Preview */}
-          <div className="w-3/4 pl-6 overflow-y-auto">
-            <h3 className="text-md font-medium mb-4">Preview</h3>
-            <div className="relative bg-white border border-gray-300 rounded-lg shadow-lg pt-4 pb-12 px-8 min-h-[75vh]">
-              {/* PDF Header */}
-              <div className="text-center mb-8">
-                <h1 className="text-2xl font-bold text-blue-800 underline">
-                  Expense Receipt
-                </h1>
-              </div>
-
-              {/* User Details Section */}
-              {fields.userDetails && (
-                <div className="mb-8">
-                  <table className="w-full mb-6">
-                    <tbody>
-                      <tr className="bg-gray-100">
-                        <td className="py-2 px-3 w-1/4 text-sm font-semibold text-gray-600">
-                          Name
-                        </td>
-                        <td className="py-2 px-3 text-sm">{`${PDFData.userData.firstName} ${PDFData.userData.lastName}`}</td>
-                      </tr>
-                      <tr>
-                        <td className="py-2 px-3 w-1/4 text-sm font-semibold text-gray-600">
-                          Email
-                        </td>
-                        <td className="py-2 px-3 text-sm">
-                          {PDFData.userData.email}
-                        </td>
-                      </tr>
-                      <tr className="bg-gray-100">
-                        <td className="py-2 px-3 w-1/4 text-sm font-semibold text-gray-600">
-                          Phone
-                        </td>
-                        <td className="py-2 px-3 text-sm">
-                          {PDFData.userData.phone}
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              )}
-
-              {/* Expense Details Section */}
-              {fields.expenseDetails && (
-                <div className="mb-6">
-                  <table className="w-full mb-4">
-                    <tbody>
-                      <tr className="bg-gray-100">
-                        <td className="py-2 px-3 w-1/2 text-sm font-semibold text-gray-600">
-                          Title
-                        </td>
-                        <td className="py-2 px-3 text-sm">
-                          {PDFData.expenseData.title}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="py-2 px-3 w-1/2 text-sm font-semibold text-gray-600">
-                          Date
-                        </td>
-                        <td className="py-2 px-3 text-sm">
-                          {new Date(
-                            PDFData.expenseData.expenseDate
-                          ).toLocaleDateString("en-GB", {
-                            day: "2-digit",
-                            month: "short",
-                            year: "numeric",
-                          })}
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              )}
-
-              {/* Expense Summary Section */}
-              {fields.expenseSummary && (
-                <div className="mb-6">
-                  <table className="w-full border-collapse border border-gray-300 mb-6">
-                    <tbody>
-                      <tr>
-                        <td className="py-2 px-3 border border-gray-300 bg-blue-50 w-1/2 text-sm font-semibold text-blue-800">
-                          Amount
-                        </td>
-                        <td className="py-2 px-3 border border-gray-300 text-lg font-bold text-green-600">
-                          ${PDFData.expenseData.amount.toFixed(2)}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="py-2 px-3 border border-gray-300 bg-blue-50 text-sm font-semibold text-blue-800">
-                          Category
-                        </td>
-                        <td className="py-2 px-3 border border-gray-300 text-sm">
-                          {PDFData.expenseData.category}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="py-2 px-3 border border-gray-300 bg-blue-50 text-sm font-semibold text-blue-800">
-                          Payment Method
-                        </td>
-                        <td className="py-2 px-3 border border-gray-300 text-sm">
-                          {PDFData.expenseData.paymentThrough}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="py-2 px-3 border border-gray-300 bg-blue-50 text-sm font-semibold text-blue-800">
-                          Vendor
-                        </td>
-                        <td className="py-2 px-3 border border-gray-300 text-sm">
-                          {PDFData.expenseData.vendor}
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              )}
-
-              {/* Description Section */}
-              {fields.description && (
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-blue-900 mb-2">
-                    Description
-                  </h3>
-                  <p className="text-sm text-gray-600">
-                    {PDFData.expenseData.description}
-                  </p>
-                </div>
-              )}
-
-              {/* Receipt Image */}
-              {fields.receipt && (
-                <div className="mb-6 flex justify-center">
-                  <img
-                    src={PDFData.expenseData.receipt}
-                    alt="Receipt"
-                    className="border border-gray-300 p-1"
-                  />
-                </div>
-              )}
-
-              {/* Footer */}
-              {fields.footer && (
-                <div className="absolute bottom-4 left-0 right-0 px-8 text-xs text-gray-500 italic flex justify-between">
-                  <span>Generated on: {new Date().toLocaleDateString()}</span>
-                  <span>Page 1 of 1</span>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
+      <PDFExportModal
+        type="expense"
+        visible={sidebar}
+        onClose={() => setSidebar(false)}
+        fields={fields}
+        handleFieldToggle={handleFieldToggle}
+        toggleAllFields={toggleAllFields}
+        onExportPDF={ExportAsPDF}
+        PDFData={PDFData}
+        renderPreview={renderExpensePreview}
+      />
     </div>
   );
 };

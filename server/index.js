@@ -63,6 +63,9 @@ app.use('/', exportRoutes);
 const AcitivityRoute = require('./src/routes/AcitivityRoute');
 app.use('/', AcitivityRoute);
 
+const BudgetRoute = require('./src/routes/BudgetRoutes');
+app.use('/', BudgetRoute);
+
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });

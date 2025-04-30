@@ -18,6 +18,7 @@ const IncomeSchema = new Schema(
       required: true,
     },
     incomeDate: {
+      required: true,
       type: Date,
     },
     category: {
@@ -27,6 +28,7 @@ const IncomeSchema = new Schema(
     },
     paymentThrough: {
       type: mongoose.Schema.ObjectId,
+      required: true,
       ref: "Payment",
     },
     notes: {

@@ -29,8 +29,12 @@ const generateExpensePDF = async (req, res) => {
 
 const generateIncomePDF = async (req, res) => {
   try {
-    const incomeData = req.body;
-    const pdfBuffer = await pdfGenerator.generateIncomePDF(incomeData);
+    const { incomeData, userData, fields } = req.body;
+    const pdfBuffer = await pdfGenerator.generateIncomePDF(
+      incomeData,
+      userData,
+      fields
+    );
 
     // Set headers to serve the PDF file as download
     res.setHeader(

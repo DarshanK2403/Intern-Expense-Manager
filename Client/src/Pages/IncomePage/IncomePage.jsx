@@ -164,15 +164,15 @@ const IncomePage = () => {
 
   const lowerSearch = searchValue.toLowerCase();
 
-// Later in your code, where the error occurs:
-const filteredIncomes = Array.isArray(incomeData) 
-  ? incomeData.filter(
-      (item) =>
-        item.title.toLowerCase().includes(lowerSearch) ||
-        item.category.category_name.toLowerCase().includes(lowerSearch) ||
-        item.amount.toString().includes(lowerSearch)
-    )
-  : [];
+  // Later in your code, where the error occurs:
+  const filteredIncomes = Array.isArray(incomeData)
+    ? incomeData.filter(
+        (item) =>
+          item.title.toLowerCase().includes(lowerSearch) ||
+          item.category.category_name.toLowerCase().includes(lowerSearch) ||
+          item.amount.toString().includes(lowerSearch)
+      )
+    : [];
   // Apply sort to the filtered results
   const sortedFilteredExpenses = filteredIncomes.sort(
     getComparator(order, orderBy)
@@ -182,6 +182,10 @@ const filteredIncomes = Array.isArray(incomeData)
     page * rowsPerPage,
     page * rowsPerPage + rowsPerPage
   );
+
+  const DetailIncome = async(id)=>{
+    navigate(`detail-income/${id}`);
+  }
 
   return (
     <div>
@@ -257,11 +261,11 @@ const filteredIncomes = Array.isArray(incomeData)
                               selected={isSelected}
                             />
                           </TableCell>
-                          <TableCell>
+                          <TableCell onClick={() => DetailIncome(item._id)}>
                             <div className="grid grid-rows-2">
                               {item.title}
                               <span className="text-gray-600">
-                                {item.notes}  
+                                {item.notes}
                               </span>
                             </div>
                           </TableCell>

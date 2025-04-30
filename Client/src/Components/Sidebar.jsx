@@ -11,6 +11,7 @@ import {
   ChevronRight,
   Banknote,
   Store,
+  ClipboardList,
 } from "lucide-react";
 import axios from "axios";
 import { AuthContext } from "../context/AuthContext";
@@ -35,6 +36,7 @@ const Sidebar = () => {
     { icon: Banknote, label: "Income", path: "/income" },
     { icon: Store, label: "Vendor", path: "/vendor" },
     { icon: BarChart, label: "Reports", path: "/reports" },
+    { icon: ClipboardList, label: "Budget", path: "/budget" },
     { icon: Settings, label: "Settings", path: "/settings" },
   ];
 

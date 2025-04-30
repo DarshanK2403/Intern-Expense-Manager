@@ -8,7 +8,7 @@ router.post("/add-income",authMiddleware, IncomeController.AddIncome);
 
 router.get("/get-income", authMiddleware, IncomeController.getIncomebyUserId);
 
-router.get("/get-income-by-id/:id", authMiddleware, IncomeController.getIncomebyId);
+router.get("/income-details/:id", authMiddleware, IncomeController.getIncomebyId);
 
 router.put("/edit-income/:id",authMiddleware, IncomeController.EditIncomebyId);
 

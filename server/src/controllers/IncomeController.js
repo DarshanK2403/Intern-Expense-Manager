@@ -89,7 +89,7 @@ const getIncomebyUserId = async (req, res) => {
 const getIncomebyId = async (req, res) => {
   const { id } = req.params;
   try {
-    const getIncome = await Income.findById(id);
+    const getIncome = await Income.findById(id).populate("category").populate("paymentThrough");
     if (getIncome) {
       res.status(200).json(getIncome);
     } else {

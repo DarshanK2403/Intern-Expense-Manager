@@ -1,6 +1,4 @@
-/* eslint-disable no-unused-vars */
 import { useForm } from "react-hook-form";
-import Subnav from "../../Components/Subnav";
 import Input from "../../Components/Input";
 import axios from "axios";
 import { useCallback, useEffect, useState } from "react";
@@ -21,7 +19,6 @@ const AddIncome = () => {
   const navigate = useNavigate();
   const [isUploading, setIsUploading] = useState(false);
   const [filePreview, setFilePreview] = useState(null);
-  const [fileType, setFileType] = useState(null);
   const [loading, setLoading] = useState(false);
   const [PaymentType, setPaymentType] = useState([]);
 
@@ -84,10 +81,6 @@ const AddIncome = () => {
     const fileURL = URL.createObjectURL(file);
     setFilePreview(fileURL);
 
-    if (file.type.startsWith("image/")) {
-      setFileType("image");
-    }
-
     setValue("receiptFile", file); // Store file for form submission
     setIsUploading(false);
   };
@@ -95,7 +88,6 @@ const AddIncome = () => {
   // Remove uploaded file
   const handleRemoveFile = () => {
     setFilePreview(null);
-    setFileType(null);
     setValue("receiptFile", null);
   };
 
@@ -109,7 +101,7 @@ const AddIncome = () => {
         });
         setPaymentType(res.data.data);
         if (callback) callback(res.data.data);
-      } catch (error) {
+      } catch {
         toast.error("Something went wrong");
       }
     },
@@ -127,7 +119,7 @@ const AddIncome = () => {
         });
         setincomeCategories(res.data.data);
         if (callback) callback(res.data.data);
-      } catch (error) {
+      } catch {
         toast.error("Internal Server Error");
       }
     },
