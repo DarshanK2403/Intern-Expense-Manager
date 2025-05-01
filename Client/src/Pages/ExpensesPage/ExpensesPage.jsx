@@ -1,29 +1,10 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable no-unused-vars */
-import React, { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import axios from "axios";
-import {
-  Calendar,
-  FileText,
-  CreditCard,
-  Tag,
-  Image,
-  IndianRupee,
-  Edit,
-  Trash,
-  File,
-  FileX,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-  Trash2,
-} from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { FileText, IndianRupee, Edit, Trash2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import SpinnerLoader from "../../Components/Loader/SpinnerLoader";
 import { useOutletContext } from "react-router-dom";
-import EditExpense from "./EditExpense";
 import { format } from "date-fns";
 import {
   Table,
@@ -50,14 +31,7 @@ const ExpensesPage = () => {
   const [rowsPerPage, setRowsPerPage] = useState(5); // default 5 per page
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (token) {
-      getExpense();
-    }
-  }, [token, searchValue]);
-
-  // Get Expense
-  const getExpense = async () => {
+  const getExpense = useCallback(async () => {
     setLoading(true);
     try {
       const res = await axios(`/get-expense/`, {
@@ -71,12 +45,18 @@ const ExpensesPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    if (token) {
+      getExpense();
+    }
+  }, [token, searchValue, getExpense]);
 
   const expenseDetail = async (id) => {
     try {
       navigate(`expense-detail/${id}`);
-    } catch (error) {
+    } catch {
       toast.error("Somthing went wrong!");
     }
   };
@@ -84,31 +64,29 @@ const ExpensesPage = () => {
   const editExpense = async (id) => {
     try {
       navigate(`edit-expense/${id}`);
-    } catch (error) {
+    } catch {
       toast.error("Something went wrong!");
     }
   };
 
-  // Delete Expense API
-  const deleteExpense = async (id) => {
+  // Delete Expense
+  const deleteExpenses = async (ids) => {
+    setLoading(true);
     try {
-      await axios.delete(`/delete-expense/${id}`,{
-        headers:{
-          Authorization: `Bearer ${token}`
-        }
+      await axios.delete("/delete-expense", {
+        data: { ids: Array.isArray(ids) ? ids : [ids] },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
-      toast.success("Expense Deleted");
+      toast.success("Expense(s) Deleted");
+      setSelected([]);
       getExpense();
-    } catch (error) {
-      console.log(error)
-      toast.error("Expense Delete Failed");
+    } catch {
+      toast.error("Failed to delete vendor(s)");
+    } finally {
+      setLoading(false);
     }
-  };
-
-  // Handle Delete
-  const handleDelete = () => {
-    deleteExpense(selected);
-    setSelected([]); 
   };
 
   // Handle Selct All Click
@@ -116,7 +94,7 @@ const ExpensesPage = () => {
     if (event.target.checked) {
       setSelected(sortedData.map((n) => n._id));
     } else {
-      setSelected([]); 
+      setSelected([]);
     }
   };
 
@@ -200,7 +178,7 @@ const ExpensesPage = () => {
       <ToastContainer autoClose={1500}></ToastContainer>
       {selected.length > 0 && (
         <button
-          onClick={handleDelete}
+          onClick={() => deleteExpenses(selected)}
           className="bg-red-500 text-white py-2 px-4 rounded-md mt-4"
         >
           Delete Expense
@@ -288,7 +266,7 @@ const ExpensesPage = () => {
                               className="text-gray-600 hover:text-blue-600"
                             />
                           </button>
-                          <button onClick={() => deleteExpense(item._id)}>
+                          <button onClick={() => deleteExpenses(item._id)}>
                             <Trash2
                               size={16}
                               className="text-gray-600 hover:text-red-600"

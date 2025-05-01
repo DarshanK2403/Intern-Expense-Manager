@@ -16,6 +16,7 @@ const ExpenseLayout = lazy(() => import("./Layouts/ExpenseLayout"));
 import { PrivateRoute, AdminRoute } from "./hooks/PrivateRoute";
 import BudgetPage from "./Pages/BudgetPage/BudgetPage";
 import BudgetPagelayout from "./Layouts/BudgetPagelayout";
+import AdminReport from "./admin/Page/AdminReport";
 const AddIncome = lazy(() => import("./Pages/IncomePage/AddIncome"));
 const RecentTransactios = lazy(() =>
   import("./Pages/DashboardPage/RecentTransactios")
@@ -129,6 +130,7 @@ function App() {
                 <Route index path="dashboard" element={<AdminPage />} />
 
                 <Route path="users" element={<AdminUserPage />} />
+                <Route path="report" element={<AdminReport />} />
 
                 <Route
                   index

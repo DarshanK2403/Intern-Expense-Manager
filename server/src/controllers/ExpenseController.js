@@ -115,33 +115,44 @@ const getExpenseDetailbyId = async (req, res) => {
 };
 
 const deleteExpensebyId = async (req, res) => {
-  const userId = req.user.id;
-  const expenseId = req.params.id;
-
+  const { ids } = req.body;
   try {
-    const deleteExpense = await ExpenseModel.findOneAndDelete({
-      _id: expenseId,
-      userId: userId,
-    });
-
-    if (!deleteExpense) {
-      return res
-        .status(404)
-        .json({ message: "Expense not found or not authorized" });
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ message: "No expense IDs provided" });
     }
 
-    const cat = await CategoryModel.findById(deleteExpense.category);
+    // Fetch the expenses and populate the category name
+    const expensesToDelete = await ExpenseModel.find({
+      _id: { $in: ids },
+    }).populate("category");
 
-    await logActivity(
-      userId,
-      "DELETE_EXPENSE",
-      `Deleted an expense of ₹${deleteExpense.amount} under '${
-        cat?.category_name || "Unknown Category"
-      }'`
-    );
+    if (expensesToDelete.length === 0) {
+      return res.status(404).json({ message: "No expenses found to delete" });
+    }
 
-    res.status(200).json({ message: "Expense Deleted", deleteExpense });
+    // Delete the expenses
+    const result = await ExpenseModel.deleteMany({ _id: { $in: ids } });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ message: "No expenses were deleted" });
+    }
+
+    for (let expense of expensesToDelete) {
+      const categoryName =
+        expense.category?.category_name || "Unknown Category";
+      await logActivity(
+        req.user.id,
+        "DELETE_EXPENSE",
+        `Deleted an expense of ₹${expense.amount} under '${categoryName}'`
+      );
+    }
+
+    res.status(200).json({
+      message: "Expenses deleted successfully",
+      deletedCount: result.deletedCount,
+    });
   } catch (error) {
+    console.error("Error deleting expenses:", error);
     res.status(500).json({ message: error.message });
   }
 };

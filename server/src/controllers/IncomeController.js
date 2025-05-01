@@ -89,7 +89,9 @@ const getIncomebyUserId = async (req, res) => {
 const getIncomebyId = async (req, res) => {
   const { id } = req.params;
   try {
-    const getIncome = await Income.findById(id).populate("category").populate("paymentThrough");
+    const getIncome = await Income.findById(id)
+      .populate("category")
+      .populate("paymentThrough");
     if (getIncome) {
       res.status(200).json(getIncome);
     } else {
@@ -164,32 +166,40 @@ const EditIncomebyId = async (req, res) => {
 };
 
 const deleteIncomebyId = async (req, res) => {
-  const userId = req.user.id;
-
+  const { ids } = req.body;
   try {
-    const deleteIncome = await Income.findOneAndDelete({
-      _id: req.params.id,
-      userId: userId,
-    });
-
-    if (!deleteIncome) {
-      return res
-        .status(404)
-        .json({ message: "Income not found or not authorized" });
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ message: "No incomes IDs provided" });
     }
 
-    const cat = await CategoryModel.findById(deleteIncome.category);
+    // Fetch the expenses to log their details
+    const incomesToDelete = await Income.find({ _id: { $in: ids } });
 
-    await logActivity(
-      userId,
-      "DELETE_INCOME",
-      `Deleted an income of ₹${deleteIncome.amount} under '${
-        cat?.category_name || "Unknown Category"
-      }'`
-    );
+    if (incomesToDelete.length === 0) {
+      return res.status(404).json({ message: "No expenses found to delete" });
+    }
 
-    res.status(200).json({ message: "Income Deleted", deleteIncome });
+    // Delete the expenses
+    const result = await Income.deleteMany({ _id: { $in: ids } });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ message: "No expenses were deleted" });
+    }
+
+    for (let expense of incomesToDelete) {
+      await logActivity(
+        req.user.id,
+        "DELETE_INCOME",
+        `Deleted an income of ₹${expense.amount} under '${expense.category.category_name}'`
+      );
+    }
+
+    res.status(200).json({
+      message: "Expenses deleted successfully",
+      deletedCount: result.deletedCount,
+    });
   } catch (error) {
+    console.error("Error deleting expenses:", error);
     res.status(500).json({ message: error.message });
   }
 };

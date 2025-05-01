@@ -18,18 +18,18 @@ const AdminSidebar = () => {
   const navigate = useNavigate();
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   const location = useLocation();
-  
 
   const menuItems = [
     { name: "Dashboard", icon: Home, path: "/admin/dashboard" },
     { name: "Users", icon: FileText, path: "/admin/users" },
+    { name: "Report", icon: BarChart2, path: "/admin/report" },
     { name: "Settings", icon: Settings, path: "/admin/settings" },
   ];
 
   const logout = () => {
     localStorage.removeItem("id");
     navigate("/signin", { replace: true });
-  }
+  };
   return (
     <aside
       className={`${
@@ -56,7 +56,6 @@ const AdminSidebar = () => {
               </li>
             );
           })}
-        
         </ul>
         <div className="mt-10 pt-6 border-t border-gray-200">
           <button

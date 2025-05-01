@@ -1,6 +1,7 @@
 const PaymentModel = require("../models/PaymentModel");
 const PaymentType = require("../models/PaymentType");
 
+// Payment Type
 const CreatePaymentType = async (req, res) => {
   try {
     const { name } = req.body;
@@ -77,6 +78,50 @@ const DeletePaymentType = async (req, res) => {
   }
 };
 
+const UpdatePaymentType = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name } = req.body;
+    const userId = req.user.id; // assuming authMiddleware sets req.user
+
+    if (!name || !name.trim()) {
+      return res.status(400).json({ message: "Payment type name is required." });
+    }
+
+    const existingType = await PaymentType.findOne({
+      _id: id,
+      userId,
+    });
+
+    if (!existingType) {
+      return res.status(404).json({ message: "Payment type not found." });
+    }
+
+    // Check for duplicate name for the same user
+    const duplicate = await PaymentType.findOne({
+      userId,
+      name: name.trim(),
+      _id: { $ne: id }, // exclude current document
+    });
+
+    if (duplicate) {
+      return res.status(400).json({ message: "Payment type already exists." });
+    }
+
+    existingType.name = name.trim();
+    await existingType.save();
+
+    return res.status(200).json({
+      message: "Payment type updated successfully.",
+      data: existingType,
+    });
+  } catch (err) {
+    console.error("UpdatePaymentType Error:", err);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+// Payment
 const CreatePayment = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -156,6 +201,7 @@ module.exports = {
   CreatePaymentType,
   GetPaymentType,
   DeletePaymentType,
+  UpdatePaymentType,
   CreatePayment,
   GetPayment,
   DeletePayment,

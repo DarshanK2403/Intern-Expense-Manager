@@ -61,7 +61,7 @@ const Navbar = () => {
   }
 
   return (
-    <nav className="bg-white shadow fixed top-0 left-0 right-0 z-10">
+    <nav className="bg-white shadow-sm top-0 left-0 right-0 z-10 relative border-b border-gray-300">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
           {/* Logo and Brand */}
@@ -70,23 +70,19 @@ const Navbar = () => {
               className="flex items-center space-x-2 cursor-pointer"
               onClick={() => navigate("/dashboard")}
             >
-              <div className="bg-blue-600 text-white p-2 rounded-lg">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
+              <div className="flex items-center">
+                <div
+                  className="flex items-center space-x-2 cursor-pointer"
+                  onClick={() => navigate("/dashboard")}
                 >
-                  <path
-                    fillRule="evenodd"
-                    d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm3 1h6v4H7V5zm8 8v2h1v1H4v-1h1v-2H4v-1h12v1h-1z"
-                    clipRule="evenodd"
-                  />
-                </svg>
+                  <div className="w-8 h-8 bg-blue-600 rounded-md flex items-center justify-center">
+                    <span className="text-white font-bold">F</span>
+                  </div>
+                  <h1 className="text-xl font-bold text-blue-600 hidden sm:block">
+                    FinanceTrack
+                  </h1>
+                </div>
               </div>
-              <h1 className="text-xl font-bold text-blue-600 hidden sm:block">
-                FinanceTrack
-              </h1>
             </div>
           </div>
 

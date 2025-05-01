@@ -24,9 +24,7 @@ const AddIncome = () => {
 
   // On Submit
   const submitHandler = async (data) => {
-    console.log(data);
-
-    if (data.receiptFile && !(data.receiptFile instanceof File)) {
+    if (data.receiptFile && !(data.receiptFile instanceof Blob)) {
       console.error("Invalid file format");
       return;
     }
@@ -35,6 +33,7 @@ const AddIncome = () => {
     formData.append("title", data.title);
     formData.append("amount", data.amount);
     formData.append("incomeDate", data.incomeDate);
+    formData.append("paymentThrough", data.paymentThrough);
     formData.append("category", data.category);
     formData.append("notes", data.notes);
     if (data.receiptFile instanceof File) {
@@ -45,30 +44,18 @@ const AddIncome = () => {
 
     try {
       setLoading(true);
-
-      const res = await axios.post(`/add-income`, formData, {
+      await axios.post(`/add-income`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${token}`,
         },
       });
-
-      if (res.data.file) {
-        const { cloudinaryUrl, originalName, uniqueName, fileType } =
-          res.data.file;
-        console.log("Uploaded file details:", {
-          cloudinaryUrl,
-          originalName,
-          uniqueName,
-          fileType,
-        });
-      }
-      console.log("Form Data Sent:", res.data);
       navigate("/income");
     } catch (error) {
       console.log(error);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   // Handle File Change

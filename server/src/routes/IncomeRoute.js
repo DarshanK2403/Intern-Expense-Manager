@@ -1,17 +1,18 @@
 const express = require("express");
 const router = express.Router();
 const IncomeController = require("../controllers/IncomeController");
-const Income = require("../models/IncomeModel");;
-const authMiddleware = require("../middleware/authMiddleware");
+const protect = require("../middleware/authMiddleware");
 
-router.post("/add-income",authMiddleware, IncomeController.AddIncome);
+router.use(protect);
 
-router.get("/get-income", authMiddleware, IncomeController.getIncomebyUserId);
+router.post("/add-income", IncomeController.AddIncome);
 
-router.get("/income-details/:id", authMiddleware, IncomeController.getIncomebyId);
+router.get("/get-income",  IncomeController.getIncomebyUserId);
 
-router.put("/edit-income/:id",authMiddleware, IncomeController.EditIncomebyId);
+router.get("/income-details/:id",  IncomeController.getIncomebyId);
 
-router.delete("/delete-income/:id", authMiddleware, IncomeController.deleteIncomebyId);
+router.put("/edit-income/:id", IncomeController.EditIncomebyId);
+
+router.delete("/delete-income",  IncomeController.deleteIncomebyId);
 
 module.exports = router

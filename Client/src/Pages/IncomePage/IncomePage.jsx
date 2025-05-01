@@ -107,11 +107,23 @@ const IncomePage = () => {
     };
   };
 
-  // Handle Delete
-  const handleDelete = () => {
-    // Call your deleteExpense function here
-    deleteIncome(selected);
-    setSelected([]); // Clear selection after deletion
+  const deleteIncomes = async (ids) => {
+    setLoading(true);
+    try {
+      await axios.delete("/delete-income", {
+        data: { ids: Array.isArray(ids) ? ids : [ids] },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      toast.success("Income(s) Deleted");
+      setSelected([]);
+      getIncome();
+    } catch {
+      toast.error("Failed to delete income(s)");
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Handle Selct All Click
@@ -183,9 +195,9 @@ const IncomePage = () => {
     page * rowsPerPage + rowsPerPage
   );
 
-  const DetailIncome = async(id)=>{
+  const DetailIncome = async (id) => {
     navigate(`detail-income/${id}`);
-  }
+  };
 
   return (
     <div>
@@ -193,7 +205,7 @@ const IncomePage = () => {
       <div className="max-w-6xl mx-auto bg-white rounded-lg shadow overflow-hidden mb-5 ">
         {selected.length > 0 && (
           <button
-            onClick={handleDelete}
+            onClick={() => deleteIncomes(selected)}
             className="bg-red-500 text-white py-2 px-4 rounded-md mt-4"
           >
             Delete Income
@@ -283,7 +295,7 @@ const IncomePage = () => {
                                   className="text-gray-600 hover:text-blue-600"
                                 />
                               </button>
-                              <button onClick={() => deleteIncome(item._id)}>
+                              <button onClick={() => deleteIncomes(item._id)}>
                                 <Trash2
                                   size={16}
                                   className="text-gray-600 hover:text-red-600"

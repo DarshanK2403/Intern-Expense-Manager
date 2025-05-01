@@ -20,4 +20,10 @@ router.get(
   DashboardController.IncomeByCategory
 );
 
+router.get(
+  "/budget/:year/dashboard-summary",
+  authMiddleware,
+  DashboardController.BudgetDashboardSummary
+);
+
 module.exports = router;

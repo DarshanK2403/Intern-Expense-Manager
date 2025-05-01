@@ -1,23 +1,15 @@
-/* eslint-disable react/no-unescaped-entities */
-/* eslint-disable no-unused-vars */
 import axios from "axios";
 import {
-  ArrowDownLeft,
-  ArrowUpRight,
   Briefcase,
   ChevronRight,
   CreditCard,
-  DollarSign,
-  Eye,
   FileText,
   IndianRupee,
-  MoreHorizontal,
-  MoreVertical,
-  MoreVerticalIcon,
+  PiggyBank,
   PlusCircle,
   TrendingUp,
 } from "lucide-react";
-import React, { useEffect, useRef, useState, PureComponent } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { format } from "date-fns";
 import { toast, ToastContainer } from "react-toastify";
 import { Link } from "react-router-dom";
@@ -25,27 +17,18 @@ import { PieChart } from "@mui/x-charts/PieChart";
 import MetricCard from "../../Components/MetricCard";
 import SpinnerLoader from "../../Components/Loader/SpinnerLoader";
 import { Box, Paper, Typography, useTheme } from "@mui/material";
+import QuickLink from "../../Components/QuickLink";
 
 const Dashboard = () => {
+  const token = localStorage.getItem("Token");
+  const [carddata, setCardata] = useState([]);
   const [loading, setLoading] = useState(false);
   const [recentTransaction, setRecentTransaction] = useState([]);
-  const [totalExpense, setTotalExpense] = useState();
-  const [totalIncome, setTotalIncome] = useState();
-  const [currentBalance, setcurrentBalance] = useState();
   const [expenseData, setExpenseData] = useState([]);
-  const [timeframe, setTimeframe] = useState("monthly");
   const [incomeData, setIncomeData] = useState([]);
-  const token = localStorage.getItem("Token");
-
-  const COLORS = [
-    "#5B9BD5",
-    "#70AD47",
-    "#FFD966",
-    "#E57373",
-    "#A085C2",
-    "#56C0E0",
-    "#F4A261",
-  ];
+  const [summary, setSummary] = useState([]);
+  const currentYear = new Date().getFullYear();
+  const [year] = useState(currentYear);
 
   useEffect(() => {
     const getRecentTransactions = async () => {
@@ -86,9 +69,7 @@ const Dashboard = () => {
           Authorization: `Bearer ${token}`,
         },
       });
-      setTotalExpense(res.data.totalExpense);
-      setTotalIncome(res.data.totalIncome);
-      setcurrentBalance(res.data.currentBalance);
+      setCardata(res.data);
     };
     if (token) {
       getTotalAmount();
@@ -96,42 +77,58 @@ const Dashboard = () => {
   }, [token]);
 
   // Get Expenseby Category & Income
+  const getExpensebyCategory = useCallback(async () => {
+    try {
+      const res = await axios.get(`/expensebycategory`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setExpenseData(res.data);
+    } catch {
+      toast.error("Internal Server Error");
+    }
+  }, [token]);
+
+  const getIncomebyCategory = useCallback(async () => {
+    try {
+      const res = await axios.get(`/incomebycategory`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setIncomeData(res.data);
+    } catch {
+      toast.error("Internal Server Error");
+    }
+  }, [token]);
+
   useEffect(() => {
-    const getExpensebyCategory = async () => {
-      try {
-        const res = await axios.get(`/expensebycategory`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        setExpenseData(res.data);
-        // console.log(res.data);
-      } catch (error) {
-        toast.error("Internal Server Error");
-      }
-    };
-
-    const getIncomebyCategory = async () => {
-      try {
-        const res = await axios.get(`/incomebycategory`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        // console.log(res.data);
-        setIncomeData(res.data);
-      } catch (error) {
-        toast.error("Internal Server Error");
-      }
-    };
-
     if (token) {
       getExpensebyCategory();
       getIncomebyCategory();
     }
-  }, [token]);
+  }, [token, getExpensebyCategory, getIncomebyCategory]);
 
   const theme = useTheme();
+
+  const fetchSummary = useCallback(async () => {
+    try {
+      const res = await axios.get(`/budget/${year}/dashboard-summary`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setSummary(res.data.data.categories);
+      console.log(res.data.data);
+    } catch (err) {
+      console.error("Error fetching budget summary:", err);
+    }
+  }, [year, token]);
+
+  useEffect(() => {
+    fetchSummary();
+  }, [fetchSummary]);
 
   // Custom color palette for professional look
   const chartColors = [
@@ -155,8 +152,46 @@ const Dashboard = () => {
     }));
   };
 
+  const quickLinks = [
+    {
+      to: "/income/add",
+      icon: PlusCircle,
+      title: "Add Income",
+      description: "Record a new income",
+      color: "text-green-600",
+    },
+    {
+      to: "/expenses/add",
+      icon: CreditCard,
+      title: "Add Expense",
+      description: "Log a new expense",
+      color: "text-red-600",
+    },
+    {
+      to: "/vendor/add",
+      icon: Briefcase,
+      title: "Add Vendor",
+      description: "Add a new vendor",
+      color: "text-blue-600",
+    },
+    {
+      to: "/reports/generate",
+      icon: FileText,
+      title: "Generate Report",
+      description: "Financial summary report",
+      color: "text-purple-600",
+    },
+    {
+      to: "/budget",
+      icon: FileText,
+      title: "Manage Budget",
+      description: "Control your finances",
+      color: "text-amber-600",
+    },
+  ];
+
   return (
-    <div className="p-4 h-auto">
+    <div className="p-4">
       <ToastContainer></ToastContainer>
       <div className="space-x-6 space-y-6">
         {/* Financial Metrics - Horizontal Layout */}
@@ -164,15 +199,15 @@ const Dashboard = () => {
           <MetricCard
             icon={<TrendingUp className="h-6 w-6 text-green-600" />}
             title="Total Income"
-            value={totalIncome}
-            description="From all income sources"
+            value={carddata.totalIncome}
+            description="All income this month"
             bgColor="bg-green-100"
             textColor="text-green-600"
           />
           <MetricCard
             icon={<CreditCard className="h-6 w-6 text-red-600" />}
             title="Total Expenses"
-            value={totalExpense}
+            value={carddata.totalExpense}
             description="All expenses this month"
             bgColor="bg-red-100"
             textColor="text-red-600"
@@ -180,82 +215,82 @@ const Dashboard = () => {
           <MetricCard
             icon={<IndianRupee className="h-6 w-6 text-blue-600" />}
             title="Net Balance"
-            value={currentBalance}
-            description="Net income - expenses"
+            value={carddata.currentBalance}
+            description="Income - Expense"
             bgColor="bg-blue-100"
             textColor="text-blue-600"
+          />
+          <MetricCard
+            icon={<PiggyBank className="h-6 w-6 text-amber-600" />}
+            title="Remaining Budget"
+            value={carddata.remainingBudget}
+            description="Total Budget - Total Spent"
+            bgColor="bg-amber-100"
+            textColor="text-amber-600"
           />
         </div>
 
         {/* Quick Actions - Vertical Layout */}
-        <div className="w-full flex flex-row space-x-4">
-          {/* Add Income */}
-          <Link
-            to="/income/add"
-            className="w-full flex items-center justify-between p-4 bg-white rounded-lg shadow hover:bg-gray-50 transition-colors"
-          >
-            <div className="flex items-center">
-              <PlusCircle className="h-5 w-5 mr-2 text-green-600" />
-              <div>
-                <p className={`font-medium text-start  text-green-600`}>
-                  Add Income
-                </p>
-                <p className="text-xs text-gray-500">Record a new income</p>
-              </div>
-            </div>
-            <ArrowUpRight className="h-5 w-5 text-gray-400" />
-          </Link>
+        <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+          {quickLinks.map((link, index) => (
+            <QuickLink key={index} {...link} />
+          ))}
+        </div>
+      </div>
 
-          {/* Add Expense */}
-          <Link
-            to="/expenses/add"
-            className="w-full flex items-center justify-between p-4 bg-white rounded-lg shadow hover:bg-gray-50 transition-colors"
-          >
-            <div className="flex items-center">
-              <CreditCard className="h-5 w-5 mr-2 text-red-600" />
-              <div>
-                <p className={`font-medium text-start  text-red-600`}>
-                  Add Expense
-                </p>
-                <p className="text-xs text-gray-500">Log a new expense</p>
-              </div>
-            </div>
-            <ArrowUpRight className="h-5 w-5 text-gray-400" />
-          </Link>
+      {/* Budget */}
+      <div className="space-y-4 mt-5 bg-white p-6 border border-gray-300 shadow rounded-lg flex flex-col">
+        <h2 className="text-xl font-semibold">Budget Overview - {year}</h2>
 
-          {/* Add Vendor */}
-          <Link
-            to="/vendor/add"
-            className="w-full flex items-center justify-between p-4 bg-white rounded-lg shadow hover:bg-gray-50 transition-colors"
-          >
-            <div className="flex items-center">
-              <Briefcase className="h-5 w-5 mr-2 text-blue-600" />
-              <div>
-                <p className={`font-medium text-start  text-blue-600`}>
-                  Add Vendor
-                </p>
-                <p className="text-xs text-gray-500">Add a new vendor</p>
-              </div>
-            </div>
-            <ArrowUpRight className="h-5 w-5 text-gray-400" />
-          </Link>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {summary.map((item) => {
+            const percentSpent = (item?.totalSpent / item?.totalBudget) * 100;
+            const percentRemaining = 100 - percentSpent;
 
-          {/* Report Genarte */}
-          <Link
-            to="/reports/generate"
-            className="w-full flex items-center justify-between p-4 bg-white rounded-lg shadow hover:bg-gray-50 transition-colors"
-          >
-            <div className="flex items-center">
-              <FileText className="h-5 w-5 mr-2 text-purple-600" />
-              <div>
-                <p className={`font-medium text-start  text-purple-600`}>
-                  Generate your financial report
+            return (
+              <div
+                key={item.categoryId}
+                className="p-4 rounded-xl shadow bg-white border border-gray-300"
+                style={{ borderColor: item.color }}
+              >
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="font-semibold">{item.categoryName}</h3>
+                  <span
+                    className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                      item.status === "Over Budget"
+                        ? "bg-red-100 text-red-600"
+                        : item.status === "Near Limit"
+                        ? "bg-yellow-100 text-yellow-600"
+                        : "bg-green-100 text-green-600"
+                    }`}
+                  >
+                    {item.status}
+                  </span>
+                </div>
+
+                {/* Progress Bar */}
+                <div className="relative h-4 bg-gray-200 rounded-full overflow-hidden">
+                  <div
+                    className="absolute left-0 top-0 h-full bg-green-500"
+                    style={{ width: `${percentSpent}%` }}
+                  ></div>
+                  <div
+                    className="absolute right-0 top-0 h-full bg-blue-500"
+                    style={{ width: `${percentRemaining}%` }}
+                  ></div>
+                </div>
+
+                <div className="flex justify-between text-sm mt-1 text-gray-700">
+                  <span>Spent: ₹{item.totalSpent.toFixed(2)}</span>
+                  <span>Remaining: ₹{item.remaining.toFixed(2)}</span>
+                </div>
+
+                <p className="text-xs text-gray-500 mt-1">
+                  Total Budget: ₹{item.totalBudget.toFixed(2)}
                 </p>
-                <p className="text-xs text-gray-500">Generate Report</p>
               </div>
-            </div>
-            <ArrowUpRight className="h-5 w-5 text-gray-400" />
-          </Link>
+            );
+          })}
         </div>
       </div>
 
@@ -390,16 +425,15 @@ const Dashboard = () => {
               No Transactions Yet
             </h3>
             <p className="text-gray-500 text-center max-w-md font-sans min-h-[40px]">
-              You haven't recorded any transactions. Start by adding an income
-              or expense.
+              You haven&#39;t recorded any transactions. Start by adding an
+              income or expense.
             </p>
           </div>
         )}
       </div>
 
-      {/* Expense by Category */}
-       
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 rounded-md">
+      <div className="mt-6 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-96 rounded-md">
           {/* Expenses by Category*/}
           {expenseData.length > 0 ? (
             <div style={{ width: "100%", height: 150 }}>
@@ -618,6 +652,7 @@ const Dashboard = () => {
           )}
         </div>
       </div>
+    </div>
   );
 };
 

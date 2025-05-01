@@ -1,6 +1,8 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Save, Trash2 } from "lucide-react";
 import axios from "axios";
+import SpinnerLoader from "../../Components/Loader/SpinnerLoader";
+import { toast, ToastContainer } from "react-toastify";
 
 const BudgetPage = () => {
   const token = localStorage.getItem("Token");
@@ -11,6 +13,7 @@ const BudgetPage = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+  const [activeQuarter, setActiveQuarter] = useState(1);
 
   const currencyFormatter = new Intl.NumberFormat("en-IN", {
     style: "currency",
@@ -20,21 +23,29 @@ const BudgetPage = () => {
   });
 
   const months = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
+    "January",
+    "February",
+    "March",
+    "April",
     "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
   ];
 
-  const getCategories = async () => {
+  // Group months by quarters
+  const quarters = [
+    { id: 1, name: "Q1 (Jan - Mar)", months: [0, 1, 2] },
+    { id: 2, name: "Q2 (Apr - Jun)", months: [3, 4, 5] },
+    { id: 3, name: "Q3 (Jul - Sep)", months: [6, 7, 8] },
+    { id: 4, name: "Q4 (Oct - Dec)", months: [9, 10, 11] },
+  ];
+
+  const getCategories = useCallback(async () => {
     try {
       setLoading(true);
       const res = await axios.get(`/category?type=expense`, {
@@ -43,15 +54,26 @@ const BudgetPage = () => {
         },
       });
       setCategories(res.data.data);
+
+      // Initialize expanded state for all categories
+      const initialExpandedState = {};
+      res.data.data.forEach((cat) => {
+        initialExpandedState[cat._id] = false;
+      });
+
       setLoading(false);
     } catch (error) {
       console.error("Error fetching categories:", error);
       setError("Failed to fetch categories. Please try again.");
       setLoading(false);
     }
-  };
+  }, [token]);
 
-  const getBudgetData = async () => {
+  useEffect(() => {
+    getCategories();
+  }, [getCategories]);
+
+  const getBudgetData = useCallback(async () => {
     try {
       setLoading(true);
       const res = await axios.get(`/budget/${selectedYear}`, {
@@ -101,7 +123,7 @@ const BudgetPage = () => {
       initializeBudgets(categories);
       setLoading(false);
     }
-  };
+  }, [selectedYear, categories, token]);
 
   const initializeBudgets = (categoriesData) => {
     const initialBudgets = {};
@@ -115,14 +137,10 @@ const BudgetPage = () => {
   };
 
   useEffect(() => {
-    getCategories();
-  }, []);
-
-  useEffect(() => {
     if (categories.length > 0) {
       getBudgetData();
     }
-  }, [selectedYear, categories]);
+  }, [selectedYear, categories, getBudgetData]);
 
   const getMonthlyTotal = (monthIndex) => {
     let total = 0;
@@ -132,18 +150,18 @@ const BudgetPage = () => {
     return total;
   };
 
-  const getCategoryYearlyTotal = (categoryId) => {
+  const getQuarterlyTotal = (quarterMonths) => {
     let total = 0;
-    for (let i = 0; i < 12; i++) {
-      total += budgets[categoryId]?.[i] || 0;
-    }
+    quarterMonths.forEach((monthIndex) => {
+      total += getMonthlyTotal(monthIndex);
+    });
     return total;
   };
 
-  const getTotalBudget = () => {
+  const getCategoryQuarterlyTotal = (categoryId, quarterMonths) => {
     let total = 0;
-    categories.forEach((category) => {
-      total += getCategoryYearlyTotal(category._id);
+    quarterMonths.forEach((monthIndex) => {
+      total += budgets[categoryId]?.[monthIndex] || 0;
     });
     return total;
   };
@@ -173,7 +191,7 @@ const BudgetPage = () => {
 
       if (response.data.success) {
         setSaving(false);
-        alert("Budget saved successfully!");
+        toast.success("Budget saved successfully!");
       } else {
         setSaving(false);
         setError("Failed to save budgets: " + response.data.message);
@@ -189,15 +207,12 @@ const BudgetPage = () => {
     const numValue = value === "" ? 0 : parseFloat(value);
 
     setBudgets((prevBudgets) => {
-      // Create a new object to avoid mutation
       const newBudgets = { ...prevBudgets };
 
-      // If this category doesn't exist in budgets yet, initialize it
       if (!newBudgets[categoryId]) {
         newBudgets[categoryId] = {};
       }
 
-      // Update the specific month for this category
       newBudgets[categoryId] = {
         ...newBudgets[categoryId],
         [monthIndex]: numValue,
@@ -208,20 +223,30 @@ const BudgetPage = () => {
   };
 
   const resetBudgets = () => {
-    // Reset all budgets to zero
+    const confirmReset = window.confirm(
+      "Are you sure you want to reset your budget?"
+    );
+    if (!confirmReset) return;
+
     initializeBudgets(categories);
   };
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        Loading...
+      <div className="flex justify-center items-center h-40">
+        <SpinnerLoader size="large" color="blue" />
       </div>
     );
   }
 
+  // Get current quarter's months
+  const currentQuarterMonths = quarters.find(
+    (q) => q.id === activeQuarter
+  ).months;
+
   return (
-    <div className="min-h-screen bg-gray-50 w-full">
+    <div className="h-full bg-gray-50 w-full">
+      <ToastContainer autoClose={1500} />
       {/* Header */}
       <header className="bg-white shadow">
         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
@@ -272,101 +297,115 @@ const BudgetPage = () => {
       </header>
 
       {/* Main Content */}
-      <main className="mx-auto w-full py-4">
+      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
             {error}
           </div>
         )}
+
+        {/* Quarter Tabs */}
+        <div className="flex mb-4 border-b border-gray-400">
+          {quarters.map((quarter) => (
+            <button
+              key={quarter.id}
+              onClick={() => setActiveQuarter(quarter.id)}
+              className={`px-4 py-2 font-medium text-sm ${
+                activeQuarter === quarter.id
+                  ? "text-blue-600 border-b-2 border-blue-600"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              {quarter.name}
+            </button>
+          ))}
+        </div>
+
         <div className="bg-white shadow rounded-lg overflow-hidden">
-          {/* Budget Table */}
-          <div className="overflow-x-auto">
+          {activeQuarter > 0 ? (
             <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50 border-t border-gray-300">
+              <thead className="bg-gray-50">
                 <tr>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50 z-10 border-r"
-                  >
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Category
                   </th>
-                  {months.map((month, idx) => (
+                  {currentQuarterMonths.map((monthIdx) => (
                     <th
-                      key={`${month}-${idx}`}
-                      scope="col"
-                      className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      key={monthIdx}
+                      className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
                     >
-                      {month}
+                      {months[monthIdx]}
                     </th>
                   ))}
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-blue-50"
-                  >
-                    Total
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-blue-50">
+                    Quarterly Total
                   </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {categories.map((category, categoryIdx) => (
+                {categories.map((category, idx) => (
                   <tr
                     key={category._id}
-                    className={
-                      categoryIdx % 2 === 0 ? "bg-white" : "bg-gray-50"
-                    }
+                    className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
                   >
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 sticky left-0 bg-inherit z-10 border-r flex items-center">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 flex items-center">
                       {category.category_name}
                     </td>
-                    {months.map((month, idx) => (
+                    {currentQuarterMonths.map((monthIdx) => (
                       <td
-                        key={`${category._id}-${idx}`}
-                        className="px-2 py-4 whitespace-nowrap text-sm text-gray-500"
+                        key={`${category._id}-${monthIdx}`}
+                        className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center"
                       >
                         <input
                           type="number"
-                          value={budgets[category._id]?.[idx] || 0}
+                          value={budgets[category._id]?.[monthIdx] || 0}
                           onChange={(e) =>
                             handleBudgetChange(
                               category._id,
-                              idx,
+                              monthIdx,
                               e.target.value
                             )
                           }
-                          step="0.01"
-                          className="w-24 border-0 p-0 focus:ring-0 text-right focus:outline-none"
+                          step="100"
+                          className="w-24 border border-gray-300 rounded p-1 focus:ring-blue-500 focus:border-blue-500 text-right"
                           min="0"
                         />
                       </td>
                     ))}
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 bg-blue-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 bg-blue-50 text-center">
                       {currencyFormatter.format(
-                        getCategoryYearlyTotal(category._id)
+                        getCategoryQuarterlyTotal(
+                          category._id,
+                          currentQuarterMonths
+                        )
                       )}
                     </td>
                   </tr>
                 ))}
-
                 {/* Totals Row */}
                 <tr className="bg-gray-100 font-medium">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 sticky left-0 bg-gray-100 z-10 border-r">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     Monthly Total
                   </td>
-                  {months.map((month, idx) => (
+                  {currentQuarterMonths.map((monthIdx) => (
                     <td
-                      key={`total-${idx}`}
-                      className="px-2 py-4 whitespace-nowrap text-sm text-gray-900 text-right"
+                      key={`total-${monthIdx}`}
+                      className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-center"
                     >
-                      {currencyFormatter.format(getMonthlyTotal(idx))}
+                      {currencyFormatter.format(getMonthlyTotal(monthIdx))}
                     </td>
                   ))}
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 bg-blue-100">
-                    {currencyFormatter.format(getTotalBudget())}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 bg-blue-100 text-center">
+                    {currencyFormatter.format(
+                      getQuarterlyTotal(currentQuarterMonths)
+                    )}
                   </td>
                 </tr>
               </tbody>
             </table>
-          </div>
+          ) : (
+            " "
+          )}
         </div>
 
         {/* Action Buttons */}

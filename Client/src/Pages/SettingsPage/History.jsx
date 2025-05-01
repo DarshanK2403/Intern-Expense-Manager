@@ -32,53 +32,41 @@ const History = () => {
 
   // Get icon and color based on activity type
   const getActivityIconAndColor = (actionType) => {
-    // Default styling
+    // Default styling (purple)
     let icon = <Activity className="w-5 h-5 text-purple-500" />;
     let bgColor = "bg-purple-100";
     let borderColor = "border-purple-200";
     let hoverBorderColor = "group-hover:border-purple-400";
-
-    // Color scheme based on action categories
+  
     if (!actionType) return { icon, bgColor, borderColor, hoverBorderColor };
-
-    // Expense activities
-    if (actionType.includes("EXPENSE")) {
-      icon = <DollarSign className="w-5 h-5 text-red-500" />;
-      bgColor = "bg-red-50";
-      borderColor = "border-red-200";
-      hoverBorderColor = "group-hover:border-red-400";
-    }
-    // Income activities
-    else if (actionType.includes("INCOME")) {
+  
+    const upperType = actionType.toUpperCase();
+  
+    if (upperType.startsWith("CREATE")) {
       icon = <DollarSign className="w-5 h-5 text-green-500" />;
       bgColor = "bg-green-50";
       borderColor = "border-green-200";
       hoverBorderColor = "group-hover:border-green-400";
+    } else if (upperType.startsWith("DELETE")) {
+      icon = <DollarSign className="w-5 h-5 text-red-500" />;
+      bgColor = "bg-red-50";
+      borderColor = "border-red-200";
+      hoverBorderColor = "group-hover:border-red-400";
+    } else if (upperType.startsWith("UPDATE")) {
+      icon = <Activity className="w-5 h-5 text-yellow-500" />;
+      bgColor = "bg-yellow-50";
+      borderColor = "border-yellow-200";
+      hoverBorderColor = "group-hover:border-yellow-400";
+    } else if (upperType.startsWith("GENERATE")) {
+      icon = <Activity className="w-5 h-5 text-purple-500" />;
+      bgColor = "bg-purple-50";
+      borderColor = "border-purple-200";
+      hoverBorderColor = "group-hover:border-purple-400";
     }
-    // Vendor activities
-    else if (actionType.includes("VENDOR")) {
-      icon = <User className="w-5 h-5 text-blue-500" />;
-      bgColor = "bg-blue-50";
-      borderColor = "border-blue-200";
-      hoverBorderColor = "group-hover:border-blue-400";
-    }
-    // Report activities
-    else if (actionType.includes("REPORT")) {
-      icon = <Activity className="w-5 h-5 text-amber-500" />;
-      bgColor = "bg-amber-50";
-      borderColor = "border-amber-200";
-      hoverBorderColor = "group-hover:border-amber-400";  
-    }
-    // Profile activities
-    else if (actionType.includes("PROFILE")) {
-      icon = <User className="w-5 h-5 text-indigo-500" />;
-      bgColor = "bg-indigo-50";
-      borderColor = "border-indigo-200";
-      hoverBorderColor = "group-hover:border-indigo-400";
-    }
-
+  
     return { icon, bgColor, borderColor, hoverBorderColor };
   };
+  
 
   // Action-specific styling for card
   const getActionTypeStyles = (actionType) => {
