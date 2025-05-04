@@ -62,7 +62,11 @@ const UpdateVendor = () => {
   // Update Vendor
   const onSubmit = async (data) => {
     try {
-      const res = await axios.put(`/update-vendor/${id}`, data);
+      const res = await axios.put(`/update-vendor/${id}`, data,{
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       if (res.status === 200) {
         toast.success("Vendor Updated Successfully");
         navigate(-1);
@@ -155,7 +159,7 @@ const UpdateVendor = () => {
           <div className="mt-2 space-x-2">
             <input
               type="submit"
-              value="Add Vendor"
+              value="Update Vendor"
               className="py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 hover:cursor-pointer focus:"
             />
             <button

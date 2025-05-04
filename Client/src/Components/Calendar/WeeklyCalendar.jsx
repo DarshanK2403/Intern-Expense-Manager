@@ -6,7 +6,7 @@ import {
   ChevronLeftIcon,
   ChevronRight,
 } from "lucide-react";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 
 const WeeklyCalendar = ({
   onDateSelect = () => {},
@@ -34,7 +34,7 @@ const WeeklyCalendar = ({
     return date.toLocaleDateString("en-US", options);
   };
 
-  const updateWeek = (baseDate, newOffset) => {
+  const updateWeek = (baseDate) => {
     const monday = getMonday(baseDate);
     const weekDates = [];
     for (let i = 0; i < 7; i++) {
@@ -43,13 +43,13 @@ const WeeklyCalendar = ({
       weekDates.push(day);
     }
     setCurrentWeek(weekDates);
-    setWeekOffset(newOffset);
   };
 
   useEffect(() => {
-    updateWeek(initialDate, 0);
+    const base = new Date(initialDate);
+    base.setDate(base.getDate() - weekOffset * 7);
+    updateWeek(base);
   }, []);
-
 
   const handleDateSelect = (date) => {
     setSelectedDate(date);
@@ -57,27 +57,23 @@ const WeeklyCalendar = ({
   };
 
   const previousWeek = () => {
-    const prevWeekDate = new Date(currentWeek[0]);
-    prevWeekDate.setDate(prevWeekDate.getDate() - 7);
-    updateWeek(prevWeekDate, weekOffset + 1);
+    setWeekOffset((prev) => prev + 1);
   };
 
   const nextWeek = () => {
-    const nextWeekDate = new Date(currentWeek[0]);
-    nextWeekDate.setDate(nextWeekDate.getDate() + 7);
-    updateWeek(nextWeekDate, weekOffset - 1);
+    setWeekOffset((prev) => prev - 1);
   };
 
-  const getWeekRange = () => {
+  const weekRange = useMemo(() => {
     if (currentWeek.length < 7) return "";
     return `${formatDate(currentWeek[0])} - ${formatDate(currentWeek[6])}`;
-  };
+  }, [currentWeek]);
 
   const selectWeekFromMonth = (date) => {
     const newOffset = Math.round(
       (getMonday(initialDate) - getMonday(date)) / (1000 * 60 * 60 * 24 * 7)
     );
-    updateWeek(date, newOffset);
+    setWeekOffset(newOffset);
     setShowMonthCalendar(false);
   };
 
@@ -88,6 +84,7 @@ const WeeklyCalendar = ({
     const lastDay = new Date(year, month + 1, 0);
     let firstDayOfWeek = firstDay.getDay();
     firstDayOfWeek = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
+
     const daysArray = [];
     for (let i = 0; i < firstDayOfWeek; i++) {
       daysArray.push(null);
@@ -120,14 +117,11 @@ const WeeklyCalendar = ({
           <ChevronLeft size={16} />
         </button>
 
-        {/* Modified to make the date range clickable to show calendar */}
         <button
           onClick={() => setShowMonthCalendar(!showMonthCalendar)}
-          // className="px-4 py-3 rounded-md hover:bg-blue-50 transition-colors duration-200 text-gray-800 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-300 flex items-center"
           className="flex items-center gap-2 px-3 py-2"
         >
-          {/* <Calendar size={16} className="text-gray-500" /> */}
-          <span>{getWeekRange()}</span>
+          <span>{weekRange}</span>
         </button>
 
         <button

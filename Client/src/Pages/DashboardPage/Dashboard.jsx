@@ -18,6 +18,7 @@ import MetricCard from "../../Components/MetricCard";
 import SpinnerLoader from "../../Components/Loader/SpinnerLoader";
 import { Box, Paper, Typography, useTheme } from "@mui/material";
 import QuickLink from "../../Components/QuickLink";
+import FormattedAmount from "../../Components/FormattedAmount";
 
 const Dashboard = () => {
   const token = localStorage.getItem("Token");
@@ -152,6 +153,7 @@ const Dashboard = () => {
     }));
   };
 
+  // Quick Link
   const quickLinks = [
     {
       to: "/income/add",
@@ -360,9 +362,6 @@ const Dashboard = () => {
                           <div className={`font-medium `}>
                             {transaction.title}
                           </div>
-                          <div className="text-xs text-gray-600">
-                            {/* {getRelativeTime(date)} */}
-                          </div>
                         </div>
                       </div>
                     </td>
@@ -374,13 +373,11 @@ const Dashboard = () => {
                       <div className="flex items-center justify-end">
                         {isExpense ? (
                           <div className="flex items-center">
-                            <IndianRupee className="h-4 w-4" />
-                            <span>{transaction.amount}</span>
+                            <FormattedAmount amount={transaction.amount} />
                           </div>
                         ) : (
                           <div className="flex items-center">
-                            <IndianRupee className="h-4 w-4" />
-                            <span>{transaction.amount}</span>
+                            <FormattedAmount amount={transaction.amount} />
                           </div>
                         )}
                       </div>

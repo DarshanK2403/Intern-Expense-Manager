@@ -5,7 +5,7 @@ const ReportNav = () => {
   const currentPath = location.pathname;
   
   return (
-    <div className="w-full max-w-7xl mx-auto bg-white mt-2 shadow">
+    <div className="w-full mx-auto bg-white h-max pt-2 shadow">
       <div className="flex border-b border-gray-200">
         <NavLink
           to="/reports/generate"

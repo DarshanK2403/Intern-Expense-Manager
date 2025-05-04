@@ -1,7 +1,7 @@
 import axios from "axios";
 import { format } from "date-fns";
 import { Clock, Activity, User, DollarSign, Filter } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 const History = () => {
   const token = localStorage.getItem("Token");
@@ -9,7 +9,7 @@ const History = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState("all");
 
-  const ActivityLog = async () => {
+  const ActivityLog = useCallback(async () => {
     setIsLoading(true);
     try {
       const res = await axios.get("/activity-logs", {
@@ -17,18 +17,20 @@ const History = () => {
           Authorization: `Bearer ${token}`,
         },
       });
-
+  
       setActivityLogs(res.data);
     } catch (error) {
       console.error("Error fetching activity logs:", error);
     } finally {
       setIsLoading(false);
     }
-  };
-
+  }, [token]); // re-memoize if token changes
+  
   useEffect(() => {
-    ActivityLog();
-  }, [token]);
+    if (token) {
+      ActivityLog();
+    }
+  }, [token, ActivityLog]);
 
   // Get icon and color based on activity type
   const getActivityIconAndColor = (actionType) => {

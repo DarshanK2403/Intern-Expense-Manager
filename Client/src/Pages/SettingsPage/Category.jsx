@@ -11,16 +11,27 @@ const Category = () => {
   const [activeTab, setActiveTab] = useState("expense");
   const [categories, setCategories] = useState([]);
   const token = localStorage.getItem("Token");
+  
+  // Separate form states for Add and Edit
   const {
-    register,
-    handleSubmit,
-    setValue,
-    formState: { errors },
-    reset,
+    register: registerAdd,
+    handleSubmit: handleSubmitAdd,
+    formState: { errors: errorsAdd },
+    reset: resetAdd,
   } = useForm();
+  
+  const {
+    register: registerEdit,
+    handleSubmit: handleSubmitEdit,
+    setValue: setValueEdit,
+    formState: { errors: errorsEdit },
+    reset: resetEdit,
+  } = useForm();
+  
   const [open, setOpen] = useState(false);
   const [edit, setEdit] = useState(false);
   const [editId, setEditId] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const fetchCategories = useCallback(
     async (type) => {
@@ -48,36 +59,39 @@ const Category = () => {
     }
   }, [token, activeTab, fetchCategories]);
 
-  const submitHandler = async (data) => {
-    const categoryData = {
-      ...data,
-      category_type: activeTab,
-    };
-
+  const onSubmitAdd = async (data) => {
+    setSubmitting(true);
+    console.log("Form data being submitted:", data);
+    
     try {
-      const res = await axios.post(
-        `/category?type=${activeTab}`,
-        categoryData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      // Make sure to add the category type to the request
+      const categoryData = {
+        ...data,
+        type: activeTab
+      };
+            
+      const res = await axios.post(`/category?type=${activeTab}`, categoryData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+      });
+            
       if (res.data.message === "Created") {
         toast.success(
-          `${
-            activeTab.charAt(0).toUpperCase() + activeTab.slice(1)
-          } Category Added`
+          `${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Category Added`
         );
         fetchCategories(activeTab);
-        reset();
+        resetAdd();
+        setOpen(false);
       } else {
         toast.error("Something went wrong");
       }
     } catch (error) {
-      toast.error("Server Error");
       console.error(`Error creating ${activeTab} category:`, error);
+      toast.error(error.response?.data?.message || "Server Error");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -89,9 +103,7 @@ const Category = () => {
         },
       });
       toast.success(
-        `${
-          activeTab.charAt(0).toUpperCase() + activeTab.slice(1)
-        } Category Deleted`
+        `${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Category Deleted`
       );
       fetchCategories(activeTab);
     } catch (error) {
@@ -100,59 +112,74 @@ const Category = () => {
     }
   };
 
-  const toggleForm = () => {
+  const toggleAddForm = () => {
     setOpen((prev) => !prev);
+    // Close edit form if it's open
+    if (edit) {
+      setEdit(false);
+    }
+    // Reset add form
+    resetAdd();
   };
 
   const updateCategories = async (id) => {
     try {
+      // Open edit form, close add form
       setEdit(true);
       setOpen(false);
+      
       const getData = await axios.get(`/category-by-id/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
+      console.log("Category data for editing:", getData.data);
       const data = getData.data.data;
-      setValue("category_name", data.category_name);
-      setValue("category_description", data.category_description);
+      
+      // Set values in edit form
+      setValueEdit("category_name", data.category_name);
+      setValueEdit("category_description", data.category_description);
       setEditId(id); // Save the ID in state
     } catch (error) {
-      console.log(error);
+      console.error("Error fetching category for edit:", error);
+      toast.error("Failed to load category data");
     }
   };
 
-  const onSubmit = async (data) => {
+  const onSubmitEdit = async (data) => {
+    setSubmitting(true);
     try {
       const id = editId; // Get the ID from state
+      console.log("Updating category with data:", data);
+      
       const res = await axios.put(`/update-category/${id}`, data, {
         headers: {
           Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
         },
       });
+      
+      console.log("Update response:", res.data);
+      
       if (res.data.message === "Updated") {
-        toast.success("Catgey Updated");
+        toast.success("Category Updated");
         fetchCategories(activeTab);
         setEdit(false);
         setEditId(null);
-        reset({
-          category_name: "",
-          category_description: "",
-        });
+        resetEdit();
       }
     } catch (error) {
-      console.log(error);
+      console.error("Error updating category:", error);
+      toast.error(error.response?.data?.message || "Failed to update category");
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const cancelEdit = () => {
-    reset({
-      category_name: "",
-      category_description: "",
-    });
+    resetEdit();
     setEdit(false);
-    setEditId(null); // optional if you track editId
-    setOpen(false); // optional if you want to close the form
+    setEditId(null);
   };
 
   return (
@@ -189,8 +216,9 @@ const Category = () => {
             </TabButton>
           </div>
           <button
-            onClick={() => toggleForm()}
+            onClick={toggleAddForm}
             className="bg-blue-600 py-2 px-4 rounded-md text-white mx-2 flex items-center"
+            disabled={submitting}
           >
             {open ? (
               <div className="flex items-center gap-2">
@@ -213,7 +241,7 @@ const Category = () => {
           }`}
         >
           <div className="p-6">
-            <form onSubmit={handleSubmit(submitHandler)} className="space-y-4">
+            <form onSubmit={handleSubmitAdd(onSubmitAdd)} className="space-y-4">
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -223,7 +251,7 @@ const Category = () => {
                   <input
                     type="text"
                     placeholder={`Enter ${activeTab} Category`}
-                    {...register("category_name", {
+                    {...registerAdd("category_name", {
                       required: "Category name is required",
                       maxLength: {
                         value: 50,
@@ -233,9 +261,9 @@ const Category = () => {
                     })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                  {errors.category_name && (
+                  {errorsAdd.category_name && (
                     <p className="text-red-500 text-xs mt-1">
-                      {errors.category_name.message}
+                      {errorsAdd.category_name.message}
                     </p>
                   )}
                 </div>
@@ -247,7 +275,7 @@ const Category = () => {
                   <input
                     type="text"
                     placeholder="Category Description"
-                    {...register("category_description")}
+                    {...registerAdd("category_description")}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -256,19 +284,22 @@ const Category = () => {
               <div className="flex justify-end">
                 <button
                   type="submit"
+                  disabled={submitting}
                   className="
                   flex items-center px-4 py-2 
                   bg-blue-600 text-white rounded-md 
                   hover:bg-blue-700 transition-colors
+                  disabled:bg-blue-300
                 "
                 >
-                  Add
+                  {submitting ? "Adding..." : "Add"}
                 </button>
               </div>
             </form>
           </div>
         </div>
 
+        {/* Category Edit Form */}
         <div
           className={`transition-all ease-in-out duration-300 overflow-hidden ${
             edit
@@ -277,7 +308,7 @@ const Category = () => {
           }`}
         >
           <div className="p-6">
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={handleSubmitEdit(onSubmitEdit)} className="space-y-4">
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -287,7 +318,7 @@ const Category = () => {
                   <input
                     type="text"
                     placeholder={`Enter ${activeTab} Category`}
-                    {...register("category_name", {
+                    {...registerEdit("category_name", {
                       required: "Category name is required",
                       maxLength: {
                         value: 50,
@@ -297,9 +328,9 @@ const Category = () => {
                     })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                  {errors.category_name && (
+                  {errorsEdit.category_name && (
                     <p className="text-red-500 text-xs mt-1">
-                      {errors.category_name.message}
+                      {errorsEdit.category_name.message}
                     </p>
                   )}
                 </div>
@@ -311,7 +342,7 @@ const Category = () => {
                   <input
                     type="text"
                     placeholder="Category Description"
-                    {...register("category_description")}
+                    {...registerEdit("category_description")}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -319,6 +350,7 @@ const Category = () => {
 
               <div className="flex justify-end space-x-2">
                 <button
+                  type="button"
                   className="
                   flex items-center px-4 py-2 
                   bg-white border border-gray-400 rounded-md 
@@ -326,22 +358,25 @@ const Category = () => {
                 "
                   onClick={cancelEdit}
                 >
-                  Cancle
+                  Cancel
                 </button>
                 <button
                   type="submit"
+                  disabled={submitting}
                   className="
                   flex items-center px-4 py-2 
                   bg-blue-600 text-white rounded-md 
                   hover:bg-blue-700 transition-colors
+                  disabled:bg-blue-300
                 "
                 >
-                  Update
+                  {submitting ? "Updating..." : "Update"}
                 </button>
               </div>
             </form>
           </div>
         </div>
+        
         {/* Categories List */}
         {loading ? (
           <div className="flex justify-center items-center h-40">

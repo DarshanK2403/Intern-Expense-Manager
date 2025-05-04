@@ -30,6 +30,7 @@ import {
   Paper,
   Checkbox,
 } from "@mui/material";
+import FormattedAmount from "../../Components/FormattedAmount";
 
 const IncomePage = () => {
   const token = localStorage.getItem("Token");
@@ -281,7 +282,10 @@ const IncomePage = () => {
                               </span>
                             </div>
                           </TableCell>
-                          <TableCell>${item.amount}</TableCell>
+                          <TableCell>
+                              <FormattedAmount amount={item.amount} />
+                          </TableCell>
+
                           <TableCell>{item.category.category_name}</TableCell>
                           <TableCell>
                             {format(new Date(item.incomeDate), "dd MMM, yyyy")}

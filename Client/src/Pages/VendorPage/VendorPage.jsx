@@ -161,6 +161,18 @@ const VendorPage = () => {
     }
   };
 
+  const detailVendor = async (id) => {
+    try {
+      const res = await axios.get(`/get-vendor-by-id/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      navigate(`/vendor/detail/${id}`, { state: res.data });
+    } catch {
+      toast.error("Something went wrong!");
+    }
+  };
   return (
     <div className="max-w-6xl mx-auto bg-white rounded-lg shadow overflow-hidden mb-5">
       <ToastContainer></ToastContainer>
@@ -230,7 +242,10 @@ const VendorPage = () => {
                         <Checkbox checked={isSelected} />
                       </TableCell>
                       <TableCell>
-                        <div className="grid grid-rows-2">
+                        <div
+                          className="grid grid-rows-2 hover:cursor-pointer"
+                          onClick={() => detailVendor(item._id)}
+                        >
                           {item.name}
                           <span className="text-gray-600">{item.notes}</span>
                         </div>
@@ -238,9 +253,11 @@ const VendorPage = () => {
                       <TableCell>
                         <div className="flex items-center">{item.email}</div>
                       </TableCell>
-                      <TableCell>{item.category.category_name}</TableCell>
                       <TableCell>
-                        {format(new Date(item.createdAt), "dd MMM yyyy")}
+                        {item.category?.category_name ?? "-"}
+                      </TableCell>
+                      <TableCell>
+                        {format(new Date(item?.createdAt), "dd MMM yyyy")}
                       </TableCell>
                       {/* Action */}
                       <TableCell>

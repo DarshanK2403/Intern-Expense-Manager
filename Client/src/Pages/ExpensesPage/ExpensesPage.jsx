@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import axios from "axios";
-import { FileText, IndianRupee, Edit, Trash2 } from "lucide-react";
+import { FileText, Edit, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import SpinnerLoader from "../../Components/Loader/SpinnerLoader";
@@ -18,6 +18,7 @@ import {
   Paper,
   Checkbox,
 } from "@mui/material";
+import FormattedAmount from "../../Components/FormattedAmount";
 
 const ExpensesPage = () => {
   const [loading, setLoading] = useState(false);
@@ -28,7 +29,7 @@ const ExpensesPage = () => {
   const [order, setOrder] = useState("desc");
   const [orderBy, setOrderBy] = useState("expenseDate");
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5); // default 5 per page
+  const [rowsPerPage, setRowsPerPage] = useState(5);
   const navigate = useNavigate();
 
   const getExpense = useCallback(async () => {
@@ -249,8 +250,7 @@ const ExpensesPage = () => {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center">
-                          <IndianRupee size={16} />
-                          {item.amount}
+                          <FormattedAmount amount={item.amount} />
                         </div>
                       </TableCell>
                       <TableCell>{item.category?.category_name}</TableCell>

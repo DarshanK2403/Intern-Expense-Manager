@@ -5,7 +5,8 @@ const ReportModel = require("../models/ReportModel");
 const CategoryModel = require("../models/Category");
 const logActivity = require("../utils/logActivity");
 const { format } = require("date-fns");
-
+const Budget = require("../models/BudgetModel");
+const Category = require("../models/Category");
 const formatKey = (date, type) =>
   type === "year"
     ? date.toISOString().slice(0, 7)
@@ -146,6 +147,106 @@ const getReport = async (req, res) => {
     const incomeChange = calculateChange(totalIncome, prevTotalIncome);
     const balanceChange = calculateChange(balance, prevBalance);
     const savingRateChange = calculateChange(savingRate, prevSavingRate);
+    const transactionChange = calculateChange(
+      expenses.length + incomes.length,
+      prevExpenses.length + prevIncomes.length
+    );
+
+    const budgetDoc = await Budget.findOne({
+      userId,
+      year: 2025,
+    });
+
+    let startMonth, endMonth;
+    if (type !== "year") {
+      startMonth = startDate.getUTCMonth();
+      endMonth = endDate.getUTCMonth();
+    }
+
+    const budgetMap = {};
+
+    for (const cat of budgetDoc?.categories || []) {
+      if (!cat || !cat.category || !cat.category._id) continue;
+
+      let total = 0;
+      if (type === "year") {
+        total = cat.entries.reduce((sum, entry) => sum + entry.amount, 0);
+      } else {
+        total = cat.entries
+          .filter(
+            (entry) => entry.month >= startMonth && entry.month <= endMonth
+          )
+          .reduce((sum, entry) => sum + entry.amount, 0);
+      }
+
+      budgetMap[cat.category._id.toString()] = {
+        category: cat.category._id,
+        budgeted: total,
+      };
+    }
+
+    const expenseMatch = {
+      userId: new mongoose.Types.ObjectId(userId),
+      ...(startDate &&
+        endDate && {
+          expenseDate: { $gte: startDate, $lte: endDate },
+        }),
+    };
+
+    const expenseData = await Expense.aggregate([
+      { $match: expenseMatch },
+      {
+        $lookup: {
+          from: "categories",
+          localField: "category",
+          foreignField: "_id",
+          as: "categoryInfo",
+        },
+      },
+      {
+        $unwind: {
+          path: "$categoryInfo",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $group: {
+          _id: "$category",
+          spent: { $sum: "$amount" },
+          category_name: { $first: "$categoryInfo.category_name" },
+        },
+      },
+    ]);
+
+    const categoryIds = Object.keys(budgetMap);
+
+    const categories = await Category.find({
+      _id: { $in: categoryIds.map((id) => new mongoose.Types.ObjectId(id)) },
+    }).select("category_name");
+
+    const categoryNameMap = {};
+    categories.forEach((cat) => {
+      categoryNameMap[cat._id.toString()] = cat.category_name;
+    });
+
+    const result = [];
+
+    for (const [categoryId, budget] of Object.entries(budgetMap)) {
+      const spentEntry = expenseData.find(
+        (e) => e._id?.toString() === categoryId
+      );
+
+      const spent = spentEntry?.spent || 0;
+      const budgeted = budget.budgeted || 0;
+
+      result.push({
+        categoryId,
+        category_name: categoryNameMap[categoryId] || "Unknown",
+        budgeted: budgeted.toFixed(2),
+        spent: spent.toFixed(2),
+        remaining: (budgeted - spent).toFixed(2),
+      });
+    }
 
     // Format comparison strings
     const formatComparison = (change) => {
@@ -159,6 +260,7 @@ const getReport = async (req, res) => {
       income: formatComparison(incomeChange),
       balance: formatComparison(balanceChange),
       savingRate: formatComparison(savingRateChange),
+      transaction: formatComparison(transactionChange),
     };
 
     const groupedData = {};
@@ -214,10 +316,9 @@ const getReport = async (req, res) => {
           incomeDate: { $gte: new Date(startDate), $lte: new Date(endDate) },
         },
       },
-      // Join with CategoryModel
       {
         $lookup: {
-          from: "categories", // make sure this matches your actual MongoDB collection name
+          from: "categories",
           localField: "category",
           foreignField: "_id",
           as: "categoryInfo",
@@ -228,7 +329,7 @@ const getReport = async (req, res) => {
       },
       {
         $group: {
-          _id: "$categoryInfo.category_name", // Group by category name
+          _id: "$categoryInfo.category_name",
           value: { $sum: "$amount" },
         },
       },
@@ -246,41 +347,130 @@ const getReport = async (req, res) => {
       },
       {
         $lookup: {
-          from: "categories", // Name of the collection where the categories are stored
-          localField: "category", // Field in the Expense collection
-          foreignField: "_id", // Field in the Category collection
-          as: "categoryDetails", // Alias for the joined data
+          from: "categories",
+          localField: "category",
+          foreignField: "_id",
+          as: "categoryDetails",
         },
       },
       {
-        $unwind: "$categoryDetails", // Unwind the array that comes from the lookup
+        $unwind: "$categoryDetails",
       },
       {
         $group: {
-          _id: "$categoryDetails.category_name", // Group by the category_name field
-          value: { $sum: "$amount" }, // Sum the amount for each category
+          _id: "$categoryDetails.category_name",
+          value: { $sum: "$amount" },
         },
       },
       {
-        $sort: { value: -1 }, // Sort by value in descending order
+        $sort: { value: -1 },
       },
     ]);
 
     const recentIncomes = await Income.find({
       userId,
       incomeDate: { $gte: startDate, $lte: endDate },
-    }).limit(5);
+    }).populate("category");
 
     const recentExpenses = await Expense.find({
       userId,
       expenseDate: { $gte: startDate, $lte: endDate },
-    }).limit(5);
+    }).populate("category");
 
     const transaction = [...recentIncomes, ...recentExpenses].sort((a, b) => {
       const aDate = a.expenseDate || a.incomeDate;
       const bDate = b.expenseDate || b.incomeDate;
       return bDate - aDate;
     });
+
+    const categoryTotals = {};
+    let highestExpense = null;
+
+    for (const tx of transaction) {
+      if (!tx.expenseDate) continue;
+
+      const categoryId = tx.category?._id?.toString();
+      if (!categoryId) continue;
+
+      categoryTotals[categoryId] =
+        (categoryTotals[categoryId] || 0) + tx.amount;
+
+      if (!highestExpense || tx.amount > highestExpense.amount) {
+        highestExpense = tx;
+      }
+    }
+
+    let topSpendingCategoryId = null;
+    let maxSpent = 0;
+
+    for (const [catId, total] of Object.entries(categoryTotals)) {
+      if (total > maxSpent) {
+        maxSpent = total;
+        topSpendingCategoryId = catId;
+      }
+    }
+
+    let topSpendingCategoryName = "Unknown";
+
+    for (const tx of transaction) {
+      const categoryId = tx.category?._id?.toString();
+      if (categoryId === topSpendingCategoryId) {
+        topSpendingCategoryName = tx.category?.category_name || "Unknown";
+        break;
+      }
+    }
+
+    const targetMonths = [];
+    const monthNames = []; // For console logging readable names
+    const tempDate = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+    const endMonths = new Date(endDate.getFullYear(), endDate.getMonth(), 1);
+
+    while (tempDate <= endMonths) {
+      const monthStr = `${tempDate.getFullYear()}-${String(
+        tempDate.getMonth() + 1
+      ).padStart(2, "0")}`;
+      targetMonths.push(monthStr);
+
+      const monthName = tempDate.toLocaleString("default", { month: "long" });
+      monthNames.push(`${monthName} ${tempDate.getFullYear()}`);
+
+      tempDate.setMonth(tempDate.getMonth() + 1);
+    }
+
+    // Console logs for debugging
+    console.log("startDate:", startDate.toISOString().split("T")[0]);
+    console.log("endDate:", endDate.toISOString().split("T")[0]);
+    console.log("Target Months (YYYY-MM):", targetMonths);
+    console.log("Readable Month Names:", monthNames);
+
+    const budgetData = {};
+
+    for (let month of targetMonths) {
+      const year = parseInt(month.split("-")[0]);
+      const monthIndex = parseInt(month.split("-")[1]) - 1;
+
+      const budgetForMonth = await Budget.find({
+        userId: new mongoose.Types.ObjectId(req.user.id),
+        year,
+        "categories.entries.month": monthIndex,
+      });
+
+      let totalAmountForMonth = 0;
+      if (budgetForMonth.length > 0) {
+        budgetForMonth.forEach((budget) => {
+          budget.categories.forEach((category) => {
+            const entry = category.entries.find(
+              (entry) => entry.month === monthIndex
+            );
+            if (entry) {
+              totalAmountForMonth += entry.amount;
+            }
+          });
+        });
+      }
+
+      budgetData[month] = totalAmountForMonth;
+    }
 
     res.status(200).json({
       totalIncome,
@@ -298,10 +488,20 @@ const getReport = async (req, res) => {
       incomeSources,
       expenseByCategory,
       transaction,
+      budgetVsActual: result,
+      topSpendingCategory: {
+        name: topSpendingCategoryName,
+        amount: maxSpent,
+      },
+      highestExpense: {
+        title: highestExpense?.title || "N/A",
+        amount: highestExpense?.amount || 0,
+      },
+      budgetData: budgetData,
     });
   } catch (error) {
     console.error("Error fetching report:", error);
-    res.status(500).json({ message: "Server Error" });
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -380,9 +580,12 @@ const saveReport = async (req, res) => {
     await logActivity(
       userId,
       "GENERATE_REPORT",
-      `Generated a report from ${format(new Date(startDate), "dd MMM yyyy")} to ${format(new Date(endDate), "dd MMM yyyy")}`
+      `Generated a report from ${format(
+        new Date(startDate),
+        "dd MMM yyyy"
+      )} to ${format(new Date(endDate), "dd MMM yyyy")}`
     );
-  
+
     res.status(201).json({
       message: "Report successfully generated and stored",
       report: savedReport,
@@ -418,7 +621,6 @@ const getSavedReportById = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user.id;
-    // console.log(id);
 
     const report = await ReportModel.findById(id);
 
@@ -455,7 +657,10 @@ const deleteReportById = async (req, res) => {
     await logActivity(
       userId,
       "DELETE_REPORT",
-      `Deleted a report from ${format(new Date(report.startDate), "dd MMM yyyy")} to ${format(new Date(report.endDate), "dd MMM yyyy")}`
+      `Deleted a report from ${format(
+        new Date(report.startDate),
+        "dd MMM yyyy"
+      )} to ${format(new Date(report.endDate), "dd MMM yyyy")}`
     );
 
     return res.status(200).json({ message: "Report deleted successfully" });

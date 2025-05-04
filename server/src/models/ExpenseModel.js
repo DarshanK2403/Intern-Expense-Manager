@@ -31,10 +31,12 @@ const ExpenseSchema = new Schema(
     },
     paymentThrough: {
       type: mongoose.Schema.ObjectId,
-      ref: "Payment"
+      ref: "Payment",
     },
     vendor: {
-      type: String,
+      type: mongoose.Schema.ObjectId,
+      ref: "Vendor",
+      default: null,
     },
     receipt: {
       cloudinaryUrl: { type: String },

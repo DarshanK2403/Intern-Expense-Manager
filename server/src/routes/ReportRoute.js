@@ -1,16 +1,18 @@
 const express = require("express");
 const router = express.Router();
 const ReportController = require("../controllers/ReportController");
-const authMiddleware = require("../middleware/authMiddleware");
+const protect = require("../middleware/authMiddleware");
 
-router.get("/get-report/:type",authMiddleware, ReportController.getReport);
+router.use(protect);
 
-router.post("/save-report",authMiddleware, ReportController.saveReport)
+router.get("/get-report/:type", ReportController.getReport);
 
-router.get('/saved-report',authMiddleware, ReportController.getSavedReport)
+router.post("/save-report", ReportController.saveReport);
 
-router.get('/report-by-id/:id',authMiddleware, ReportController.getSavedReportById)
+router.get("/saved-report", ReportController.getSavedReport);
 
-router.delete('/delete-report-by-id/:id',authMiddleware, ReportController.deleteReportById)
+router.get("/report-by-id/:id", ReportController.getSavedReportById);
+
+router.delete("/delete-report-by-id/:id", ReportController.deleteReportById);
 
 module.exports = router;

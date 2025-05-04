@@ -37,7 +37,6 @@ const BudgetPage = () => {
     "December",
   ];
 
-  // Group months by quarters
   const quarters = [
     { id: 1, name: "Q1 (Jan - Mar)", months: [0, 1, 2] },
     { id: 2, name: "Q2 (Apr - Jun)", months: [3, 4, 5] },
@@ -79,12 +78,11 @@ const BudgetPage = () => {
       const res = await axios.get(`/budget/${selectedYear}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      console.log("API Response:", res.data.data); // Check if response is correct
 
       if (res.data.success) {
-        // Transform API data to the structure we use in our component
         const budgetData = {};
 
-        // Initialize empty budgets for all categories first
         categories.forEach((category) => {
           budgetData[category._id] = {};
           for (let i = 0; i < 12; i++) {
@@ -92,34 +90,31 @@ const BudgetPage = () => {
           }
         });
 
-        // Fill in data from API response
-        if (res.data.data && res.data.data.categories) {
-          res.data.data.categories.forEach((item) => {
-            // Find the category by name
-            const category = categories.find(
-              (cat) => cat.category_name === item.name
-            );
+        res.data.data.categories.forEach((item) => {
+          const category = categories.find(
+            (cat) => cat._id === item.category._id
+          );
 
-            if (category) {
-              // Process entries for this category
-              item.entries.forEach((entry) => {
-                budgetData[category._id][entry.month] = entry.amount;
-              });
-            }
-          });
-        }
+          if (category) {
+            item.entries.forEach((entry) => {
+              budgetData[category._id][entry.month] = entry.amount;
+            });
+          } else {
+            console.warn(
+              `Category with _id ${item.category._id} not found in categories.`
+            );
+          }
+        });
 
         setBudgets(budgetData);
       } else {
         console.error("Error fetching budget data:", res.data.message);
-        // If no data, initialize empty budgets
         initializeBudgets(categories);
       }
 
       setLoading(false);
     } catch (error) {
       console.error("Error fetching budget data:", error);
-      // If error, initialize empty budgets
       initializeBudgets(categories);
       setLoading(false);
     }
@@ -128,16 +123,18 @@ const BudgetPage = () => {
   const initializeBudgets = (categoriesData) => {
     const initialBudgets = {};
     categoriesData.forEach((category) => {
-      initialBudgets[category._id] = {};
-      for (let i = 0; i < 12; i++) {
-        initialBudgets[category._id][i] = 0;
+      if (category._id) {
+        initialBudgets[category._id] = {};
+        for (let i = 0; i < 12; i++) {
+          initialBudgets[category._id][i] = 0;
+        }
       }
     });
     setBudgets(initialBudgets);
   };
 
   useEffect(() => {
-    if (categories.length > 0) {
+    if (categories && categories.length > 0) {
       getBudgetData();
     }
   }, [selectedYear, categories, getBudgetData]);
@@ -168,7 +165,7 @@ const BudgetPage = () => {
 
   const prepareBudgetPayload = () => {
     return categories.map((category) => ({
-      name: category.category_name,
+      category: category._id,
       entries: Array.from({ length: 12 }, (_, idx) => ({
         month: idx,
         amount: Number(budgets[category._id]?.[idx] || 0),

@@ -4,7 +4,7 @@ const SettingController = require("../controllers/SettingController");
 const authMiddleware = require("../middleware/authMiddleware");
 
 // Unified Category Routes
-router.post("/category", authMiddleware, SettingController.CreateCategory);
+router.post("/category?:type", authMiddleware, SettingController.CreateCategory);
 router.get("/category", authMiddleware, SettingController.GetCategory);
 router.get(
   "/category-by-id/:id",

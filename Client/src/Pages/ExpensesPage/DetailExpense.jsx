@@ -33,7 +33,7 @@ const DetailExpense = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
-  const dropdownRef = useRef(null); 
+  const dropdownRef = useRef(null);
   const { user } = useContext(AuthContext);
   const [sidebar, setSidebar] = useState(false);
 
@@ -42,7 +42,11 @@ const DetailExpense = () => {
       try {
         if (id) {
           setIsLoading(true);
-          const res = await axios.get(`/expense-details/${id}`);
+          const res = await axios.get(`/expense-details/${id}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
           setExpenseData(res.data);
           // console.log(res.data);
         }
@@ -78,7 +82,11 @@ const DetailExpense = () => {
 
   const deleteExpense = async () => {
     try {
-      await axios.delete(`/delete-expense/${id}`);
+      await axios.delete(`/delete-expense/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       toast.success("Expense deleted successfully");
       navigate(-1);
     } catch (error) {

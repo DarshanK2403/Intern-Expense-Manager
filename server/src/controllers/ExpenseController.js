@@ -40,9 +40,12 @@ const createExpense = async (req, res) => {
       expenseDate: new Date(expenseDate),
       category,
       paymentThrough,
-      vendor,
     };
 
+    // Safely assign vendor if it's a valid ObjectId
+    if (vendor && vendor !== "null" && vendor !== "undefined") {
+      expenseData.vendor = vendor;
+    }
     if (req.file) {
       const cloudinaryResponse = await cloudinaryUtil.uploadFileToCloudinary(
         req.file.buffer,

@@ -17,6 +17,7 @@ import { PrivateRoute, AdminRoute } from "./hooks/PrivateRoute";
 import BudgetPage from "./Pages/BudgetPage/BudgetPage";
 import BudgetPagelayout from "./Layouts/BudgetPagelayout";
 import AdminReport from "./admin/Page/AdminReport";
+import VendorDetail from "./Pages/VendorPage/VendorDetail";
 const AddIncome = lazy(() => import("./Pages/IncomePage/AddIncome"));
 const RecentTransactios = lazy(() =>
   import("./Pages/DashboardPage/RecentTransactios")
@@ -96,6 +97,8 @@ function App() {
                 <Route index element={<VendorPage />} />
                 <Route path="add" element={<AddVendor />} />
                 <Route path="edit/:id" element={<UpdateVendor />} />
+                <Route path="detail/:id" element={<VendorDetail />} />
+                
               </Route>
 
               <Route path="/settings" element={<SettingLayout />}>

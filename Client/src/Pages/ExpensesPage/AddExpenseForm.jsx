@@ -23,6 +23,7 @@ const AddExpenseForm = () => {
     watch,
     setValue,
   } = useForm();
+  const methods = useForm(); // create form context
 
   const token = localStorage.getItem("Token");
   const receipt = watch("receipt");
@@ -72,9 +73,9 @@ const AddExpenseForm = () => {
       console.error("Invalid file format");
       return;
     }
-
     // Create FormData
     const formData = new FormData();
+
     formData.append("title", data.title);
     formData.append("amount", data.amount);
     formData.append("description", data.description);
@@ -162,8 +163,8 @@ const AddExpenseForm = () => {
           Authorization: `Bearer ${token}`,
         },
       });
-      const vendor = res.data.map((data) => data.name);
-      setVendorSuggestions(vendor);
+      console.log(res.data);
+      setVendorSuggestions(res.data);
     } catch (error) {
       console.error("Error fetching vendor data:", error);
     }
@@ -345,14 +346,15 @@ const AddExpenseForm = () => {
                     validation={{ required: "Select one" }}
                   />
 
-                  <AutocompleteInput
-                    name="vendor"
+                  <SelectInput
+                    id="vendor"
                     label="Vendor"
-                    placeholder="Search or select vendor (optional)"
-                    suggestions={vendorSuggestions}
+                    options={vendorSuggestions}
+                    valueField="_id"
+                    keyField="_id"
+                    displayField="name"
+                    register={register}
                     required={false}
-                    {...register("vendor")}
-                    onSelect={(value) => setValue("vendor", value)}
                   />
                 </div>
 

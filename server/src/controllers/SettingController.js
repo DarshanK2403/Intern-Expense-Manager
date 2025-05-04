@@ -4,23 +4,25 @@ const CategoryModel = require("../models/Category");
 const CreateCategory = async (req, res) => {
   try {
     const userId = req.user.id;
-    // const { type } = req.query;
-    const { category_name, category_description, category_type } = req.body;
-
+    const { type } = req.query;
+    const { category_name, category_description } = req.body;
+    console.log(type)
     const existCategory = await CategoryModel.findOne({
       userId,
-      category_type,
+      category_type: type,
       category_name,
       category_description,
     });
 
+
     if (existCategory) {
       return res.status(409).json({ message: "Already exists" });
     }
-
+    // Create new category
     const newCategory = await CategoryModel.create({
-      ...req.body,
-      category_type,
+      category_name,
+      category_description,
+      category_type : type,
       userId,
     });
 
@@ -29,6 +31,7 @@ const CreateCategory = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
 
 // Generic Get Category
 const GetCategory = async (req, res) => {
@@ -75,7 +78,6 @@ const UpdateCategory = async (req, res) => {
   try {
     const userId = req.user.id;
     const { id } = req.params;
-    console.log(id);
     const { category_name, category_description, category_type } = req.body;
 
     // Check if the category exists
