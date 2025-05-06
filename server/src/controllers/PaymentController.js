@@ -82,10 +82,12 @@ const UpdatePaymentType = async (req, res) => {
   try {
     const { id } = req.params;
     const { name } = req.body;
-    const userId = req.user.id; // assuming authMiddleware sets req.user
+    const userId = req.user.id;
 
     if (!name || !name.trim()) {
-      return res.status(400).json({ message: "Payment type name is required." });
+      return res
+        .status(400)
+        .json({ message: "Payment type name is required." });
     }
 
     const existingType = await PaymentType.findOne({
@@ -197,6 +199,51 @@ const DeletePayment = async (req, res) => {
   }
 };
 
+const UpdatePayment = async (req, res) => {
+  try {
+    const { id } = req.params; 
+    const { label } = req.body;
+    const userId = req.user.id;
+
+    if (!label || !label.trim()) {
+      return res.status(400).json({ message: "Label is required." });
+    }
+
+    const existingPayment = await PaymentModel.findOne({
+      _id: id,
+      userId,
+    });
+
+    if (!existingPayment) {
+      return res.status(404).json({ message: "Payment not found." });
+    }
+
+    // Check for duplicate label for the same user
+    const duplicate = await PaymentModel.findOne({
+      userId,
+      label: label.trim(),
+      _id: { $ne: id }, // Exclude current document
+    });
+
+    if (duplicate) {
+      return res.status(400).json({ message: "Payment label already exists." });
+    }
+
+    // Update the payment details
+    existingPayment.label = label.trim();
+
+    await existingPayment.save();
+
+    return res.status(200).json({
+      message: "Payment updated successfully.",
+      data: existingPayment,
+    });
+  } catch (err) {
+    console.error("UpdatePayment Error:", err);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
 module.exports = {
   CreatePaymentType,
   GetPaymentType,
@@ -205,4 +252,5 @@ module.exports = {
   CreatePayment,
   GetPayment,
   DeletePayment,
+  UpdatePayment,
 };

@@ -286,7 +286,7 @@ const IncomePage = () => {
                               <FormattedAmount amount={item.amount} />
                           </TableCell>
 
-                          <TableCell>{item.category.category_name}</TableCell>
+                          <TableCell>{item.category?.category_name}</TableCell>
                           <TableCell>
                             {format(new Date(item.incomeDate), "dd MMM, yyyy")}
                           </TableCell>

@@ -7,7 +7,7 @@ const BudgetEntrySchema = new mongoose.Schema({
     type: Number,
     required: true,
     min: 0,
-    max: 11, // 0-11 represents Jan-Dec
+    max: 11,
     validate: {
       validator: Number.isInteger,
       message: "{VALUE} is not an integer value for month",
@@ -21,7 +21,6 @@ const BudgetEntrySchema = new mongoose.Schema({
   },
 });
 
-// Define the schema for budget categories
 const BudgetCategorySchema = new mongoose.Schema({
   category: {
     type: mongoose.Schema.Types.ObjectId,
@@ -31,7 +30,6 @@ const BudgetCategorySchema = new mongoose.Schema({
   entries: [BudgetEntrySchema],
 });
 
-// Define the main Budget schema
 const BudgetSchema = new mongoose.Schema(
   {
     userId: {

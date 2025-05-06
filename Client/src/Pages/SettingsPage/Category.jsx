@@ -11,7 +11,7 @@ const Category = () => {
   const [activeTab, setActiveTab] = useState("expense");
   const [categories, setCategories] = useState([]);
   const token = localStorage.getItem("Token");
-  
+
   // Separate form states for Add and Edit
   const {
     register: registerAdd,
@@ -19,7 +19,7 @@ const Category = () => {
     formState: { errors: errorsAdd },
     reset: resetAdd,
   } = useForm();
-  
+
   const {
     register: registerEdit,
     handleSubmit: handleSubmitEdit,
@@ -27,7 +27,7 @@ const Category = () => {
     formState: { errors: errorsEdit },
     reset: resetEdit,
   } = useForm();
-  
+
   const [open, setOpen] = useState(false);
   const [edit, setEdit] = useState(false);
   const [editId, setEditId] = useState(null);
@@ -62,24 +62,30 @@ const Category = () => {
   const onSubmitAdd = async (data) => {
     setSubmitting(true);
     console.log("Form data being submitted:", data);
-    
+
     try {
       // Make sure to add the category type to the request
       const categoryData = {
         ...data,
-        type: activeTab
+        type: activeTab,
       };
-            
-      const res = await axios.post(`/category?type=${activeTab}`, categoryData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
-      });
-            
+
+      const res = await axios.post(
+        `/category?type=${activeTab}`,
+        categoryData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
       if (res.data.message === "Created") {
         toast.success(
-          `${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Category Added`
+          `${
+            activeTab.charAt(0).toUpperCase() + activeTab.slice(1)
+          } Category Added`
         );
         fetchCategories(activeTab);
         resetAdd();
@@ -97,18 +103,18 @@ const Category = () => {
 
   const deleteCategory = async (id) => {
     try {
-      await axios.delete(`/category/${id}`, {
+      const res = await axios.delete(`/category/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      toast.success(
-        `${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Category Deleted`
-      );
+
+      toast.warning(res.data.message);
       fetchCategories(activeTab);
     } catch (error) {
-      toast.error(`Failed to delete ${activeTab} category`);
-      console.error(error);
+      const errorMessage =
+        error.response?.data?.message || "Failed to delete category";
+      toast.error(errorMessage);
     }
   };
 
@@ -127,7 +133,7 @@ const Category = () => {
       // Open edit form, close add form
       setEdit(true);
       setOpen(false);
-      
+
       const getData = await axios.get(`/category-by-id/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -135,7 +141,7 @@ const Category = () => {
       });
       console.log("Category data for editing:", getData.data);
       const data = getData.data.data;
-      
+
       // Set values in edit form
       setValueEdit("category_name", data.category_name);
       setValueEdit("category_description", data.category_description);
@@ -151,16 +157,16 @@ const Category = () => {
     try {
       const id = editId; // Get the ID from state
       console.log("Updating category with data:", data);
-      
+
       const res = await axios.put(`/update-category/${id}`, data, {
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
       });
-      
+
       console.log("Update response:", res.data);
-      
+
       if (res.data.message === "Updated") {
         toast.success("Category Updated");
         fetchCategories(activeTab);
@@ -308,7 +314,10 @@ const Category = () => {
           }`}
         >
           <div className="p-6">
-            <form onSubmit={handleSubmitEdit(onSubmitEdit)} className="space-y-4">
+            <form
+              onSubmit={handleSubmitEdit(onSubmitEdit)}
+              className="space-y-4"
+            >
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -376,7 +385,7 @@ const Category = () => {
             </form>
           </div>
         </div>
-        
+
         {/* Categories List */}
         {loading ? (
           <div className="flex justify-center items-center h-40">

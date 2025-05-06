@@ -122,7 +122,7 @@ const AddIncome = () => {
   }, [token, fetchIncomeCategories, getPaymentType]);
   return (
     <div className="max-w-7xl mx-auto py-6 bg-gray-50">
-      <ToastContainer></ToastContainer>
+      <ToastContainer autoClose={1500}></ToastContainer>
       <div className="bg-white shadow p-6">
         <div className="text-xl font-semibold text-gray-800">Add Income</div>
         <form onSubmit={handleSubmit(submitHandler)} className="mt-2">

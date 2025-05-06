@@ -11,6 +11,7 @@ import Input from "../../Components/Input";
 import SelectInput from "../../Components/Select";
 import axios from "axios";
 import AutocompleteInput from "../../Components/AutocompleteInput";
+import { DollarSign, Store } from "lucide-react";
 
 const EditExpense = () => {
   const { id } = useParams();
@@ -38,7 +39,6 @@ const EditExpense = () => {
             Authorization: `Bearer ${token}`,
           },
         });
-        console.log(res.data.receipt?.cloudinaryUrl);
         setValue("title", res.data.title);
         setValue("amount", res.data.amount);
         setValue("description", res.data.description);
@@ -71,6 +71,19 @@ const EditExpense = () => {
     }
   }, [token]);
 
+  const VendorSuggest = useCallback(async () => {
+    try {
+      const res = await axios.get(`/get-vendor`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setVendorSuggestions(res.data);
+    } catch (error) {
+      toast.error("Error fetching vendor data:", error);
+    }
+  }, [token]);
+
   useEffect(() => {
     getPaymentType();
   }, [getPaymentType]);
@@ -96,7 +109,7 @@ const EditExpense = () => {
 
   const onSubmit = async (data) => {
     if (!id) {
-      console.error("Error: Expense ID is missing");
+      toast.error("Error: Invalid ID");
       return;
     }
 
@@ -120,26 +133,15 @@ const EditExpense = () => {
     try {
       setLoading(true);
       const res = await axios.put(`/edit-expense/${id}`, formData, {
-        headers: { "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${token}`
-         },
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
+        },
       });
 
-      if (res.data.file) {
-        const { cloudinaryUrl, originalName, uniqueName, fileType } =
-          res.data.file;
-        console.log("Uploaded file details:", {
-          cloudinaryUrl,
-          originalName,
-          uniqueName,
-          fileType,
-        });
-      }
-
-      console.log(res.data);
       navigate("/expenses");
     } catch (error) {
-      console.error(
+      toast.error(
         "Error uploading expense:",
         error.response?.data || error.message
       );
@@ -147,20 +149,6 @@ const EditExpense = () => {
       setLoading(false); // Ensure loading is turned off in all cases
     }
   };
-
-  const VendorSuggest = useCallback(async () => {
-    try {
-      const res = await axios.get(`/get-vendor`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const vendor = res.data.map((data) => data.name);
-      setVendorSuggestions(vendor);
-    } catch (error) {
-      console.error("Error fetching vendor data:", error);
-    }
-  }, [token]);
 
   const fetchExpenseCategories = useCallback(async () => {
     try {
@@ -329,6 +317,7 @@ const EditExpense = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 {/* Payment Through */}
                 <SelectInput
+                  icon={DollarSign}
                   id="paymentThrough"
                   label="Payment Through"
                   options={PaymentType}
@@ -340,14 +329,16 @@ const EditExpense = () => {
                   validation={{ required: "Select one" }}
                 />
 
-                <AutocompleteInput
-                  name="vendor"
+                <SelectInput
+                  icon={Store}
+                  id="vendor"
                   label="Vendor"
-                  placeholder="Search or select vendor (optional)"
-                  suggestions={vendorSuggestions}
+                  options={vendorSuggestions}
+                  valueField="_id"
+                  keyField="_id"
+                  displayField="name"
+                  register={register}
                   required={false}
-                  {...register("vendor")}
-                  onSelect={(value) => setValue("vendor", value)}
                 />
               </div>
 

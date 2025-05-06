@@ -180,7 +180,7 @@ const DetailExpense = () => {
   return (
     <div className="flex h-full">
       <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <ToastContainer position="top-right" autoClose={3000} />
+        <ToastContainer autoClose={1500} />
         <div>
           {/* Header Section */}
           <div className="bg-white rounded-lg shadow-md p-6 mb-6">
@@ -210,19 +210,6 @@ const DetailExpense = () => {
 
               {/* Action Buttons */}
               <div className="flex items-center gap-2">
-                <button
-                  className="flex items-center gap-1 px-3 py-2 bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 transition-colors"
-                  onClick={() => EditExpense()}
-                >
-                  <Edit className="h-4 w-4" />
-                  <span className="hidden sm:inline">Edit</span>
-                </button>
-
-                <button className="flex items-center gap-1 px-3 py-2 bg-purple-50 text-purple-600 rounded-md hover:bg-purple-100 transition-colors">
-                  <Share2 className="h-4 w-4" />
-                  <span className="hidden sm:inline">Share</span>
-                </button>
-
                 {/* More Options Dropdown */}
                 <div className="relative" ref={dropdownRef}>
                   <button
@@ -237,28 +224,24 @@ const DetailExpense = () => {
                     <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
                       <ul className="py-1">
                         <li className="px-1">
-                          <button className="w-full flex items-center gap-2 rounded-md text-left px-3 py-2 text-gray-700 hover:bg-gray-50 transition-colors">
-                            <Eye className="h-4 w-4 text-gray-500" />
-                            <span>Preview</span>
+                          <button
+                            className="w-full flex items-center gap-2 rounded-md text-left px-3 py-2 text-gray-700 hover:bg-gray-50 transition-colors"
+                            onClick={() => EditExpense()}
+                          >
+                            <Edit className="h-4 w-4 text-gray-500" />
+                            <span>Edit</span>
                           </button>
                         </li>
+
                         <li className="px-1">
                           <button
                             className="w-full flex items-center gap-2 rounded-md text-left px-3 py-2 text-gray-700 hover:bg-gray-50 transition-colors"
-                            // onClick={() => ExportAsPDF()}
                             onClick={() => setSidebar(true)}
                           >
                             <Download className="h-4 w-4 text-gray-500" />
                             <span>Download PDF</span>
                           </button>
                         </li>
-                        <li className="px-1">
-                          <button className="w-full flex items-center gap-2 rounded-md text-left px-3 py-2 text-gray-700 hover:bg-gray-50 transition-colors">
-                            <FileSpreadsheet className="h-4 w-4 text-gray-500" />
-                            <span>Export to Excel</span>
-                          </button>
-                        </li>
-                        <li className="border-t border-gray-100 my-1"></li>
                         <li className="px-1">
                           <button
                             onClick={() => deleteExpense()}

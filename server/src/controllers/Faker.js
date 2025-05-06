@@ -1,8 +1,9 @@
-const Category = require("../models/Category"); // adjust path as needed
-const generateFakeData = require("../utils/FakeExpense"); // adjust path
+const Category = require("../models/Category");
+const generateFakeData = require("../utils/FakeExpense");
 const Expense = require("../models/ExpenseModel");
-const PaymentMethod = require("../models/PaymentModel"); // adjust path as needed
-const Income = require("../models/IncomeModel"); // adjust path as needed
+const PaymentMethod = require("../models/PaymentModel");
+const Income = require("../models/IncomeModel");
+const Vendor = require("../models/Vendor");
 
 const FakeExpenseAndIncome = async (req, res) => {
   try {
@@ -33,20 +34,25 @@ const FakeExpenseAndIncome = async (req, res) => {
       return res.status(400).json({ error: "No income categories found" });
     }
 
+    const vendors = await Vendor.find({ userId });
+    if (!vendors.length) {
+      return res.status(400).json({ error: "No vendors found" });
+    }
+
     const fakeData = generateFakeData(
       userId,
       expenseCategories,
       incomeCategories,
       paymentMethods,
+      vendors,
       count,
       { month, year }
     );
 
-    const fakeExpenses = fakeData.filter(item => item.expenseDate);
-    const fakeIncome = fakeData.filter(item => item.incomeDate);
+    const fakeExpenses = fakeData.filter((item) => item.expenseDate);
+    const fakeIncome = fakeData.filter((item) => item.incomeDate);
 
     await Expense.insertMany(fakeExpenses);
-
     await Income.insertMany(fakeIncome);
 
     return res.status(201).json({

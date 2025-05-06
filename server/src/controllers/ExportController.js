@@ -74,7 +74,11 @@ const generateVendorPDF = async (req, res) => {
 const generateReportPDF = async (req, res) => {
   try {
     const reportData = req.body;
-    const pdfBuffer = await pdfGenerator.generateReportPDF(reportData);
+    const pdfBuffer = await pdfGenerator.generateReportPDF(
+      reportData,
+      userData,
+      fields
+    );
 
     // Set headers to serve the PDF file as download
     res.setHeader(

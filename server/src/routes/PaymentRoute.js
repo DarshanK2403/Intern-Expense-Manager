@@ -20,4 +20,6 @@ router.get("/payment", PaymentController.GetPayment);
 
 router.delete("/payment/:id", PaymentController.DeletePayment);
 
+router.put("/payment/:id", PaymentController.UpdatePayment);
+
 module.exports = router;

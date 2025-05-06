@@ -385,7 +385,6 @@ const getReport = async (req, res) => {
 
     const categoryTotals = {};
     let highestExpense = null;
-
     for (const tx of transaction) {
       if (!tx.expenseDate) continue;
 
@@ -397,6 +396,21 @@ const getReport = async (req, res) => {
 
       if (!highestExpense || tx.amount > highestExpense.amount) {
         highestExpense = tx;
+      }
+    }
+
+    let highestIncome = null;
+    for (const tx of transaction) {
+      if (!tx.incomeDate) continue;
+
+      const categoryId = tx.category?._id?.toString();
+      if (!categoryId) continue;
+
+      categoryTotals[categoryId] =
+        (categoryTotals[categoryId] || 0) + tx.amount;
+
+      if (!highestIncome || tx.amount > highestIncome.amount) {
+        highestIncome = tx;
       }
     }
 
@@ -421,7 +435,7 @@ const getReport = async (req, res) => {
     }
 
     const targetMonths = [];
-    const monthNames = []; // For console logging readable names
+    const monthNames = [];
     const tempDate = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
     const endMonths = new Date(endDate.getFullYear(), endDate.getMonth(), 1);
 
@@ -436,12 +450,6 @@ const getReport = async (req, res) => {
 
       tempDate.setMonth(tempDate.getMonth() + 1);
     }
-
-    // Console logs for debugging
-    console.log("startDate:", startDate.toISOString().split("T")[0]);
-    console.log("endDate:", endDate.toISOString().split("T")[0]);
-    console.log("Target Months (YYYY-MM):", targetMonths);
-    console.log("Readable Month Names:", monthNames);
 
     const budgetData = {};
 
@@ -496,6 +504,12 @@ const getReport = async (req, res) => {
       highestExpense: {
         title: highestExpense?.title || "N/A",
         amount: highestExpense?.amount || 0,
+        date: highestExpense?.expenseDate || "N/A",
+      },
+      highestIncome: {
+        title: highestIncome?.title || "N/A",
+        amount: highestIncome?.amount || 0,
+        date: highestIncome?.incomeDate || "N/A",
       },
       budgetData: budgetData,
     });
@@ -508,87 +522,16 @@ const getReport = async (req, res) => {
 const saveReport = async (req, res) => {
   try {
     const userId = req.user.id;
-    const {
-      totalIncome,
-      totalExpense,
-      balance,
-      savingRate,
-      comparisons,
-      startDate,
-      endDate,
-      prevStartDate,
-      prevEndDate,
-      type,
-      offset,
-      formatted,
-      incomeSources,
-      expenseByCategory,
-      transaction,
-    } = req.body;
+    const data = { userId, ...req.body };
 
-    // 🔁 Convert category names to ObjectIds
-    const updatedExpenseByCategory = await Promise.all(
-      expenseByCategory.map(async (item) => {
-        const category = await CategoryModel.findOne({ name: item._id });
-        return {
-          _id: category ? category._id : null,
-          totalAmount: item.totalAmount,
-          count: item.count,
-        };
-      })
-    );
+    const report = new ReportModel(data);
 
-    const filteredExpenseByCategory = updatedExpenseByCategory.filter(
-      (item) => item._id
-    );
-
-    // 🔁 Convert income source names to ObjectIds
-    const updatedIncomeSources = await Promise.all(
-      incomeSources.map(async (item) => {
-        const source = await Income.findOne({ name: item._id });
-        return {
-          _id: source ? source._id : null,
-          value: item.value,
-        };
-      })
-    );
-
-    const filteredIncomeSources = updatedIncomeSources.filter(
-      (item) => item._id
-    );
-
-    const newReport = new ReportModel({
-      userId,
-      totalIncome,
-      totalExpense,
-      balance,
-      savingRate,
-      comparisons,
-      startDate,
-      endDate,
-      prevStartDate,
-      prevEndDate,
-      type,
-      offset,
-      formatted,
-      incomeSources: filteredIncomeSources, // ✅ Fixed
-      expenseByCategory: filteredExpenseByCategory,
-      transaction,
-    });
-
-    const savedReport = await newReport.save();
-    await logActivity(
-      userId,
-      "GENERATE_REPORT",
-      `Generated a report from ${format(
-        new Date(startDate),
-        "dd MMM yyyy"
-      )} to ${format(new Date(endDate), "dd MMM yyyy")}`
-    );
+    // Save the report data to MongoDB
+    report.save();
 
     res.status(201).json({
       message: "Report successfully generated and stored",
-      report: savedReport,
+      report: report,
     });
   } catch (error) {
     console.error(error);
@@ -604,7 +547,6 @@ const getSavedReport = async (req, res) => {
     const userId = req.user.id;
     const report = await ReportModel.find({ userId });
 
-    // Check if the report exists
     if (!report) {
       return res.status(404).json({ message: "Report not found" });
     }

@@ -13,7 +13,8 @@ const recentTransactions = async (req, res) => {
       .sort({
         createdAt: -1,
       })
-      .populate("category");
+      .populate("category")
+      .populate("vendor");
 
     const latestIncome = await Income.find({ userId })
       .sort({ createdAt: -1 })
@@ -113,14 +114,13 @@ const ExpenseByCategory = async (req, res) => {
         $project: {
           _id: 0,
           category_id: "$_id",
-          category_name: "$categoryInfo.category_name", // adjust field name if needed
+          category_name: "$categoryInfo.category_name",
           total: 1,
         },
       },
-      { $sort: { total: -1 } }, // Sort by total, descending
+      { $sort: { total: -1 } },
     ]);
 
-    // Split into top 9 and "Other"
     const top9 = categoryExpense.slice(0, 9);
     const otherTotal = categoryExpense
       .slice(9)
@@ -133,7 +133,7 @@ const ExpenseByCategory = async (req, res) => {
       });
     }
 
-    res.status(200).json(top9); // Return the top 9 categories with "Other" as necessary
+    res.status(200).json(top9);
   } catch (error) {
     res.status(500).json({ error: "Server Error", details: error.message });
   }
@@ -190,28 +190,15 @@ const BudgetDashboardSummary = async (req, res) => {
     }
 
     // Get user's budget for the year
-    const budget = await Budget.findOne({ userId, year });
+    const budget = await Budget.findOne({ userId, year }).populate(
+      "categories.category"
+    );
 
     if (!budget) {
       return res
         .status(404)
         .json({ success: false, message: "No budget found" });
     }
-
-    // Fetch categories to help with mapping
-    const categories = await Category.find({ userId });
-
-    // Create a mapping from category name to category ID
-    const categoryNameToIdMap = categories.reduce((map, category) => {
-      map[category.category_name] = category._id.toString();
-      return map;
-    }, {});
-
-    // Create a reverse mapping from category ID to budget category
-    const budgetCategoryMap = budget.categories.reduce((map, cat) => {
-      map[categoryNameToIdMap[cat.name]] = cat;
-      return map;
-    }, {});
 
     // Get total spent per category from the aggregation
     const totalSpentAggregation = await Expense.aggregate([
@@ -232,30 +219,27 @@ const BudgetDashboardSummary = async (req, res) => {
       },
     ]);
 
-    // Map the aggregation result to an easy-to-use object
     const totalSpentMap = totalSpentAggregation.reduce((map, item) => {
       map[item._id.toString()] = item.totalSpent;
       return map;
     }, {});
 
-    // Create the summary for each category
+    // Calculate budget summary
     const summary = budget.categories.map((cat) => {
-      // Calculate the total budget for the category
       const totalBudget = cat.entries.reduce(
         (sum, entry) => sum + entry.amount,
         0
       );
 
-      // Find the corresponding category ID from our mapping
-      const categoryId = categoryNameToIdMap[cat.name];
+      const categoryId = cat.category?._id?.toString();
+      const categoryName = cat.category?.category_name || "Unknown";
 
-      // Get the total spent for this category using the mapped ID
       const categorySpent = categoryId ? totalSpentMap[categoryId] || 0 : 0;
 
       return {
-        categoryId: cat._id,
-        categoryName: cat.name,
-        color: cat.color,
+        categoryId,
+        categoryName,
+        color: cat.category?.color || "#999999",
         totalBudget,
         totalSpent: categorySpent,
         remaining: totalBudget - categorySpent,

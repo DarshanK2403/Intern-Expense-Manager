@@ -9,15 +9,11 @@ import {
   Calendar,
   Download,
   Edit,
-  Eye,
-  FileSpreadsheet,
   FileText,
   MoreVertical,
   Receipt,
-  Share2,
   Tag,
   Trash2,
-  User,
   Wallet,
 } from "lucide-react";
 import { format } from "date-fns";
@@ -29,20 +25,17 @@ const DetailIncome = () => {
   const dropdownRef = useRef(null);
   const [isOpen, setIsOpen] = useState(false);
   const [incomeData, setIncomeData] = useState();
-  const [filePreview, setFilePreview] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [sidebar, setSidebar] = useState(false);
   const { user } = useContext(AuthContext);
 
   const [fields, setFields] = useState({
     userDetails: true,
-    expenseDetails: true,
-    expenseSummary: true,
-    description: true,
+    incomeDetails: true,
+    incomeSummary: true,
     receipt: true,
     footer: true,
   });
-
   useEffect(() => {
     const getIncomeeDetails = async () => {
       try {
@@ -127,12 +120,13 @@ const DetailIncome = () => {
       amount: incomeData?.amount || "-",
       incomeDate: incomeData?.incomeDate || "-",
       receipt: incomeData?.receipt?.cloudinaryUrl || "-",
+      notes: incomeData?.notes,
     },
   };
 
   const ExportAsPDF = async () => {
     try {
-      const response = await axios.post(`/pdf/expense`, PDFData, {
+      const response = await axios.post(`/pdf/income`, PDFData, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -151,6 +145,10 @@ const DetailIncome = () => {
     } catch (error) {
       console.error("Error generating PDF:", error);
     }
+  };
+
+  const EditIncome = () => {
+    navigate(`/income/edit-income/${id}`);
   };
 
   if (isLoading) {
@@ -195,19 +193,6 @@ const DetailIncome = () => {
 
               {/* Action Buttons */}
               <div className="flex items-center gap-2">
-                <button
-                  className="flex items-center gap-1 px-3 py-2 bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 transition-colors"
-                  // onClick={() => EditExpense()}
-                >
-                  <Edit className="h-4 w-4" />
-                  <span className="hidden sm:inline">Edit</span>
-                </button>
-
-                <button className="flex items-center gap-1 px-3 py-2 bg-purple-50 text-purple-600 rounded-md hover:bg-purple-100 transition-colors">
-                  <Share2 className="h-4 w-4" />
-                  <span className="hidden sm:inline">Share</span>
-                </button>
-
                 {/* More Options Dropdown */}
                 <div className="relative" ref={dropdownRef}>
                   <button
@@ -222,27 +207,24 @@ const DetailIncome = () => {
                     <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
                       <ul className="py-1">
                         <li className="px-1">
-                          <button className="w-full flex items-center gap-2 rounded-md text-left px-3 py-2 text-gray-700 hover:bg-gray-50 transition-colors">
-                            <Eye className="h-4 w-4 text-gray-500" />
-                            <span>Preview</span>
+                          <button
+                            className="w-full flex items-center gap-2 rounded-md text-left px-3 py-2 text-gray-700 hover:bg-gray-50 transition-colors"
+                            onClick={() => EditIncome()}
+                          >
+                            <Edit className="h-4 w-4 text-gray-500" />
+                            <span>Edit</span>
                           </button>
                         </li>
+
                         <li className="px-1">
                           <button
                             className="w-full flex items-center gap-2 rounded-md text-left px-3 py-2 text-gray-700 hover:bg-gray-50 transition-colors"
-                            // onClick={() => setSidebar(true)}
+                            onClick={() => setSidebar(true)}
                           >
                             <Download className="h-4 w-4 text-gray-500" />
                             <span>Download PDF</span>
                           </button>
                         </li>
-                        <li className="px-1">
-                          <button className="w-full flex items-center gap-2 rounded-md text-left px-3 py-2 text-gray-700 hover:bg-gray-50 transition-colors">
-                            <FileSpreadsheet className="h-4 w-4 text-gray-500" />
-                            <span>Export to Excel</span>
-                          </button>
-                        </li>
-                        <li className="border-t border-gray-100 my-1"></li>
                         <li className="px-1">
                           <button
                             onClick={() => deleteIncome()}
@@ -365,22 +347,6 @@ const DetailIncome = () => {
                       {incomeData?.paymentThrough?.label || "-"}
                     </p>
                   </div>
-
-                  {/* Description - Full Width */}
-                  {/* <div className="md:col-span-2 mt-2">
-                    <p className="text-sm font-medium text-gray-500 mb-2 flex items-center gap-1">
-                      Description
-                    </p>
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <p className="text-gray-800 whitespace-pre-line">
-                        {incomeData?.description || (
-                          <span className="text-gray-600">
-                            No description provided.
-                          </span>
-                        )}
-                      </p>
-                    </div>
-                  </div> */}
                 </div>
               </div>
             </div>

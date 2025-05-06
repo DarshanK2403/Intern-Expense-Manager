@@ -199,8 +199,9 @@ const UpdateExpensebyId = async (req, res) => {
       : expense.expenseDate;
     expense.category = category || expense.category;
     expense.paymentThrough = paymentThrough || expense.paymentThrough;
-    expense.vendor = vendor || expense.vendor;
-
+    if (vendor && vendor !== "null" && vendor !== "undefined") {
+      expense.vendor = vendor;
+    }
     if (req.file) {
       // ✅ If updating receipt, delete old Cloudinary file first
       if (expense.receipt?.uniqueName) {
@@ -236,7 +237,7 @@ const UpdateExpensebyId = async (req, res) => {
       }'`
     );
 
-    // console.log("Updated Expense:", expense); // ✅ Log full updated data
+    // console.log("Updated Expense:", expense); // Log full updated data
     res.status(200).json({ message: "Expense updated successfully", expense });
   } catch (error) {
     console.error("Error updating expense:", error);

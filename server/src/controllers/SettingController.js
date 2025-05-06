@@ -1,19 +1,20 @@
 const CategoryModel = require("../models/Category");
-
+const ExpenseModel = require("../models/ExpenseModel");
+const IncomeModel = require("../models/IncomeModel");
+const VendorModel = require("../models/Vendor");
 // Generic Create Category
 const CreateCategory = async (req, res) => {
   try {
     const userId = req.user.id;
     const { type } = req.query;
     const { category_name, category_description } = req.body;
-    console.log(type)
+    console.log(type);
     const existCategory = await CategoryModel.findOne({
       userId,
       category_type: type,
       category_name,
       category_description,
     });
-
 
     if (existCategory) {
       return res.status(409).json({ message: "Already exists" });
@@ -22,7 +23,7 @@ const CreateCategory = async (req, res) => {
     const newCategory = await CategoryModel.create({
       category_name,
       category_description,
-      category_type : type,
+      category_type: type,
       userId,
     });
 
@@ -32,17 +33,16 @@ const CreateCategory = async (req, res) => {
   }
 };
 
-
 // Generic Get Category
 const GetCategory = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { type } = req.query; // Pass category_type like ?type=income
+    const { type } = req.query;
 
     const categories = await CategoryModel.find({
       userId,
       category_type: type,
-    });
+    }).sort({ category_name: 1 });
 
     if (!categories.length) {
       return res.status(200).json({ message: "No categories found", data: [] });
@@ -120,13 +120,49 @@ const UpdateCategory = async (req, res) => {
 // Generic Delete Category
 const DeleteCategory = async (req, res) => {
   try {
-    const deleted = await CategoryModel.findByIdAndDelete(req.params.id);
-    if (!deleted) {
-      return res.status(404).json({ message: "Category not found" });
+    const categoryId = req.params.id;
+
+    // Check in Expense
+    const expenseUsed = await ExpenseModel.findOne({ category: categoryId });
+    if (expenseUsed) {
+      return res.status(200).json({
+        status: false,
+        message: "This category is used in an expense and cannot be deleted.",
+      });
     }
-    res.status(200).json({ message: "Deleted", data: deleted });
+
+    // Check in Income
+    const incomeUsed = await IncomeModel.findOne({ category: categoryId });
+    if (incomeUsed) {
+      return res.status(200).json({
+        status: false,
+        message: "This category is used in an income and cannot be deleted.",
+      });
+    }
+
+    // Check in Vendor
+    const vendorUsed = await VendorModel.findOne({ category: categoryId });
+    if (vendorUsed) {
+      return res.status(200).json({
+        status: false,
+        message: "This category is used in a vendor and cannot be deleted.",
+      });
+    }
+
+    const deleted = await CategoryModel.findByIdAndDelete(categoryId);
+    if (!deleted) {
+      return res
+        .status(404)
+        .json({ status: false, message: "Category not found" });
+    }
+
+    res.status(200).json({
+      status: true,
+      message: "Category deleted successfully",
+      data: deleted,
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ status: false, message: error.message });
   }
 };
 

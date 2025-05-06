@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { toast, ToastContainer } from "react-toastify";
 import axios from "axios";
 import {
@@ -34,7 +41,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
-
+import Select from "react-select";
 import "react-datepicker/dist/react-datepicker.css";
 import { format } from "date-fns";
 import WeeklyCalendar from "../../Components/Calendar/WeeklyCalendar";
@@ -42,8 +49,12 @@ import MonthlyCalendar from "../../Components/Calendar/MonthlyCalendar";
 import YearlyCalendar from "../../Components/Calendar/YearlyCalendar";
 import DateCalender from "../../Components/Calendar/DateCalender";
 import SpinnerLoader from "../../Components/Loader/SpinnerLoader";
+import PDFExportModal from "../../Components/Export/PDFExportModal";
+import { AuthContext } from "../../context/AuthContext";
+import { renderReportPreview } from "../../Components/Export/renderReportPreview";
 
 const ReportPage = () => {
+  const token = localStorage.getItem("Token");
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState([]);
   const [Offset, setOffset] = useState(0);
@@ -53,8 +64,6 @@ const ReportPage = () => {
   const [allTransactions, setAllTransactions] = useState([]);
   const [activeFilters, setActiveFilters] = useState(false);
   const [period, setPeriod] = useState("week");
-  const [ExpenseCategory, setExpenseCategory] = useState([]);
-  const [IncomeCategory, setIncomeCategory] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredTransactions, setFilteredTransactions] = useState([]);
   const [visibleTransactions, setVisibleTransactions] =
@@ -80,42 +89,19 @@ const ReportPage = () => {
     "#8884d8",
     "#82ca9d",
   ];
-  // const [financialData, setFinancialData] = useState([])
-  const [financialData, setFinancialData] = useState({
-    totalExpense: 3750.45, //Done
-    totalIncome: 5200.0, //Done
-    netBalance: 1449.55, //Done
-    savingRate: 27.88, //Done
-    topSpendingCategory: "Housing", //Done
-    highestExpense: {
-      amount: 1200.0,
-      category: "Rent",
-      date: "2025-04-25",
-    }, //Done
-    totalTransactions: 47, //Done
-    highestIncome: {
-      amount: 4800.0,
-      source: "Salary",
-      date: "2025-04-01",
-    },
-    remainingBudget: 450.25,
-    isOverBudget: false,
-    monthlyBudget: 4200.0,
-    expenseByCategory: [
-      { category: "Housing", amount: 1350.0 },
-      { category: "Food", amount: 850.25 },
-      { category: "Transportation", amount: 420.75 },
-      { category: "Utilities", amount: 380.45 },
-      { category: "Entertainment", amount: 325.0 },
-      { category: "Other", amount: 424.0 },
-    ], // Done
-  });
-
+  const [FilterCategoryOption, setFilterCategoryOption] = useState([]);
   const toggleFilterPanel = () => {
     setActiveFilters(!activeFilters);
   };
-
-  const token = localStorage.getItem("Token");
+  const [sidebar, setSidebar] = useState(false);
+  const { user } = useContext(AuthContext);
+  const [fields, setFields] = useState({
+    userDetails: true,
+    incomeDetails: true,
+    incomeSummary: true,
+    receipt: true,
+    footer: true,
+  });
   const generateReport = useCallback(async () => {
     try {
       setLoading(true);
@@ -140,9 +126,7 @@ const ReportPage = () => {
       setFormatedData(res.data.formatted);
       setincomeSourceData(res.data.incomeSources);
       setcategoryExpenseData(res.data.expenseByCategory);
-      setAllTransactions(res.data.xction);
-      setExpenseCategory(res.data.expenseByCategory.map((cat) => cat._id));
-      setIncomeCategory(res.data.incomeSources.map((cat) => cat._id));
+      setAllTransactions(res.data.transaction);
       setBudgetVsActualData(res.data.budgetVsActual);
     } catch {
       toast.error("Error fetching report data");
@@ -178,7 +162,14 @@ const ReportPage = () => {
   );
 
   const remainingBudget = BudgetTotal - data.totalExpense;
-  console.log("remainingBudget", remainingBudget);
+  useEffect(() => {
+    setData((prev) => ({
+      ...prev,
+      remainingBudget,
+      isOverBudget: remainingBudget < 0,
+    }));
+  }, [BudgetTotal, data.totalExpense]);
+
   const toggleDropdown = () => setIsDropdownOpen((prev) => !prev);
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -361,6 +352,28 @@ const ReportPage = () => {
     }).format(value);
   };
 
+  const getCategories = useCallback(async () => {
+    try {
+      const res = await axios.get(`/category?type=expense&type=income`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const options = res.data.data.map((item) => ({
+        value: item.category_name,
+        label: item.category_name,
+      }));
+      setFilterCategoryOption(options);
+    } catch {
+      toast.error("Something went wrong");
+    }
+  }, [token]);
+
+  useEffect(() => {
+    getCategories();
+  }, []);
+
   if (loading)
     return (
       <div className="flex justify-center items-center h-40">
@@ -368,7 +381,57 @@ const ReportPage = () => {
       </div>
     );
 
-  console.log(data.budgetData);
+  const handleFieldToggle = (field) => {
+    setFields((prev) => ({
+      ...prev,
+      [field]: !prev[field],
+    }));
+  };
+
+  const toggleAllFields = (value) => {
+    const updatedFields = {};
+    Object.keys(fields).forEach((key) => {
+      updatedFields[key] = value;
+    });
+    setFields(updatedFields);
+  };
+
+  const PDFData = {
+    fields,
+    userData: {
+      firstName: user?.firstName,
+      lastName: user?.lastName,
+      email: user?.email,
+      phone: user?.phone,
+    },
+    vendorData: {
+     
+    },
+  };
+
+  const ExportAsPDF = async () => {
+    try {
+      const response = await axios.post(`/pdf/report`, PDFData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        responseType: "blob",
+      });
+
+      const blob = new Blob([response.data], { type: "application/pdf" });
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = downloadUrl;
+      document.body.appendChild(a);
+      a.download = `expense-report.pdf`;
+      a.click();
+      window.URL.revokeObjectURL(downloadUrl);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+    }
+  };
+
   return (
     <div className="w-full bg-gray-50">
       <ToastContainer></ToastContainer>
@@ -462,10 +525,15 @@ const ReportPage = () => {
               </button>
 
               {/* Export Button */}
-              <button className="flex items-center justify-center gap-2 bg-blue-100 hover:bg-blue-200 text-blue-700 font-medium px-4 py-2 rounded-md w-full sm:w-auto shadow-sm">
-                <Download size={16} />
-                <span>Export</span>
-              </button>
+              <li className="px-1">
+                <button
+                  className="w-full flex items-center gap-2 rounded-md text-left px-3 py-2 text-gray-700 hover:bg-gray-50 transition-colors"
+                  onClick={() => setSidebar(true)}
+                >
+                  <Download className="h-4 w-4 text-gray-500" />
+                  <span>Download PDF</span>
+                </button>
+              </li>
 
               <button
                 className="flex items-center justify-center gap-2 bg-green-100 hover:bg-green-200 text-green-700 font-medium px-4 py-2 rounded-md w-full sm:w-auto shadow-sm"
@@ -499,28 +567,9 @@ const ReportPage = () => {
                   : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
               }`}
             >
-              Charts Section
+              Charts
             </button>
-            <button
-              onClick={() => setActiveTab("income")}
-              className={`mr-8 py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === "income"
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              Income
-            </button>
-            <button
-              onClick={() => setActiveTab("expenses")}
-              className={`mr-8 py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === "expenses"
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              Expenses
-            </button>
+
             <button
               onClick={() => setActiveTab("transactions")}
               className={`mr-8 py-4 px-1 border-b-2 font-medium text-sm ${
@@ -570,57 +619,19 @@ const ReportPage = () => {
                 </select>
               </div>
 
-              {/* Expense Category */}
-              {tempFilters.type === "expense" && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Expense Category
-                  </label>
-                  <select
-                    value={tempFilters.expenseCategory}
-                    onChange={(e) =>
-                      setTempFilters((prev) => ({
-                        ...prev,
-                        expenseCategory: e.target.value,
-                      }))
-                    }
-                    className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2"
-                  >
-                    <option value="all">All</option>
-                    {ExpenseCategory.map((cat) => (
-                      <option value={cat} key={`expense-${cat}`}>
-                        {cat}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {/* Income Category */}
-              {tempFilters.type === "income" && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Income Category
-                  </label>
-                  <select
-                    value={tempFilters.incomeCategory}
-                    onChange={(e) =>
-                      setTempFilters((prev) => ({
-                        ...prev,
-                        incomeCategory: e.target.value,
-                      }))
-                    }
-                    className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2"
-                  >
-                    <option value="all">All</option>
-                    {IncomeCategory.map((cat) => (
-                      <option value={cat} key={`income-${cat}`}>
-                        {cat}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Category
+                </label>
+                <Select
+                  defaultValue={[]}
+                  isMulti
+                  name="colors"
+                  options={FilterCategoryOption}
+                  className="basic-multi-select w-52"
+                  classNamePrefix="select"
+                />
+              </div>
 
               {/* Min Amount */}
               <div>
@@ -732,7 +743,7 @@ const ReportPage = () => {
                         <h2 className="text-lg font-medium text-gray-700">
                           Budget Status
                         </h2>
-                        {financialData.isOverBudget ? (
+                        {data.isOverBudget ? (
                           <AlertTriangle
                             className="text-yellow-500"
                             size={24}
@@ -752,19 +763,18 @@ const ReportPage = () => {
                         <div className="w-full bg-gray-200 rounded-full h-2.5">
                           <div
                             className={`h-2.5 rounded-full ${
-                              financialData.isOverBudget
-                                ? "bg-red-500"
-                                : "bg-green-500"
+                              data.isOverBudget ? "bg-red-500" : "bg-green-500"
                             }`}
                             style={{
-                              width: `${
-                                (1 - remainingBudget / BudgetTotal) * 100
-                              }%`,
+                              width: `${Math.min(
+                                (1 - remainingBudget / BudgetTotal) * 100,
+                                100
+                              )}%`,
                             }}
                           ></div>
                         </div>
                       </div>
-                      {financialData.isOverBudget && (
+                      {data.isOverBudget && (
                         <div className="mt-4 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
                           <div className="flex">
                             <AlertTriangle
@@ -773,9 +783,7 @@ const ReportPage = () => {
                             />
                             <p className="text-sm text-yellow-700">
                               You&#39;ve exceeded your monthly budget by{" "}
-                              {formatCurrency(
-                                Math.abs(financialData.remainingBudget)
-                              )}
+                              {formatCurrency(Math.abs(remainingBudget))}
                             </p>
                           </div>
                         </div>
@@ -797,10 +805,12 @@ const ReportPage = () => {
                           </div>
                           <div>
                             <p className="font-medium">
-                              {data.topSpendingCategory?.name}
+                              {data.topSpendingCategory?.name || "N/A"}
                             </p>
                             <p className="text-sm text-gray-500">
-                              {formatCurrency(data.topSpendingCategory?.amount)}
+                              {formatCurrency(
+                                data.topSpendingCategory?.amount || 0
+                              )}
                             </p>
                           </div>
                         </div>
@@ -818,6 +828,16 @@ const ReportPage = () => {
                             <p className="text-sm text-gray-500">
                               {formatCurrency(data.highestExpense?.amount)}
                             </p>
+                            {data?.highestExpense?.date &&
+                              !isNaN(new Date(data?.highestExpense?.date)) && (
+                                <p className="text-xs text-gray-500">
+                                  Spent on{" "}
+                                  {format(
+                                    new Date(data?.highestExpense?.date),
+                                    "dd MMM yyyy"
+                                  )}
+                                </p>
+                              )}
                           </div>
                         </div>
                       </div>
@@ -853,14 +873,21 @@ const ReportPage = () => {
                         </div>
                       </div>
                       <p className="text-2xl font-bold text-gray-800">
-                        {formatCurrency(financialData.highestIncome.amount)}
+                        {formatCurrency(data?.highestIncome?.amount)}
                       </p>
                       <p className="text-sm text-gray-600">
-                        {financialData.highestIncome.source}
+                        {data?.highestIncome?.title}
                       </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        Received on {financialData.highestIncome.date}
-                      </p>
+                      {data?.highestIncome?.date &&
+                        !isNaN(new Date(data?.highestIncome?.date)) && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            Received on{" "}
+                            {format(
+                              new Date(data?.highestIncome?.date),
+                              "dd MMM yyyy"
+                            )}
+                          </p>
+                        )}
                     </div>
 
                     <div className="bg-white rounded-xl shadow-md p-6">
@@ -878,7 +905,12 @@ const ReportPage = () => {
                       <div className="w-full bg-gray-200 rounded-full h-2.5 mt-3">
                         <div
                           className="h-2.5 rounded-full bg-purple-500"
-                          style={{ width: `${data.savingRate}%` }}
+                          style={{
+                            width: `${Math.max(
+                              0,
+                              Math.min(data.savingRate, 100)
+                            )}%`,
+                          }}
                         ></div>
                       </div>
                     </div>
@@ -991,59 +1023,110 @@ const ReportPage = () => {
                 </div>
               </div>
 
-              {/* Expense by Category Pie Chart */}
-              {filters.type !== "income" && (
-                <div className="bg-white p-4 md:p-6 mb-5 rounded-xl shadow border border-gray-300">
-                  <div className="flex justify-between items-center mb-3 md:mb-4">
-                    <h2 className="text-base md:text-lg font-medium text-gray-900">
-                      Expense by Category
-                    </h2>
-                    <div className="flex items-center gap-2">
-                      <PieChartIcon size={14} className="text-gray-500" />
-                      <span className="text-xs md:text-sm text-gray-500">
-                        Distribution
-                      </span>
+              <div className="grid grid-cols-2 gap-2 h-max">
+                {/* Expense by Category Pie Chart */}
+                {filters.type !== "income" && (
+                  <div className="bg-white p-4 md:p-6 mb-5 rounded-xl shadow border h-full border-gray-300">
+                    <div className="flex justify-between items-center mb-3 md:mb-4">
+                      <h2 className="text-base md:text-lg font-medium text-gray-900">
+                        Expense by Category
+                      </h2>
+                      <div className="flex items-center gap-2">
+                        <PieChartIcon size={14} className="text-gray-500" />
+                        <span className="text-xs md:text-sm text-gray-500">
+                          Distribution
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="h-64 md:h-72 lg:h-80">
+                      {loading ? (
+                        <div className="flex justify-center items-center h-40">
+                          <SpinnerLoader size="large" color="blue" />
+                        </div>
+                      ) : categoryExpenseData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={categoryExpenseData}
+                              cx="50%"
+                              cy="50%"
+                              labelLine={false}
+                              innerRadius={30}
+                              outerRadius="70%"
+                              fill="#8884d8"
+                              dataKey="value"
+                            >
+                              {categoryExpenseData.map((entry, index) => (
+                                <Cell
+                                  key={`cell-${index}`}
+                                  name={entry._id}
+                                  fill={COLORS[index % COLORS.length]}
+                                />
+                              ))}
+                            </Pie>
+                            <Tooltip formatter={(value) => `$${value}`} />
+                            <Legend
+                              layout="horizontal"
+                              verticalAlign="bottom"
+                              align="center"
+                              wrapperStyle={{ fontSize: "12px" }}
+                            />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <div className="h-64 md:h-72 lg:h-80 flex justify-center items-center">
+                          <div className="text-lg md:text-2xl text-gray-600">
+                            No Data Found
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
+                )}
 
-                  <div className="h-64 md:h-72 lg:h-80">
+                {/* Income Sources Bar Chart */}
+                {filters.type !== "expense" && (
+                  <div className="bg-white p-4 md:p-6 rounded-xl shadow border border-gray-300">
+                    <div className="flex justify-between items-center mb-3 md:mb-4">
+                      <h2 className="text-base md:text-lg font-medium text-gray-900">
+                        Income Sources
+                      </h2>
+                      <div className="flex items-center gap-2">
+                        <BarChartIcon size={14} className="text-gray-500" />
+                        <span className="text-xs md:text-sm text-gray-500">
+                          Distribution
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Income Source Chart */}
                     {loading ? (
                       <div className="flex justify-center items-center h-40">
                         <SpinnerLoader size="large" color="blue" />
                       </div>
-                    ) : categoryExpenseData.length > 0 ? (
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={categoryExpenseData}
-                            cx="50%"
-                            cy="50%"
-                            labelLine={false}
-                            innerRadius={30}
-                            outerRadius="70%"
-                            fill="#8884d8"
-                            dataKey="value"
-                            label={({ _id, percent }) =>
-                              `${_id} ${(percent * 100).toFixed(0)}%`
+                    ) : incomeSourceData.length > 0 ? (
+                      <div className="h-64 md:h-72 lg:h-80">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart
+                            data={incomeSourceData}
+                            margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
+                            barCategoryGap={
+                              incomeSourceData.length === 1 ? "70%" : "10%"
                             }
                           >
-                            {categoryExpenseData.map((entry, index) => (
-                              <Cell
-                                key={`cell-${index}`}
-                                name={entry._id}
-                                fill={COLORS[index % COLORS.length]}
-                              />
-                            ))}
-                          </Pie>
-                          <Tooltip formatter={(value) => `$${value}`} />
-                          <Legend
-                            layout="horizontal"
-                            verticalAlign="bottom"
-                            align="center"
-                            wrapperStyle={{ fontSize: "12px" }}
-                          />
-                        </PieChart>
-                      </ResponsiveContainer>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis
+                              dataKey="_id"
+                              tick={{ fontSize: 14 }}
+                              height={60}
+                            />
+                            <YAxis tick={{ fontSize: 12 }} />
+                            <Tooltip formatter={(value) => `$${value}`} />
+                            <Bar dataKey="value" fill="#3b82f6" />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
                     ) : (
                       <div className="h-64 md:h-72 lg:h-80 flex justify-center items-center">
                         <div className="text-lg md:text-2xl text-gray-600">
@@ -1052,60 +1135,8 @@ const ReportPage = () => {
                       </div>
                     )}
                   </div>
-                </div>
-              )}
-
-              {/* Income Sources Bar Chart */}
-              {filters.type !== "expense" && (
-                <div className="bg-white p-4 md:p-6 rounded-xl shadow border border-gray-300">
-                  <div className="flex justify-between items-center mb-3 md:mb-4">
-                    <h2 className="text-base md:text-lg font-medium text-gray-900">
-                      Income Sources
-                    </h2>
-                    <div className="flex items-center gap-2">
-                      <BarChartIcon size={14} className="text-gray-500" />
-                      <span className="text-xs md:text-sm text-gray-500">
-                        Distribution
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Income Source Chart */}
-                  {loading ? (
-                    <div className="flex justify-center items-center h-40">
-                      <SpinnerLoader size="large" color="blue" />
-                    </div>
-                  ) : incomeSourceData.length > 0 ? (
-                    <div className="h-64 md:h-72 lg:h-80">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart
-                          data={incomeSourceData}
-                          margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
-                          barCategoryGap={
-                            incomeSourceData.length === 1 ? "70%" : "10%"
-                          }
-                        >
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis
-                            dataKey="_id"
-                            tick={{ fontSize: 14 }}
-                            height={60}
-                          />
-                          <YAxis tick={{ fontSize: 12 }} />
-                          <Tooltip formatter={(value) => `$${value}`} />
-                          <Bar dataKey="value" fill="#3b82f6" />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  ) : (
-                    <div className="h-64 md:h-72 lg:h-80 flex justify-center items-center">
-                      <div className="text-lg md:text-2xl text-gray-600">
-                        No Data Found
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
+                )}
+              </div>
             </>
           )}
           {/* End Chart */}
@@ -1123,13 +1154,16 @@ const ReportPage = () => {
                 <div className="flex justify-center items-center h-40">
                   <SpinnerLoader size="large" color="blue" />
                 </div>
-              ) : allTransactions.length > 0 ? (
-                <div className="overflow-x-auto max-h-[28rem]">
+              ) : allTransactions?.length > 0 ? (
+                <div className="max-h-full">
                   <table className="min-w-full divide-y divide-gray-200 text-sm">
                     <thead className="bg-gray-50 sticky top-0 z-10 shadow-sm">
                       <tr>
                         <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
                           Title
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
+                          Category
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
                           Date
@@ -1159,6 +1193,10 @@ const ReportPage = () => {
                             <td className="px-4 py-3 whitespace-nowrap font-medium text-gray-900">
                               {transaction.title}
                             </td>
+                            <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
+                              {transaction?.category?.category_name}
+                            </td>
+
                             <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
                               {transaction.expenseDate
                                 ? format(
@@ -1215,6 +1253,18 @@ const ReportPage = () => {
           )}
         </main>
       </div>
+
+      <PDFExportModal
+        type="report"
+        visible={sidebar}
+        onClose={() => setSidebar(false)}
+        fields={fields}
+        handleFieldToggle={handleFieldToggle}
+        toggleAllFields={toggleAllFields}
+        onExportPDF={ExportAsPDF}
+        PDFData={PDFData}
+        renderPreview={renderReportPreview}
+      />
     </div>
   );
 };

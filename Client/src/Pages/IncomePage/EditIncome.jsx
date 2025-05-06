@@ -26,16 +26,15 @@ const EditIncome = () => {
   const getIncome = useCallback(
     async (callback) => {
       try {
-        const res = await axios.get(`/get-income-by-id/${id}`, {
+        const res = await axios.get(`/income-details/${id}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-
         setValue("title", res.data.title);
         setValue("amount", res.data.amount);
         setValue("incomeDate", res.data.incomeDate.split("T")[0]);
-        setValue("category", res.data.category);
+        setValue("category", res.data.category._id);
         setValue("notes", res.data.notes);
         setValue("receipt", res.data.receipt);
         setFilePreview(res.data.receipt?.cloudinaryUrl);
@@ -148,6 +147,10 @@ const EditIncome = () => {
   const handleRemoveFile = () => {
     setFilePreview(null);
     setValue("receiptFile", null);
+  };
+
+  const closeForm = () => {
+    navigate("/income");
   };
 
   useEffect(() => {
@@ -264,7 +267,7 @@ const EditIncome = () => {
                 <div className="mt-2">
                   <SelectInput
                     id="category"
-                    label="Expense Category"
+                    label="Income Category"
                     options={incomeCategories}
                     register={register}
                     valueField="_id"
@@ -296,20 +299,29 @@ const EditIncome = () => {
                   placeholder="Add notes here"
                 />
               </div>
-              <button
-                type="submit"
-                name="save"
-                className="w-full sm:flex-1 bg-blue-600 text-white py-2 sm:py-3 px-4 sm:px-6 rounded-md font-medium text-sm hover:bg-blue-700 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-sm"
-              >
-                {loading ? (
-                  <span className="flex items-center justify-center">
-                    <span className="animate-spin h-4 w-4 mr-2 border-b-2 border-white rounded-full"></span>
-                    Saving...
-                  </span>
-                ) : (
-                  "Save Changes"
-                )}
-              </button>
+              <div className="mt-8 flex flex-col sm:flex-row gap-4">
+                <button
+                  type="submit"
+                  name="save"
+                  className="w-full sm:flex-1 bg-blue-600 text-white py-2 sm:py-3 px-4 sm:px-6 rounded-md font-medium text-sm hover:bg-blue-700 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-sm"
+                >
+                  {loading ? (
+                    <span className="flex items-center justify-center">
+                      <span className="animate-spin h-4 w-4 mr-2 border-b-2 border-white rounded-full"></span>
+                      Saving...
+                    </span>
+                  ) : (
+                    "Save Changes"
+                  )}
+                </button>
+                <button
+                  onClick={closeForm}
+                  name="saveAndClose"
+                  className="flex-1 bg-white text-blue-600 border border-blue-600 py-3 px-6 rounded-md font-medium text-sm hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
         </form>

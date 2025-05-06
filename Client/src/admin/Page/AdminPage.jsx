@@ -120,7 +120,7 @@ const AdminPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <ToastContainer></ToastContainer>
+      <ToastContainer autoClose={1500}></ToastContainer>
       <div className="flex">
         {/* Main Content */}
         <main

@@ -123,7 +123,9 @@ const Payment = () => {
   };
 
   const handleDeletePayment = async (id) => {
-    if (window.confirm("Are you sure you want to delete this payment method?")) {
+    if (
+      window.confirm("Are you sure you want to delete this payment method?")
+    ) {
       setIsLoading(true);
       try {
         const res = await axios.delete(`/payment/${id}`, {
@@ -131,7 +133,9 @@ const Payment = () => {
             Authorization: `Bearer ${token}`,
           },
         });
-        toast.success(res.data.message || "Payment method deleted successfully");
+        toast.success(
+          res.data.message || "Payment method deleted successfully"
+        );
         getPayment();
       } catch (error) {
         toast.error(
@@ -273,7 +277,7 @@ const Payment = () => {
             <SpinnerLoader size="large" color="blue" />
           </div>
         ) : paymentMethods.length > 0 ? (
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {paymentMethods.map((method) => (
               <div
                 key={method._id}
@@ -282,7 +286,9 @@ const Payment = () => {
                 <div>
                   <h3 className="font-medium">{method.label}</h3>
                   {method.detail && (
-                    <p className="text-sm text-gray-600 mt-1">{method.detail}</p>
+                    <p className="text-sm text-gray-600 mt-1">
+                      {method.detail}
+                    </p>
                   )}
                   {method.paymentTypeId && (
                     <p className="text-xs text-gray-500 mt-1">

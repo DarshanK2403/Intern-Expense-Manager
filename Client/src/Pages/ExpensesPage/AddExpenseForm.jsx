@@ -14,6 +14,7 @@ import Subnav from "../../Components/Subnav";
 import SelectInput from "../../Components/Select";
 import { toast } from "react-toastify";
 import AutocompleteInput from "../../Components/AutocompleteInput";
+import { DollarSign, Store } from "lucide-react";
 
 const AddExpenseForm = () => {
   const {
@@ -67,10 +68,8 @@ const AddExpenseForm = () => {
 
   // Handle Form Submit
   const onSubmit = async (data) => {
-    console.log(data);
-    // Ensure file is selected
     if (data.receiptFile && !(data.receiptFile instanceof File)) {
-      console.error("Invalid file format");
+      toast.error("Invalid file format");
       return;
     }
     // Create FormData
@@ -98,23 +97,10 @@ const AddExpenseForm = () => {
         },
       });
 
-      // ✅ Check if file upload was successful
-      if (res.data.file) {
-        const { cloudinaryUrl, originalName, uniqueName, fileType } =
-          res.data.file;
-        console.log("Uploaded file details:", {
-          cloudinaryUrl,
-          originalName,
-          uniqueName,
-          fileType,
-        });
-      }
-
-      console.log("Form Data Sent:", res.data);
       navigate("/expenses");
       setLoading(false);
     } catch (error) {
-      console.error(
+      toast.error(
         "Error uploading expense:",
         error.response?.data || error.message
       );
@@ -163,10 +149,9 @@ const AddExpenseForm = () => {
           Authorization: `Bearer ${token}`,
         },
       });
-      console.log(res.data);
       setVendorSuggestions(res.data);
     } catch (error) {
-      console.error("Error fetching vendor data:", error);
+      toast.error("Internal Server Error");
     }
   }, [token]);
 
@@ -335,6 +320,7 @@ const AddExpenseForm = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                   {/* Payment Through */}
                   <SelectInput
+                    icon={DollarSign}
                     id="paymentThrough"
                     label="Payment Through"
                     options={PaymentType}
@@ -347,6 +333,7 @@ const AddExpenseForm = () => {
                   />
 
                   <SelectInput
+                    icon={Store}
                     id="vendor"
                     label="Vendor"
                     options={vendorSuggestions}

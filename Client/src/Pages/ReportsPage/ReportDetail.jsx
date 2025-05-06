@@ -1,19 +1,21 @@
-/* eslint-disable no-unused-vars */
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast, ToastContainer } from "react-toastify";
 import axios from "axios";
 import {
-  CalendarDays,
-  BarChart3,
-  FileText,
-  Filter,
   TrendingUp,
+  IndianRupee,
+  TrendingDown,
+  Wallet,
+  AlertTriangle,
   Calendar,
   Tag,
-  CreditCard,
-  IndianRupee,
-  Save,
+  Landmark,
+  Download,
+  PieChart as PieChartIcon,
+  BarChart as BarChartIcon,
+  LineChart as LineChartIcon,
   Trash2,
+  ArrowLeft,
 } from "lucide-react";
 
 import {
@@ -30,62 +32,30 @@ import {
   Legend,
   ResponsiveContainer,
   Cell,
-  ReferenceLine,
 } from "recharts";
-
-import {
-  ArrowUpRight,
-  ArrowDownRight,
-  DollarSign,
-  Download,
-  ChevronDown,
-  PieChart as PieChartIcon,
-  BarChart as BarChartIcon,
-  LineChart as LineChartIcon,
-} from "lucide-react";
-
-import DatePicker from "react-datepicker";
+import Select from "react-select";
 import "react-datepicker/dist/react-datepicker.css";
-import { getISOWeek, startOfWeek, endOfWeek, format } from "date-fns";
-import WeeklyCalendar from "../../Components/Calendar/WeeklyCalendar";
-import MonthlyCalendar from "../../Components/Calendar/MonthlyCalendar";
-import YearlyCalendar from "../../Components/Calendar/YearlyCalendar";
-import DateCalender from "../../Components/Calendar/DateCalender";
+import { format } from "date-fns";
 import SpinnerLoader from "../../Components/Loader/SpinnerLoader";
-import { Link, useParams } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate, useParams } from "react-router-dom";
 
-const ReportDetail = () => {
+const ReportPage = () => {
   const { id } = useParams();
-  console.log(id);
   const [loading, setLoading] = useState(false);
-  const [customRange, setCustomRange] = useState({ from: "", to: "" });
   const [data, setData] = useState([]);
-  const [Offset, setOffset] = useState(0);
   const [formatedData, setFormatedData] = useState([]);
   const [incomeSourceData, setincomeSourceData] = useState([]);
   const [categoryExpenseData, setcategoryExpenseData] = useState([]);
   const [allTransactions, setAllTransactions] = useState([]);
-  const incomeSum = formatedData?.reduce(
-    (sum, item) => sum + (item.income || 0),
-    0
-  );
-
-  const expenseSum = formatedData?.reduce(
-    (sum, item) => sum + (item.expense || 0),
-    0
-  );
   const [activeFilters, setActiveFilters] = useState(false);
-  const [period, setPeriod] = useState("");
-  const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
-  const [ExpenseCategory, setExpenseCategory] = useState([]);
-  const [IncomeCategory, setIncomeCategory] = useState([]);
+  const [period, setPeriod] = useState("week");
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredTransactions, setFilteredTransactions] = useState([]);
   const [visibleTransactions, setVisibleTransactions] =
     useState(allTransactions);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const navigate = useNavigate();
   const [filters, setFilters] = useState({
     type: "all",
     expenseCategory: "all",
@@ -93,9 +63,8 @@ const ReportDetail = () => {
     minAmount: "",
     maxAmount: "",
   });
-  const [startDate, setStartDate] = useState(new Date());
-  const [endDate, setEndDate] = useState(new Date());
-  const [ReportType, setReportType] = useState("Week")
+  const [activeTab, setActiveTab] = useState("overview");
+  const [budgetVsActualData, setBudgetVsActualData] = useState([]);
   const COLORS = [
     "#0088FE",
     "#00C49F",
@@ -105,52 +74,59 @@ const ReportDetail = () => {
     "#82ca9d",
   ];
 
-  const toggleFilterPanel = () => {
-    setActiveFilters(!activeFilters);
-  };
-
   const token = localStorage.getItem("Token");
-  const generateReport = async () => {
+
+  const BudgetTotal = Object.values(data.budgetData || {}).reduce(
+    (acc, amount) => acc + amount,
+    0
+  );
+
+  const getReportData = useCallback(async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-
-      let requestData = {};
-
-      if (period === "custom") {
-        requestData = {
-          start: startDate.toISOString().split("T")[0],
-          end: endDate.toISOString().split("T")[0],
-        };
-      }
-
-      const res = await axios.get(`/report-by-id/${id}`, {
+      const res = await axios.get(`report-by-id/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-        params: requestData,
       });
-      console.log("Res", res.data);
-      setReportType(res.data.type)
+      console.log(res);
       setData(res.data);
       setFormatedData(res.data.formatted);
       setincomeSourceData(res.data.incomeSources);
       setcategoryExpenseData(res.data.expenseByCategory);
       setAllTransactions(res.data.transaction);
-      setExpenseCategory(res.data.expenseByCategory.map((cat) => cat._id));
-      setIncomeCategory(res.data.incomeSources.map((cat) => cat._id));
-    } catch (error) {
-      toast.error("Error fetching report data");
+      setBudgetVsActualData(res.data.budgetVsActual);
+    } catch {
+      toast("Failed to getch report data");
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, id]);
 
   useEffect(() => {
-    if (period !== "custom") {
-      generateReport();
-    }
-  }, [Offset, period]);
+    getReportData();
+  }, [token, id, getReportData]);
 
+  const remainingBudget = BudgetTotal - data.totalExpense;
+  useEffect(() => {
+    setData((prev) => ({
+      ...prev,
+      remainingBudget,
+      isOverBudget: remainingBudget < 0,
+    }));
+  }, [BudgetTotal, data.totalExpense]);
+
+  const toggleDropdown = () => setIsDropdownOpen((prev) => !prev);
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handlePeriodSelect = (selected) => {
     setPeriod(selected);
@@ -215,36 +191,40 @@ const ReportDetail = () => {
     });
 
     setVisibleTransactions(filtered);
-    setFilteredTransactions(filtered); // Optional if used elsewhere
-    // console.log(filtered);
+    setFilteredTransactions(filtered);
 
-    // ⬇️ Update category chart data
     const filteredIncome = filtered.filter((item) => item.incomeDate);
     const filteredExpense = filtered.filter((item) => item.expenseDate);
 
+    // Income Source
     const incomeSources = filteredIncome.reduce((acc, curr) => {
-      acc[curr.category] = (acc[curr.category] || 0) + curr.amount;
+      const categoryName = curr.title;
+      acc[categoryName] = (acc[categoryName] || 0) + curr.amount;
       return acc;
     }, {});
     setincomeSourceData(
-      Object.entries(incomeSources).map(([cat, value]) => ({
-        _id: cat,
+      Object.entries(incomeSources).map(([categoryName, value]) => ({
+        _id: categoryName,
+        name: categoryName,
         value,
       }))
     );
 
+    // Expense by Category
     const expenseByCategory = filteredExpense.reduce((acc, curr) => {
-      acc[curr.category] = (acc[curr.category] || 0) + curr.amount;
+      const categoryName = curr.title;
+      acc[categoryName] = (acc[categoryName] || 0) + curr.amount;
       return acc;
     }, {});
     setcategoryExpenseData(
-      Object.entries(expenseByCategory).map(([cat, value]) => ({
-        _id: cat,
+      Object.entries(expenseByCategory).map(([categoryName, value]) => ({
+        _id: categoryName,
+        name: categoryName,
         value,
       }))
     );
 
-    // ⬇️ Update totals
+    // Update totals
     const totalIncome = filteredIncome
       .reduce((sum, i) => sum + i.amount, 0)
       .toFixed(2);
@@ -265,580 +245,751 @@ const ReportDetail = () => {
     }));
   };
 
-  const filteredChartData = useMemo(() => {
-    return formatedData.map((entry) => ({
-      ...entry,
-      income: filters.type === "expense" ? 0 : entry.income,
-      expense: filters.type === "income" ? 0 : entry.expense,
-    }));
-  }, [formatedData, filters.type]);
+  // Line Charts
+  const processedData = useMemo(() => {
+    return formatedData.map((item) => {
+      let label;
+      if (period === "week") {
+        label = item.day || item.month;
+      } else if (period === "month") {
+        label = item.date || item.month;
+      } else {
+        label = item.month;
+      }
+      return {
+        label,
+        income: parseFloat(item.income || 0),
+        expense: parseFloat(item.expense || 0),
+      };
+    });
+  }, [formatedData, period]);
 
-  const saveReport = async () => {
-    try {
-      const res = await axios.post("/save-report", data, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      toast.success("Report Saved");
-    } catch (error) {
-      toast("Report Save Failed");
-    }
+  const allValues = processedData.flatMap((item) => [
+    item.income,
+    item.expense,
+  ]);
+  const minValue = Math.min(...allValues);
+  const maxValue = Math.max(...allValues);
+
+  const padding = (maxValue - minValue) * 0.1;
+  const yAxisDomain = [Math.max(0, minValue - padding), maxValue + padding];
+
+  // Format currency values
+  const formatCurrency = (value) => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "INR",
+      minimumFractionDigits: 2,
+    }).format(value);
   };
+
+  if (loading)
+    return (
+      <div className="flex justify-center items-center h-40">
+        <SpinnerLoader size="large" color="blue" />
+      </div>
+    );
+
   return (
-    <div className="w-full p-2 md:p-4 xl:p-6 min-h-screen bg-gray-50">
+    <div className="w-full bg-gray-50">
       <ToastContainer></ToastContainer>
 
-      {/* UI */}
-      <div className="min-h-screen bg-gray-50">
-        {/* Header */}
-        <div className="w-full max-w-7xl mx-auto bg-white shadow-sm p-4">
-          <div className="flex flex-nowrap items-center justify-between">
-            <div className="font-bold text-xl text-gray-800 whitespace-nowrap mr-4">
-              Report Detail
-            </div>
-
-            {/* Period */}
-            <div className="flex flex-col sm:flex-row md:items-center items-start gap-3 w-full md:w-auto">
-              <span className="capitalize font-bold">{ReportType}</span>
-
-              {/* Calaender */}
-              <div className="flex items-center border border-gray-400 rounded-md bg-white whitespace-nowrap ">
-                
-              </div>
-
-              {/* Filter Button */}
-              <button
-                onClick={toggleFilterPanel}
-                className={`flex items-center gap-2 px-3 py-2 border rounded-md hover:bg-blue-100 whitespace-nowrap ${
-                  activeFilters
-                    ? "bg-blue-100 text-blue-600"
-                    : "bg-white text-gray-800"
-                }`}
+      <div className="bg-gray-50">
+        <div className="bg-white shadow rounded-lg">
+          <div className="px-4 py-5 sm:px-6">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              {/* Report ID and Created At */}
+              <div
+                className="text-gray-800 hover:cursor-pointer"
+                onClick={() => navigate(-1)}
               >
-                <Filter size={16} />
-                <span>Filter</span>
-              </button>
-
-              {/* Export Button */}
-              <button className="flex items-center justify-center gap-2 bg-blue-100 hover:bg-blue-200 text-blue-700 font-medium px-4 py-2 rounded-md w-full sm:w-auto shadow-sm">
-                <Download size={16} />
-                <span>Export</span>
-              </button>
-
-              <button
-                className="flex items-center justify-center gap-2 bg-red-100 hover:bg-red-200 text-red-700 font-medium px-4 py-2 rounded-md w-full sm:w-auto shadow-sm"
-                onClick={saveReport}
-              >
-                <Trash2 size={16} />
-                <span>Delete</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <main className="mx-auto max-w-7xl px-3 md:px-4 py-4 md:py-6 sm:px-6 lg:px-8">
-          {/* Tabs - Scrollable on small screens */}
-          {activeFilters && (
-            <div className="bg-white border shadow-md border-gray-300 mb-5 p-3 rounded-lg mt-2 flex flex-wrap gap-4 transition-all duration-300 ease-in-out">
-              {/* Type */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Type
-                </label>
-                <select
-                  value={tempFilters.type}
-                  onChange={(e) =>
-                    setTempFilters((prev) => ({
-                      ...prev,
-                      type: e.target.value,
-                    }))
-                  }
-                  className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2"
-                >
-                  <option value="all">All</option>
-                  <option value="expense">Expense</option>
-                  <option value="income">Income</option>
-                </select>
+                <ArrowLeft />
               </div>
-
-              {/* Expense Category */}
-              {tempFilters.type === "expense" && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Expense Category
-                  </label>
-                  <select
-                    value={tempFilters.expenseCategory}
-                    onChange={(e) =>
-                      setTempFilters((prev) => ({
-                        ...prev,
-                        expenseCategory: e.target.value,
-                      }))
-                    }
-                    className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2"
-                  >
-                    <option value="all">All</option>
-                    {ExpenseCategory.map((cat) => (
-                      <option value={cat} key={`expense-${cat}`}>
-                        {cat}
-                      </option>
-                    ))}
-                  </select>
+              <div className="flex-1">
+                <div className="mt-1 flex flex-col text-sm text-gray-500">
+                  <div>
+                    <h2 className="text-2xl text-black font-bold">Report</h2>
+                  </div>
+                  {data.createdAt ? (
+                    <div className="flex text-center">
+                      <Calendar size={16} className="mr-1" />
+                      <span>
+                        Created at:{" "}
+                        {format(new Date(data?.createdAt), "dd MMM yyyy")}
+                      </span>
+                    </div>
+                  ) : (
+                    " "
+                  )}
                 </div>
-              )}
+              </div>
 
-              {/* Income Category */}
-              {tempFilters.type === "income" && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Income Category
-                  </label>
-                  <select
-                    value={tempFilters.incomeCategory}
-                    onChange={(e) =>
-                      setTempFilters((prev) => ({
-                        ...prev,
-                        incomeCategory: e.target.value,
-                      }))
-                    }
-                    className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2"
-                  >
-                    <option value="all">All</option>
-                    {IncomeCategory.map((cat) => (
-                      <option value={cat} key={`income-${cat}`}>
-                        {cat}
-                      </option>
-                    ))}
-                  </select>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center">
+                  <Tag size={16} className="mr-1 text-gray-500" />
+                  <span className="text-sm font-bold">
+                    Type:{" "}
+                    <span className="text-blue-600 capitalize">
+                      {data.type || "N/A"}
+                    </span>
+                  </span>
                 </div>
-              )}
-
-              {/* Min Amount */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Min Amount
-                </label>
-                <input
-                  type="number"
-                  value={tempFilters.minAmount || ""}
-                  onChange={(e) =>
-                    setTempFilters((prev) => ({
-                      ...prev,
-                      minAmount: e.target.value,
-                    }))
-                  }
-                  placeholder="0"
-                  className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2"
-                />
+                {data.startDate ? (
+                  <div className="flex items-center">
+                    <Calendar size={16} className="mr-1 text-gray-500" />
+                    <span className="text-sm font-bold">
+                      Date :{" "}
+                      <span className="font-medium text-blue-600">
+                        {format(new Date(data?.startDate), "dd MMM yyyy")}-{" "}
+                        {format(new Date(data?.endDate), "dd MMM yyyy")}
+                      </span>
+                    </span>
+                  </div>
+                ) : (
+                  " "
+                )}
               </div>
 
-              {/* Max Amount */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Max Amount
-                </label>
-                <input
-                  type="number"
-                  value={tempFilters.maxAmount || ""}
-                  onChange={(e) =>
-                    setTempFilters((prev) => ({
-                      ...prev,
-                      maxAmount: e.target.value,
-                    }))
-                  }
-                  placeholder="10000"
-                  className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2"
-                />
-              </div>
-
-              {/* Apply Button */}
-              <div className="flex items-end">
+              {/* Action Buttons */}
+              <div className="flex items-center space-x-3">
                 <button
-                  onClick={() => applyFilters(tempFilters)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg mt-6"
+                  // onClick={handleExport}
+                  className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
                 >
-                  Apply Filters
+                  <Download size={16} className="mr-2" />
+                  Export
+                </button>
+                <button
+                  // onClick={handleDelete}
+                  className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-red-600 bg-white hover:bg-gray-50"
+                >
+                  <Trash2 size={16} className="mr-2" />
+                  Delete
                 </button>
               </div>
             </div>
-          )}
-
-          {/* Summary Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-6">
-            <div className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-xs md:text-sm font-medium text-gray-500">
-                    Total Income
-                  </p>
-                  <p className="text-xl md:text-2xl font-bold text-gray-900">
-                    ${data.totalIncome}
-                  </p>
-                </div>
-                <div className="p-2 bg-green-50 rounded-full">
-                  <ArrowUpRight className="text-green-600" size={18} />
-                </div>
-              </div>
-              <div className="mt-2 flex items-center text-xs md:text-sm">
-                <TrendingUp className="text-green-500 mr-1" size={14} />
-                {/* <span className="text-green-500 font-medium">+12.5%</span> */}
-                <span className="text-green-500 ml-1">
-                  {data?.comparisons?.income ?? 0}
-                </span>
-              </div>
-            </div>
-
-            <div className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-xs md:text-sm font-medium text-gray-500">
-                    Total Expenses
-                  </p>
-                  <p className="text-xl md:text-2xl font-bold text-gray-900">
-                    ${data.totalExpense}
-                  </p>
-                </div>
-                <div className="p-2 bg-red-50 rounded-full">
-                  <ArrowDownRight className="text-red-600" size={18} />
-                </div>
-              </div>
-              <div className="mt-2 flex items-center text-xs md:text-sm">
-                <TrendingUp className="text-red-500 mr-1" size={14} />
-                <span className="text-red-500 ml-1">
-                  {data?.comparisons?.expense ?? 0}
-                </span>
-              </div>
-            </div>
-
-            <div className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-xs md:text-sm font-medium text-gray-500">
-                    Net Balance
-                  </p>
-                  <p className="text-xl md:text-2xl font-bold text-gray-900">
-                    ${data.balance}
-                  </p>
-                </div>
-                <div className="p-2 bg-blue-50 rounded-full">
-                  <DollarSign className="text-blue-600" size={18} />
-                </div>
-              </div>
-              <div className="mt-2 flex items-center text-xs md:text-sm">
-                <span className="text-blue-500 ml-1">
-                  {data?.comparisons?.income ?? 0}
-                </span>
-              </div>
-            </div>
-
-            <div className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-xs md:text-sm font-medium text-gray-500">
-                    Savings Rate
-                  </p>
-                  <p className="text-xl md:text-2xl font-bold text-gray-900">
-                    {data.savingRate === "NaN" ? "0" : data.savingRate}%
-                  </p>
-                </div>
-                <div className="p-2 bg-purple-50 rounded-full">
-                  <TrendingUp className="text-purple-600" size={18} />
-                </div>
-              </div>
-              <div className="mt-2 flex items-center text-xs md:text-sm">
-                <TrendingUp className="text-purple-500 mr-1" size={14} />
-                <span className="text-purple-500 ml-1">
-                  {data?.comparisons?.savingRate ?? 0}
-                </span>
-              </div>
-            </div>
           </div>
+        </div>
+        {/* Tab Buttons */}
+        <div className="mx-auto bg-white mt-2 border-y border-gray-300 mb-6">
+          <nav className="flex max-w-6xl mx-auto flex-wrap -mb-px">
+            <button
+              onClick={() => setActiveTab("overview")}
+              className={`mr-8 py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === "overview"
+                  ? "border-blue-500 text-blue-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
+            >
+              Overview
+            </button>
+            <button
+              onClick={() => setActiveTab("ChartsSection")}
+              className={`mr-8 py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === "ChartsSection"
+                  ? "border-blue-500 text-blue-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
+            >
+              Charts
+            </button>
+            <button
+              onClick={() => setActiveTab("transactions")}
+              className={`mr-8 py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === "transactions"
+                  ? "border-blue-500 text-blue-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
+            >
+              Transactions
+            </button>
+            <button
+              onClick={() => setActiveTab("budget")}
+              className={`mr-8 py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === "budget"
+                  ? "border-blue-500 text-blue-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
+            >
+              Budget Overview
+            </button>
+          </nav>
+        </div>
 
-          {/* Charts Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-4 md:mb-6">
-            {/* Income vs Expenses Line Chart */}
-            <div className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
-              <div className="flex justify-between items-center mb-3 md:mb-4">
-                <h2 className="text-base md:text-lg font-medium text-gray-900">
-                  Income vs Expenses
-                </h2>
-                <div className="flex items-center gap-2">
-                  <LineChartIcon size={14} className="text-gray-500" />
-                  <span className="text-xs md:text-sm text-gray-500">
-                    Daily Comparison
-                  </span>
+        {/* Main */}
+        <main className="mx-auto max-w-7xl px-3 md:px-4 pb-2 md:pb-5 sm:px-6 lg:px-8">
+          {/* Overview */}
+          {activeTab === "overview" && (
+            <>
+              <div className="bg-gray-50">
+                <div className="max-w-7xl mx-auto">
+                  {/* Main Metrics */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-500">
+                      <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-lg font-medium text-gray-700">
+                          Total Income
+                        </h2>
+                        <TrendingUp className="text-blue-500" size={24} />
+                      </div>
+                      <p className="text-3xl font-bold text-blue-600">
+                        {formatCurrency(data.totalIncome)}
+                      </p>
+                      <p className="text-sm text-gray-500 mt-2">
+                        {data.comparisons?.income}
+                      </p>
+                    </div>
+
+                    <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-red-500">
+                      <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-lg font-medium text-gray-700">
+                          Total Expenses
+                        </h2>
+                        <TrendingDown className="text-red-500" size={24} />
+                      </div>
+                      <p className="text-3xl font-bold text-red-600">
+                        {formatCurrency(data.totalExpense)}
+                      </p>
+                      <p className="text-sm text-gray-500 mt-2">
+                        {data.comparisons?.expense}
+                      </p>
+                    </div>
+
+                    <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-500">
+                      <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-lg font-medium text-gray-700">
+                          Net Balance
+                        </h2>
+                        <Wallet className="text-green-500" size={24} />
+                      </div>
+                      <p className="text-3xl font-bold text-green-600">
+                        {formatCurrency(data.balance)}
+                      </p>
+                      <p className="text-sm text-gray-500 mt-2">
+                        {data.comparisons?.balance}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Secondary Metrics */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div className="bg-white rounded-xl shadow-md p-6">
+                      <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-lg font-medium text-gray-700">
+                          Budget Status
+                        </h2>
+                        {data.isOverBudget ? (
+                          <AlertTriangle
+                            className="text-yellow-500"
+                            size={24}
+                          />
+                        ) : (
+                          <Calendar className="text-purple-500" size={24} />
+                        )}
+                      </div>
+                      <div className="mb-3">
+                        <div className="flex justify-between text-sm mb-1">
+                          <span>Budget: {formatCurrency(BudgetTotal)}</span>
+
+                          <span>
+                            Remaining: {formatCurrency(remainingBudget)}
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2.5">
+                          <div
+                            className={`h-2.5 rounded-full ${
+                              data.isOverBudget ? "bg-red-500" : "bg-green-500"
+                            }`}
+                            style={{
+                              width: `${Math.min(
+                                (1 - remainingBudget / BudgetTotal) * 100,
+                                100
+                              )}%`,
+                            }}
+                          ></div>
+                        </div>
+                      </div>
+                      {data.isOverBudget && (
+                        <div className="mt-4 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+                          <div className="flex">
+                            <AlertTriangle
+                              className="text-yellow-500 mr-2"
+                              size={20}
+                            />
+                            <p className="text-sm text-yellow-700">
+                              You&#39;ve exceeded your monthly budget by{" "}
+                              {formatCurrency(Math.abs(remainingBudget))}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="bg-white rounded-xl shadow-md p-6">
+                      <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-lg font-medium text-gray-700">
+                          Top Spending
+                        </h2>
+                        <PieChart className="text-indigo-500" size={24} />
+                      </div>
+                      <div className="mb-4">
+                        <p className="text-sm text-gray-500">Top Category</p>
+                        <div className="flex items-center">
+                          <div className="bg-indigo-100 rounded-full p-2 mr-3">
+                            <Tag className="text-indigo-500" size={16} />
+                          </div>
+                          <div>
+                            <p className="font-medium">
+                              {data.topSpendingCategory?.name || "N/A"}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {formatCurrency(
+                                data.topSpendingCategory?.amount || 0
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Highest Expense</p>
+                        <div className="flex items-center">
+                          <div className="bg-red-100 rounded-full p-2 mr-3">
+                            <TrendingDown className="text-red-500" size={16} />
+                          </div>
+                          <div>
+                            <p className="font-medium">
+                              {data.highestExpense?.title}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {formatCurrency(data.highestExpense?.amount)}
+                            </p>
+                            {data?.highestExpense?.date &&
+                              !isNaN(new Date(data?.highestExpense?.date)) && (
+                                <p className="text-xs text-gray-500">
+                                  Spent on{" "}
+                                  {format(
+                                    new Date(data?.highestExpense?.date),
+                                    "dd MMM yyyy"
+                                  )}
+                                </p>
+                              )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Tertiary Metrics */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="bg-white rounded-xl shadow-md p-6">
+                      <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-lg font-medium text-gray-700">
+                          Total Transactions
+                        </h2>
+                        <div className="bg-blue-100 rounded-full p-2">
+                          <Calendar className="text-blue-500" size={16} />
+                        </div>
+                      </div>
+                      <p className="text-3xl font-bold text-gray-800">
+                        {data.transaction?.length}
+                      </p>
+                      <p className="text-sm text-gray-500 mt-2 capitalize">
+                        This {data.type}
+                      </p>
+                    </div>
+
+                    <div className="bg-white rounded-xl shadow-md p-6">
+                      <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-lg font-medium text-gray-700">
+                          Highest Income
+                        </h2>
+                        <div className="bg-green-100 rounded-full p-2">
+                          <Landmark className="text-green-500" size={16} />
+                        </div>
+                      </div>
+                      <p className="text-2xl font-bold text-gray-800">
+                        {formatCurrency(data?.highestIncome?.amount)}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        {data?.highestIncome?.title}
+                      </p>
+                      {data?.highestIncome?.date &&
+                        !isNaN(new Date(data?.highestIncome?.date)) && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            Received on{" "}
+                            {format(
+                              new Date(data?.highestIncome?.date),
+                              "dd MMM yyyy"
+                            )}
+                          </p>
+                        )}
+                    </div>
+
+                    <div className="bg-white rounded-xl shadow-md p-6">
+                      <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-lg font-medium text-gray-700">
+                          Saving Rate
+                        </h2>
+                        <div className="bg-purple-100 rounded-full p-2">
+                          <TrendingUp className="text-purple-500" size={16} />
+                        </div>
+                      </div>
+                      <p className="text-3xl font-bold text-gray-800">
+                        {data.savingRate}%
+                      </p>
+                      <div className="w-full bg-gray-200 rounded-full h-2.5 mt-3">
+                        <div
+                          className="h-2.5 rounded-full bg-purple-500"
+                          style={{
+                            width: `${Math.max(
+                              0,
+                              Math.min(data.savingRate, 100)
+                            )}%`,
+                          }}
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div className="h-64 md:h-72 lg:h-80">
-                {loading ? (
-                  <div className="flex justify-center items-center h-40">
-                    <SpinnerLoader size="large" color="blue" />
-                  </div>
-                ) : (
-                  <div className="h-80">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart
-                        data={filteredChartData}
-                        margin={{ top: 10, right: 20, bottom: 10, left: 0 }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis
-                          dataKey={
-                            period === "week"
-                              ? "day"
-                              : period === "month"
-                              ? "date"
-                              : period === "year"
-                              ? "month"
-                              : "week"
-                          }
-                          tickFormatter={(value) =>
-                            period === "month"
-                              ? value.toString().padStart(2, "0")
-                              : value
-                          }
-                          tick={{ fontSize: 12 }}
-                        />
-                        <YAxis
-                          tick={{ fontSize: 12 }}
-                          domain={["auto", "auto"]} // Dynamically adjusts min/max
-                          allowDataOverflow={false} // Prevents drawing outside area
-                        />
-                        <Tooltip />
-                        <Legend wrapperStyle={{ fontSize: "12px" }} />
-                        <Line
-                          type="monotone"
-                          dataKey="income"
-                          stroke="#3b82f6"
-                          activeDot={{ r: 8 }}
-                          strokeWidth={2}
-                        />
-                        <Line
-                          type="monotone"
-                          dataKey="expense"
-                          stroke="#ef4444"
-                          strokeWidth={2}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                )}
-              </div>
-            </div>
+            </>
+          )}
+          {/* End Overview */}
 
-            {/* Expense by Category Pie Chart */}
-            {filters.type !== "income" && (
-              <div className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
+          {/* Chart Tab */}
+          {activeTab === "ChartsSection" && (
+            <>
+              {/* Income vs Expenses Line Chart */}
+              <div className="bg-white p-4 mb-5 rounded-xl shadow border border-gray-300">
                 <div className="flex justify-between items-center mb-3 md:mb-4">
                   <h2 className="text-base md:text-lg font-medium text-gray-900">
-                    Expense by Category
+                    Income vs Expenses
                   </h2>
                   <div className="flex items-center gap-2">
-                    <PieChartIcon size={14} className="text-gray-500" />
+                    <LineChartIcon size={14} className="text-gray-500" />
                     <span className="text-xs md:text-sm text-gray-500">
-                      Distribution
+                      Daily Comparison
                     </span>
                   </div>
                 </div>
-
                 <div className="h-64 md:h-72 lg:h-80">
                   {loading ? (
                     <div className="flex justify-center items-center h-40">
                       <SpinnerLoader size="large" color="blue" />
                     </div>
-                  ) : categoryExpenseData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={categoryExpenseData}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={false}
-                          innerRadius={30}
-                          outerRadius="70%"
-                          fill="#8884d8"
-                          dataKey="value"
-                          label={({ _id, percent }) =>
-                            `${_id} ${(percent * 100).toFixed(0)}%`
-                          }
-                        >
-                          {categoryExpenseData.map((entry, index) => (
-                            <Cell
-                              key={`cell-${index}`}
-                              name={entry._id}
-                              fill={COLORS[index % COLORS.length]}
-                            />
-                          ))}
-                        </Pie>
-                        <Tooltip formatter={(value) => `$${value}`} />
-                        <Legend
-                          layout="horizontal"
-                          verticalAlign="bottom"
-                          align="center"
-                          wrapperStyle={{ fontSize: "12px" }}
-                        />
-                      </PieChart>
-                    </ResponsiveContainer>
                   ) : (
-                    <div className="h-64 md:h-72 lg:h-80 flex justify-center items-center">
-                      <div className="text-lg md:text-2xl text-gray-600">
-                        No Data Found
-                      </div>
+                    <div className="w-full h-64 md:h-80">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart
+                          data={processedData}
+                          margin={{
+                            top: 10,
+                            right: 30,
+                            left: 20,
+                            bottom: 10,
+                          }}
+                        >
+                          <CartesianGrid
+                            strokeDasharray="3 3"
+                            stroke="#c8c8c8"
+                          />
+                          <XAxis dataKey="label" tick={{ fontSize: 12 }} />
+                          <YAxis
+                            domain={yAxisDomain}
+                            tick={{ fontSize: 12 }}
+                            tickFormatter={(value) =>
+                              formatCurrency(value).replace(".00", "")
+                            }
+                            width={80}
+                          />
+                          <Tooltip
+                            content={({ active, payload, label }) => {
+                              if (active && payload && payload.length) {
+                                return (
+                                  <div className="bg-white p-3 border border-gray-200 rounded shadow-md">
+                                    <p className="text-gray-600 font-medium mb-1">
+                                      {label}
+                                    </p>
+                                    {payload.map((entry, index) => (
+                                      <p
+                                        key={`item-${index}`}
+                                        style={{
+                                          color:
+                                            entry.name === "Income"
+                                              ? "#4ade80"
+                                              : "#f87171",
+                                        }}
+                                        className="text-sm font-medium"
+                                      >
+                                        {entry.name}:{" "}
+                                        {formatCurrency(entry.value)}
+                                      </p>
+                                    ))}
+                                  </div>
+                                );
+                              }
+                              return null;
+                            }}
+                          />
+
+                          <Legend wrapperStyle={{ paddingTop: 10 }} />
+                          <Line
+                            type="monotone"
+                            dataKey="income"
+                            stroke="#4ade80"
+                            strokeWidth={2}
+                            dot={{ r: 4 }}
+                            activeDot={{ r: 6 }}
+                            name="Income"
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="expense"
+                            stroke="#f87171"
+                            strokeWidth={2}
+                            dot={{ r: 4 }}
+                            activeDot={{ r: 6 }}
+                            name="Expense"
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
                     </div>
                   )}
                 </div>
               </div>
-            )}
 
-            {/* Income Sources Bar Chart */}
-            {filters.type !== "expense" && (
-              <div className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
-                <div className="flex justify-between items-center mb-3 md:mb-4">
-                  <h2 className="text-base md:text-lg font-medium text-gray-900">
-                    Income Sources
-                  </h2>
-                  <div className="flex items-center gap-2">
-                    <BarChartIcon size={14} className="text-gray-500" />
-                    <span className="text-xs md:text-sm text-gray-500">
-                      Distribution
-                    </span>
-                  </div>
-                </div>
+              <div className="grid grid-cols-2 gap-2 h-max">
+                {/* Expense by Category Pie Chart */}
+                {filters.type !== "income" && (
+                  <div className="bg-white p-4 md:p-6 mb-5 rounded-xl shadow border h-full border-gray-300">
+                    <div className="flex justify-between items-center mb-3 md:mb-4">
+                      <h2 className="text-base md:text-lg font-medium text-gray-900">
+                        Expense by Category
+                      </h2>
+                      <div className="flex items-center gap-2">
+                        <PieChartIcon size={14} className="text-gray-500" />
+                        <span className="text-xs md:text-sm text-gray-500">
+                          Distribution
+                        </span>
+                      </div>
+                    </div>
 
-                {/* Income Source Chart */}
-                {loading ? (
-                  <div className="flex justify-center items-center h-40">
-                    <SpinnerLoader size="large" color="blue" />
-                  </div>
-                ) : incomeSourceData.length > 0 ? (
-                  <div className="h-64 md:h-72 lg:h-80">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart
-                        data={incomeSourceData}
-                        margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
-                        barCategoryGap={
-                          incomeSourceData.length === 1 ? "70%" : "10%"
-                        }
-                      >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis
-                          dataKey="_id"
-                          tick={{ fontSize: 14 }}
-                          height={60}
-                        />
-                        <YAxis tick={{ fontSize: 12 }} />
-                        <Tooltip formatter={(value) => `$${value}`} />
-                        <Bar dataKey="value" fill="#3b82f6" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                ) : (
-                  <div className="h-64 md:h-72 lg:h-80 flex justify-center items-center">
-                    <div className="text-lg md:text-2xl text-gray-600">
-                      No Data Found
+                    <div className="h-64 md:h-72 lg:h-80">
+                      {loading ? (
+                        <div className="flex justify-center items-center h-40">
+                          <SpinnerLoader size="large" color="blue" />
+                        </div>
+                      ) : categoryExpenseData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={categoryExpenseData}
+                              cx="50%"
+                              cy="50%"
+                              labelLine={false}
+                              innerRadius={30}
+                              outerRadius="70%"
+                              fill="#8884d8"
+                              dataKey="value"
+                            >
+                              {categoryExpenseData.map((entry, index) => (
+                                <Cell
+                                  key={`cell-${index}`}
+                                  name={entry._id}
+                                  fill={COLORS[index % COLORS.length]}
+                                />
+                              ))}
+                            </Pie>
+                            <Tooltip formatter={(value) => `$${value}`} />
+                            <Legend
+                              layout="horizontal"
+                              verticalAlign="bottom"
+                              align="center"
+                              wrapperStyle={{ fontSize: "12px" }}
+                            />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <div className="h-64 md:h-72 lg:h-80 flex justify-center items-center">
+                          <div className="text-lg md:text-2xl text-gray-600">
+                            No Data Found
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
-              </div>
-            )}
 
-            {/* Transaction History */}
-            <div className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
-              <div className="flex justify-between items-center mb-3 md:mb-4">
-                <h2 className="text-base md:text-lg font-medium text-gray-900">
-                  Transactions
+                {/* Income Sources Bar Chart */}
+                {filters.type !== "expense" && (
+                  <div className="bg-white p-4 md:p-6 rounded-xl shadow border border-gray-300">
+                    <div className="flex justify-between items-center mb-3 md:mb-4">
+                      <h2 className="text-base md:text-lg font-medium text-gray-900">
+                        Income Sources
+                      </h2>
+                      <div className="flex items-center gap-2">
+                        <BarChartIcon size={14} className="text-gray-500" />
+                        <span className="text-xs md:text-sm text-gray-500">
+                          Distribution
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Income Source Chart */}
+                    {loading ? (
+                      <div className="flex justify-center items-center h-40">
+                        <SpinnerLoader size="large" color="blue" />
+                      </div>
+                    ) : incomeSourceData.length > 0 ? (
+                      <div className="h-64 md:h-72 lg:h-80">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart
+                            data={incomeSourceData}
+                            margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
+                            barCategoryGap={
+                              incomeSourceData.length === 1 ? "70%" : "10%"
+                            }
+                          >
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis
+                              dataKey="_id"
+                              tick={{ fontSize: 14 }}
+                              height={60}
+                            />
+                            <YAxis tick={{ fontSize: 12 }} />
+                            <Tooltip formatter={(value) => `$${value}`} />
+                            <Bar dataKey="value" fill="#3b82f6" />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    ) : (
+                      <div className="h-64 md:h-72 lg:h-80 flex justify-center items-center">
+                        <div className="text-lg md:text-2xl text-gray-600">
+                          No Data Found
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+          {/* End Chart */}
+
+          {/* Transaction Tab */}
+          {activeTab === "transactions" && (
+            <div className="bg-white rounded-2xl shadow-md overflow-hidden">
+              <div className="px-4 py-3 border-b border-gray-100">
+                <h2 className="text-lg md:text-xl font-semibold text-gray-800">
+                  Transaction History
                 </h2>
               </div>
 
-              <div className="overflow-x-auto">
-                <div className="h-full max-h-72 overflow-y-auto rounded-md">
-                  {loading ? (
-                    <div className="flex justify-center items-center h-40">
-                      <SpinnerLoader size="large" color="blue" />
-                    </div>
-                  ) : allTransactions.length > 0 ? (
-                    <table className="min-w-full divide-y divide-gray-200">
-                      {/* Sticky Header */}
-                      <thead className="bg-gray-50 sticky top-0 z-10 shadow-sm">
-                        <tr>
-                          <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Title
-                          </th>
-                          <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Date
-                          </th>
-                          <th className="px-3 md:px-6 py-2 md:py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Amount
-                          </th>
-                        </tr>
-                      </thead>
-
-                      {/* Rows */}
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {allTransactions
-                          .filter((transaction) => {
-                            if (filters.type === "income")
-                              return !!transaction.incomeDate;
-                            if (filters.type === "expense")
-                              return !!transaction.expenseDate;
-                            return true; // show all for "all"
-                          })
-                          .map((transaction) => (
-                            <tr
-                              key={
-                                transaction.title +
-                                transaction.amount +
-                                (transaction.expenseDate ||
-                                  transaction.incomeDate)
-                              }
-                              className="hover:bg-gray-50"
-                            >
-                              <td className="px-3 md:px-6 py-2 md:py-4 whitespace-nowrap text-xs md:text-sm font-medium text-gray-900">
-                                {transaction.title}
-                              </td>
-                              <td className="px-3 md:px-6 py-2 md:py-4 whitespace-nowrap text-xs md:text-sm text-gray-500">
-                                {transaction.expenseDate
-                                  ? format(
-                                      new Date(transaction.expenseDate),
-                                      "MMM dd"
-                                    )
-                                  : format(
-                                      new Date(transaction.incomeDate),
-                                      "MMM dd"
-                                    )}
-                              </td>
-                              <td
-                                className={`px-3 md:px-6 py-2 md:py-4 whitespace-nowrap text-xs md:text-sm text-right font-medium ${
-                                  transaction.incomeDate
-                                    ? "text-green-600"
-                                    : "text-red-600"
-                                }`}
-                              >
-                                <div className="flex items-center justify-end">
-                                  <IndianRupee className="w-3 h-3 md:w-4 md:h-4" />
-                                  {Math.abs(transaction.amount).toFixed(2)}
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                      </tbody>
-                    </table>
-                  ) : (
-                    <div className="h-64 md:h-72 lg:h-[72] flex justify-center items-center">
-                      <div className="text-lg md:text-2xl text-gray-600">
-                        No Data Found
-                      </div>
-                    </div>
-                  )}
+              {loading ? (
+                <div className="flex justify-center items-center h-40">
+                  <SpinnerLoader size="large" color="blue" />
                 </div>
-              </div>
+              ) : allTransactions?.length > 0 ? (
+                <div className="max-h-full">
+                  <table className="min-w-full divide-y divide-gray-200 text-sm">
+                    <thead className="bg-gray-50 sticky top-0 z-10 shadow-sm">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
+                          Title
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
+                          Category
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
+                          Date
+                        </th>
+                        <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">
+                          Amount
+                        </th>
+                      </tr>
+                    </thead>
+
+                    <tbody className="bg-white divide-y divide-gray-100">
+                      {allTransactions
+                        .filter((transaction) => {
+                          if (filters.type === "income")
+                            return !!transaction.incomeDate;
+                          if (filters.type === "expense")
+                            return !!transaction.expenseDate;
+                          return true;
+                        })
+                        .map((transaction) => (
+                          <tr
+                            key={`${transaction.title}-${transaction.amount}-${
+                              transaction.expenseDate || transaction.incomeDate
+                            }`}
+                            className="hover:bg-gray-50"
+                          >
+                            <td className="px-4 py-3 whitespace-nowrap font-medium text-gray-900">
+                              {transaction.title}
+                            </td>
+                            <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
+                              {transaction?.category?.category_name}
+                            </td>
+
+                            <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
+                              {transaction.expenseDate
+                                ? format(
+                                    new Date(transaction.expenseDate),
+                                    "MMM dd"
+                                  )
+                                : format(
+                                    new Date(transaction.incomeDate),
+                                    "MMM dd"
+                                  )}
+                            </td>
+                            <td
+                              className={`px-4 py-3 text-right whitespace-nowrap font-semibold ${
+                                transaction.incomeDate
+                                  ? "text-green-600"
+                                  : "text-red-600"
+                              }`}
+                            >
+                              <div className="flex items-center justify-end gap-1">
+                                <IndianRupee className="w-4 h-4" />
+                                {Math.abs(transaction.amount).toFixed(2)}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="h-64 flex justify-center items-center">
+                  <div className="text-lg md:text-2xl text-gray-500">
+                    No Transactions Found
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
+          )}
+          {/* End Transaction tab */}
+
+          {/* Budget Overview */}
+          {activeTab === "budget" && (
+            <>
+              <ResponsiveContainer width="100%" height={400}>
+                <BarChart data={budgetVsActualData}>
+                  <XAxis dataKey="category_name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="budgeted" fill="#8884d8" name="Budgeted" />
+                  <Bar dataKey="spent" fill="#82ca9d" name="Spent" />
+                </BarChart>
+              </ResponsiveContainer>
+            </>
+          )}
         </main>
       </div>
     </div>
   );
 };
 
-export default ReportDetail;
+export default ReportPage;

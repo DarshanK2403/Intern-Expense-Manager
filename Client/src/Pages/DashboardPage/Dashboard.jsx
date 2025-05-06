@@ -30,6 +30,16 @@ const Dashboard = () => {
   const [summary, setSummary] = useState([]);
   const currentYear = new Date().getFullYear();
   const [year] = useState(currentYear);
+  const [showAll, setShowAll] = useState(false);
+
+  const filteredSummary = summary.filter(
+    (item) =>
+      item.totalBudget !== 0 || item.totalSpent !== 0 || item.remaining !== 0
+  );
+
+  const visibleSummary = showAll
+    ? filteredSummary
+    : filteredSummary.slice(0, 6);
 
   useEffect(() => {
     const getRecentTransactions = async () => {
@@ -194,7 +204,7 @@ const Dashboard = () => {
 
   return (
     <div className="p-4">
-      <ToastContainer></ToastContainer>
+      <ToastContainer autoClose={1500}></ToastContainer>
       <div className="space-x-6 space-y-6">
         {/* Financial Metrics - Horizontal Layout */}
         <div className="flex space-x-6 flex-grow mx-auto">
@@ -240,60 +250,85 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Budget */}
       <div className="space-y-4 mt-5 bg-white p-6 border border-gray-300 shadow rounded-lg flex flex-col">
-        <h2 className="text-xl font-semibold">Budget Overview - {year}</h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {summary.map((item) => {
-            const percentSpent = (item?.totalSpent / item?.totalBudget) * 100;
-            const percentRemaining = 100 - percentSpent;
-
-            return (
-              <div
-                key={item.categoryId}
-                className="p-4 rounded-xl shadow bg-white border border-gray-300"
-                style={{ borderColor: item.color }}
-              >
-                <div className="flex justify-between items-center mb-2">
-                  <h3 className="font-semibold">{item.categoryName}</h3>
-                  <span
-                    className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                      item.status === "Over Budget"
-                        ? "bg-red-100 text-red-600"
-                        : item.status === "Near Limit"
-                        ? "bg-yellow-100 text-yellow-600"
-                        : "bg-green-100 text-green-600"
-                    }`}
-                  >
-                    {item.status}
-                  </span>
-                </div>
-
-                {/* Progress Bar */}
-                <div className="relative h-4 bg-gray-200 rounded-full overflow-hidden">
-                  <div
-                    className="absolute left-0 top-0 h-full bg-green-500"
-                    style={{ width: `${percentSpent}%` }}
-                  ></div>
-                  <div
-                    className="absolute right-0 top-0 h-full bg-blue-500"
-                    style={{ width: `${percentRemaining}%` }}
-                  ></div>
-                </div>
-
-                <div className="flex justify-between text-sm mt-1 text-gray-700">
-                  <span>Spent: ₹{item.totalSpent.toFixed(2)}</span>
-                  <span>Remaining: ₹{item.remaining.toFixed(2)}</span>
-                </div>
-
-                <p className="text-xs text-gray-500 mt-1">
-                  Total Budget: ₹{item.totalBudget.toFixed(2)}
-                </p>
-              </div>
-            );
-          })}
+        {/* Title & Toggle */}
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-semibold">Budget Overview - {year}</h2>
+          {filteredSummary.length > 6 && (
+            <button
+              onClick={() => setShowAll((prev) => !prev)}
+              className="text-sm text-blue-600 hover:underline"
+            >
+              {showAll ? "Show Less" : "Show All"}
+            </button>
+          )}
         </div>
+
+        {/* Data Display */}
+        {filteredSummary.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {visibleSummary
+              .filter(
+                (item) =>
+                  item.totalSpent !== 0 ||
+                  item.totalBudget !== 0 ||
+                  item.remaining !== 0
+              )
+              .map((item) => {
+                const percentSpent =
+                  (item.totalSpent / item.totalBudget) * 100 || 0;
+                const percentRemaining = 100 - percentSpent;
+
+                return (
+                  <div
+                    key={item.categoryId}
+                    className="p-4 rounded-xl shadow bg-white border border-gray-300"
+                  >
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="font-semibold">{item.categoryName}</h3>
+                      <span
+                        className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                          item.status === "Over Budget"
+                            ? "bg-red-100 text-red-600"
+                            : item.status === "Near Limit"
+                            ? "bg-yellow-100 text-yellow-600"
+                            : "bg-green-100 text-green-600"
+                        }`}
+                      >
+                        {item.status}
+                      </span>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="relative h-4 bg-gray-200 rounded-full overflow-hidden">
+                      <div
+                        className="absolute left-0 top-0 h-full bg-green-500"
+                        style={{ width: `${percentSpent}%` }}
+                      ></div>
+                      <div
+                        className="absolute right-0 top-0 h-full bg-blue-500"
+                        style={{ width: `${percentRemaining}%` }}
+                      ></div>
+                    </div>
+
+                    <div className="flex justify-between text-sm mt-1 text-gray-700">
+                      <span>Spent: ₹{item.totalSpent.toFixed(2)}</span>
+                      <span>Remaining: ₹{item.remaining.toFixed(2)}</span>
+                    </div>
+
+                    <p className="text-xs text-gray-500 mt-1">
+                      Total Budget: ₹{item.totalBudget.toFixed(2)}
+                    </p>
+                  </div>
+                );
+              })}
+          </div>
+        ) : (
+          // Centered No Data Message
+          <div className="flex items-center justify-center h-40 w-full">
+            <p className="text-gray-500 text-xl">No budget data to display.</p>
+          </div>
+        )}
       </div>
 
       {/* Recent Transactions */}
@@ -341,7 +376,7 @@ const Dashboard = () => {
                   ? transaction.expenseDate
                   : transaction.incomeDate;
                 const notesOrVendor = isExpense
-                  ? transaction.vendor
+                  ? transaction?.vendor?.name
                   : transaction.notes;
 
                 return (

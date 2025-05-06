@@ -41,8 +41,8 @@ const ExpensesPage = () => {
         },
       });
       setExpenses(res.data.data);
-    } catch (error) {
-      console.error("Error fetching expenses:", error);
+    } catch {
+      toast.error("Internal Server Error");
     } finally {
       setLoading(false);
     }
@@ -241,7 +241,7 @@ const ExpensesPage = () => {
                         <Checkbox checked={isSelected} />
                       </TableCell>
                       <TableCell onClick={() => expenseDetail(item._id)}>
-                        <div className="grid">
+                        <div className="grid hover:cursor-pointer">
                           {item.title}
                           <span className="text-gray-600">
                             {item.description}

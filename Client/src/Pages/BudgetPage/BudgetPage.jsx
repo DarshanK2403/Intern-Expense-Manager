@@ -255,7 +255,7 @@ const BudgetPage = () => {
               <div className="flex items-center">
                 <label
                   htmlFor="year"
-                  className="block text-sm font-medium text-gray-700 mr-2"
+                  className="block text-md font-medium text-gray-700 mr-2"
                 >
                   Year:
                 </label>
@@ -263,7 +263,7 @@ const BudgetPage = () => {
                   id="year"
                   value={selectedYear}
                   onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                  className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                  className="rounded-md border-gray-300 shadow focus:border-blue-500 focus:ring-blue-500 sm:text-md p-2 border"
                 >
                   {[
                     currentYear - 2,

@@ -139,7 +139,7 @@ const AdminSettingPage = () => {
     <div>
           <div className="space-y-6 m-5 w-[70%] mx-auto">
       <h2 className="text-xl font-semibold text-gray-800">Profile Settings</h2>
-      <ToastContainer />
+      <ToastContainer autoClose={1500} />
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center mb-6">
