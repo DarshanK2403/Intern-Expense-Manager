@@ -107,27 +107,48 @@ const Signup = async (req, res) => {
 
 const Login = async (req, res) => {
   const { email, password } = req.body;
+
+  // Basic input check
   if (!email || !password) {
-    return res.status(400).json({ message: "Email and password are required" });
+    return res.status(400).json({
+      success: false,
+      field: !email ? "email" : "password",
+      message: `${!email ? "Email" : "Password"} is required`,
+    });
   }
 
+  // Check if user exists
   const user = await UserModel.findOne({ email }).populate("role");
   if (!user) {
-    return res.status(400).json({ message: "Invalid Email" });
+    return res.status(404).json({
+      success: false,
+      field: "email",
+      message: "Email does not exist",
+    });
   }
 
+  // Password validation
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) {
-    return res.status(400).json({ message: "Invalid Password" });
+    return res.status(401).json({
+      success: false,
+      field: "password",
+      message: "Incorrect password",
+    });
   }
 
-  const Token = await jwt.sign(
+  // JWT Token
+  const Token = jwt.sign(
     { id: user._id.toString() },
-    process.env.JWt_SECRET
+    process.env.JWT_SECRET, // make sure this env variable is correct
+    { expiresIn: "7d" }
   );
-  // console.log(Token);
 
-  res.status(200).json({ message: "Login Success", Token });
+  res.status(200).json({
+    success: true,
+    message: "Login successful",
+    Token,
+  });
 };
 
 const Userdata = async (req, res) => {
@@ -352,7 +373,7 @@ const ChangeProfilePicture = async (req, res) => {
     }
 
     await logActivity(userId, "UPDATE_PROFILE", "Updated profile picture.");
-    console.log(updatedUser)
+    console.log(updatedUser);
     res.status(200).json({
       message: "Profile image updated successfully",
       user: updatedUser,

@@ -24,12 +24,18 @@ const SignupPage = () => {
   const onSubmit = async (data) => {
     setLoading(true);
     try {
-      const response = await axios.post("/signup", data);
+      const res = await axios.post("/signup", data);
+      console.log(res);
+      if (res.status === 201) {
+        navigate("/signin", {
+          state: { successMessage: "Signup successful! Please login." },
+        });
+      }
       setLoading(false);
     } catch (error) {
       if (error.response && error.response.data.errors) {
         error.response.data.errors.forEach((err) => {
-          setError(err.param, { message: err.message }); // Set field-specific error
+          setError(err.param, { message: err.message });
         });
       }
     }

@@ -2,8 +2,8 @@
 import { useContext, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import axios from "axios";
-import { Link, useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { toast, ToastContainer } from "react-toastify";
 import { Eye, EyeOff, LogIn, DollarSign } from "lucide-react";
 import { AuthContext } from "../context/AuthContext";
 
@@ -18,6 +18,7 @@ const SigninPage = () => {
     register,
     handleSubmit,
     formState: { errors },
+    setError,
   } = useForm({
     defaultValues: {
       email: "",
@@ -25,38 +26,44 @@ const SigninPage = () => {
       rememberMe: false,
     },
   });
+  const location = useLocation();
+  useEffect(() => {
+    if (location.state?.successMessage) {
+      toast.success(location.state.successMessage); // or use your alert component
+    }
+  }, [location.state]);
 
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     setServerError("");
-
     try {
       const response = await axios.post("/signin", data);
-      if (response.data.message === "Login Success") {
+
+      if (response.data.success) {
         localStorage.setItem("Token", response.data.Token);
-
-        // setUser(response.data);
-
+        toast.success(response.data.message || "Login Successful");
         navigate("/dashboard");
-        toast.success("Login Success");
       } else {
-        toast.error("Login Failed");
+        toast.error(response.data.message || "Login Failed");
       }
     } catch (error) {
-      // Handle error response
-      if (error.response) {
-        setServerError(
-          error.response.data.message ||
-            "Authentication failed. Please try again."
-        );
+      if (error.response?.data?.field) {
+        // Set field-level error (assuming you're using React Hook Form)
+        setError(error.response.data.field, {
+          message: error.response.data.message,
+        });
+      } else if (error.response?.data?.message) {
+        // Show toast for general server-side message
+        toast.error(error.response.data.message);
+        setServerError(error.response.data.message);
       } else if (error.request) {
-        // The request was made but no response was received
+        toast.error("No response from server. Please check your connection.");
         setServerError(
           "No response from server. Please check your connection."
         );
       } else {
-        // Something happened in setting up the request that triggered an Error
-        setServerError("An error occurred. Please try again later.");
+        toast.error("Something went wrong. Please try again.");
+        setServerError("Something went wrong. Please try again.");
       }
     } finally {
       setIsSubmitting(false);
@@ -77,6 +84,7 @@ const SigninPage = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-100">
+      <ToastContainer autoClose={1500} />
       {/* Abstract Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-0 w-64 h-64 bg-blue-200 rounded-full opacity-20 -translate-x-1/2 -translate-y-1/2"></div>
