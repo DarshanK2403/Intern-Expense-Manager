@@ -52,6 +52,7 @@ import SpinnerLoader from "../../Components/Loader/SpinnerLoader";
 import PDFExportModal from "../../Components/Export/PDFExportModal";
 import { AuthContext } from "../../context/AuthContext";
 import { renderReportPreview } from "../../Components/Export/renderReportPreview";
+import html2canvas from "html2canvas";
 
 const ReportPage = () => {
   const token = localStorage.getItem("Token");
@@ -65,9 +66,6 @@ const ReportPage = () => {
   const [activeFilters, setActiveFilters] = useState(false);
   const [period, setPeriod] = useState("week");
   const [searchTerm, setSearchTerm] = useState("");
-  const [filteredTransactions, setFilteredTransactions] = useState([]);
-  const [visibleTransactions, setVisibleTransactions] =
-    useState(allTransactions);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
   const [filters, setFilters] = useState({
@@ -97,11 +95,36 @@ const ReportPage = () => {
   const { user } = useContext(AuthContext);
   const [fields, setFields] = useState({
     userDetails: true,
-    incomeDetails: true,
-    incomeSummary: true,
-    receipt: true,
+    overview: true,
+    charts: true,
+    transaction: true,
+    budget: true,
     footer: true,
   });
+
+  async function captureChartAsImage(chartElementId) {
+    const chartNode = document.getElementById(chartElementId);
+    const overrideStyle = document.createElement("style");
+    overrideStyle.innerHTML = `
+      * {
+        color: initial !important;
+        background-color: initial !important;
+        border-color: initial !important;
+      }
+    `;
+    document.head.appendChild(overrideStyle);
+
+    const canvas = await html2canvas(chartNode, {
+      backgroundColor: "#fff",
+      useCORS: true,
+      scale: 2,
+    });
+
+    document.head.removeChild(overrideStyle);
+
+    return canvas.toDataURL("image/png");
+  }
+
   const generateReport = useCallback(async () => {
     try {
       setLoading(true);
@@ -243,9 +266,6 @@ const ReportPage = () => {
         isSearchMatch
       );
     });
-
-    setVisibleTransactions(filtered);
-    setFilteredTransactions(filtered);
 
     const filteredIncome = filtered.filter((item) => item.incomeDate);
     const filteredExpense = filtered.filter((item) => item.expenseDate);
@@ -404,14 +424,50 @@ const ReportPage = () => {
       email: user?.email,
       phone: user?.phone,
     },
-    vendorData: {
-     
+    reportData: {
+      type: data.type,
+      processedData: processedData,
+      period: data.period,
+      totalExpense: data?.totalExpense,
+      totalIncome: data?.totalIncome,
+      balance: data?.balance,
+      savingRate: data?.savingRate,
+      startDate: data?.startDate,
+      endDate: data?.endDate,
+      topSpendingCategory: data?.topSpendingCategory,
+      highestExpense: data?.highestExpense,
+      highestIncome: data?.highestIncome,
+      budgetData: data?.budgetData,
+      incomeSources: data?.incomeSources,
+      formatted: data?.formatted,
+      transaction: data?.transaction,
+      expenseByCategory: data?.expenseByCategory,
+      isOverBudget: data.isOverBudget,
+      budgetVsActualData: budgetVsActualData,
     },
   };
 
   const ExportAsPDF = async () => {
     try {
-      const response = await axios.post(`/pdf/report`, PDFData, {
+      const expenseImageBase64 = await captureChartAsImage(
+        "expense-category-chart"
+      );
+      const chartImageBase64 = await captureChartAsImage(
+        "income-expense-chart"
+      );
+
+      console.log(expenseImageBase64);
+
+      const preload = {
+        ...PDFData,
+        reportData: {
+          ...PDFData.reportData,
+          chartImg: chartImageBase64.replace(/^data:image\/png;base64,/, ""),
+          // expenseChart: expenseChart.replace(/^data:image\/png;base64,/, ""),
+        },
+      };
+
+      const response = await axios.post(`/pdf/report`, preload, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -525,7 +581,7 @@ const ReportPage = () => {
               </button>
 
               {/* Export Button */}
-              <li className="px-1">
+              <li className="px-1 m-auto">
                 <button
                   className="w-full flex items-center gap-2 rounded-md text-left px-3 py-2 text-gray-700 hover:bg-gray-50 transition-colors"
                   onClick={() => setSidebar(true)}
@@ -944,80 +1000,82 @@ const ReportPage = () => {
                     </div>
                   ) : (
                     <div className="w-full h-64 md:h-80">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart
-                          data={processedData}
-                          margin={{
-                            top: 10,
-                            right: 30,
-                            left: 20,
-                            bottom: 10,
-                          }}
-                        >
-                          <CartesianGrid
-                            strokeDasharray="3 3"
-                            stroke="#c8c8c8"
-                          />
-                          <XAxis dataKey="label" tick={{ fontSize: 12 }} />
-                          <YAxis
-                            domain={yAxisDomain}
-                            tick={{ fontSize: 12 }}
-                            tickFormatter={(value) =>
-                              formatCurrency(value).replace(".00", "")
-                            }
-                            width={80}
-                          />
-                          <Tooltip
-                            content={({ active, payload, label }) => {
-                              if (active && payload && payload.length) {
-                                return (
-                                  <div className="bg-white p-3 border border-gray-200 rounded shadow-md">
-                                    <p className="text-gray-600 font-medium mb-1">
-                                      {label}
-                                    </p>
-                                    {payload.map((entry, index) => (
-                                      <p
-                                        key={`item-${index}`}
-                                        style={{
-                                          color:
-                                            entry.name === "Income"
-                                              ? "#4ade80"
-                                              : "#f87171",
-                                        }}
-                                        className="text-sm font-medium"
-                                      >
-                                        {entry.name}:{" "}
-                                        {formatCurrency(entry.value)}
-                                      </p>
-                                    ))}
-                                  </div>
-                                );
-                              }
-                              return null;
+                      <div id="income-expense-chart" className="h-full w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart
+                            data={processedData}
+                            margin={{
+                              top: 10,
+                              right: 30,
+                              left: 20,
+                              bottom: 10,
                             }}
-                          />
+                          >
+                            <CartesianGrid
+                              strokeDasharray="3 3"
+                              stroke="#c8c8c8"
+                            />
+                            <XAxis dataKey="label" tick={{ fontSize: 12 }} />
+                            <YAxis
+                              domain={yAxisDomain}
+                              tick={{ fontSize: 12 }}
+                              tickFormatter={(value) =>
+                                formatCurrency(value).replace(".00", "")
+                              }
+                              width={80}
+                            />
+                            <Tooltip
+                              content={({ active, payload, label }) => {
+                                if (active && payload && payload.length) {
+                                  return (
+                                    <div className="bg-white p-3 border border-gray-200 rounded shadow-md">
+                                      <p className="text-gray-600 font-medium mb-1">
+                                        {label}
+                                      </p>
+                                      {payload.map((entry, index) => (
+                                        <p
+                                          key={`item-${index}`}
+                                          style={{
+                                            color:
+                                              entry.name === "Income"
+                                                ? "#4ade80"
+                                                : "#f87171",
+                                          }}
+                                          className="text-sm font-medium"
+                                        >
+                                          {entry.name}:{" "}
+                                          {formatCurrency(entry.value)}
+                                        </p>
+                                      ))}
+                                    </div>
+                                  );
+                                }
+                                return null;
+                              }}
+                            />
 
-                          <Legend wrapperStyle={{ paddingTop: 10 }} />
-                          <Line
-                            type="monotone"
-                            dataKey="income"
-                            stroke="#4ade80"
-                            strokeWidth={2}
-                            dot={{ r: 4 }}
-                            activeDot={{ r: 6 }}
-                            name="Income"
-                          />
-                          <Line
-                            type="monotone"
-                            dataKey="expense"
-                            stroke="#f87171"
-                            strokeWidth={2}
-                            dot={{ r: 4 }}
-                            activeDot={{ r: 6 }}
-                            name="Expense"
-                          />
-                        </LineChart>
-                      </ResponsiveContainer>
+                            <Legend wrapperStyle={{ paddingTop: 10 }} />
+                            <Line
+                              type="monotone"
+                              dataKey="income"
+                              stroke="#4ade80"
+                              strokeWidth={2}
+                              dot={{ r: 4 }}
+                              activeDot={{ r: 6 }}
+                              name="Income"
+                            />
+                            <Line
+                              type="monotone"
+                              dataKey="expense"
+                              stroke="#f87171"
+                              strokeWidth={2}
+                              dot={{ r: 4 }}
+                              activeDot={{ r: 6 }}
+                              name="Expense"
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -1045,35 +1103,40 @@ const ReportPage = () => {
                           <SpinnerLoader size="large" color="blue" />
                         </div>
                       ) : categoryExpenseData.length > 0 ? (
-                        <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie
-                              data={categoryExpenseData}
-                              cx="50%"
-                              cy="50%"
-                              labelLine={false}
-                              innerRadius={30}
-                              outerRadius="70%"
-                              fill="#8884d8"
-                              dataKey="value"
-                            >
-                              {categoryExpenseData.map((entry, index) => (
-                                <Cell
-                                  key={`cell-${index}`}
-                                  name={entry._id}
-                                  fill={COLORS[index % COLORS.length]}
-                                />
-                              ))}
-                            </Pie>
-                            <Tooltip formatter={(value) => `$${value}`} />
-                            <Legend
-                              layout="horizontal"
-                              verticalAlign="bottom"
-                              align="center"
-                              wrapperStyle={{ fontSize: "12px" }}
-                            />
-                          </PieChart>
-                        </ResponsiveContainer>
+                        <div
+                          id="expense-category-chart"
+                          className="h-full w-full"
+                        >
+                          <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                              <Pie
+                                data={categoryExpenseData}
+                                cx="50%"
+                                cy="50%"
+                                labelLine={false}
+                                innerRadius={30}
+                                outerRadius="70%"
+                                fill="#8884d8"
+                                dataKey="value"
+                              >
+                                {categoryExpenseData.map((entry, index) => (
+                                  <Cell
+                                    key={`cell-${index}`}
+                                    name={entry._id}
+                                    fill={COLORS[index % COLORS.length]}
+                                  />
+                                ))}
+                              </Pie>
+                              <Tooltip formatter={(value) => `$${value}`} />
+                              <Legend
+                                layout="horizontal"
+                                verticalAlign="bottom"
+                                align="center"
+                                wrapperStyle={{ fontSize: "12px" }}
+                              />
+                            </PieChart>
+                          </ResponsiveContainer>
+                        </div>
                       ) : (
                         <div className="h-64 md:h-72 lg:h-80 flex justify-center items-center">
                           <div className="text-lg md:text-2xl text-gray-600">

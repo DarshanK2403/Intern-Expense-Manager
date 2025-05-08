@@ -1,3 +1,4 @@
+import { IndianRupee } from 'lucide-react';
 export const renderIncomePreview = (PDFData, fields) => {
   return (
     <>
@@ -78,8 +79,8 @@ export const renderIncomePreview = (PDFData, fields) => {
                 <td className="py-2 px-3 border border-gray-300 bg-blue-50 w-1/2 text-sm font-semibold text-blue-800">
                   Amount
                 </td>
-                <td className="py-2 px-3 border border-gray-300 text-lg font-bold text-green-600">
-                  ${PDFData.incomeData.amount.toFixed(2)}
+                <td className="py-2 px-3 border border-gray-300 text-lg font-bold text-green-600 flex items-center">
+                  <IndianRupee size={20} />{PDFData.incomeData.amount.toFixed(2)}
                 </td>
               </tr>
               <tr>

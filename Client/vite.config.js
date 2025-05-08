@@ -6,9 +6,8 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
 
   optimizeDeps: {
-    include: ["lucide-react"], // ✅ Pre-bundles Lucide React so it's ready faster
+    include: ["lucide-react"],
   },
-
   build: {
     chunkSizeWarningLimit: 500,
   },

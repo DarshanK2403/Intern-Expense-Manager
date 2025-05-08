@@ -205,12 +205,14 @@ const IncomePage = () => {
       <ToastContainer autoClose={1500}></ToastContainer>
       <div className="max-w-6xl mx-auto bg-white rounded-lg shadow overflow-hidden mb-5 ">
         {selected.length > 0 && (
-          <button
-            onClick={() => deleteIncomes(selected)}
-            className="bg-red-500 text-white py-2 px-4 rounded-md mt-4"
-          >
-            Delete Income
-          </button>
+          <div className="flex mb-2 flex-col sm:flex-row gap-3 justify-end">
+            <button
+              onClick={() => deleteIncomes(selected)}
+              className="bg-red-500 text-white py-2 px-4 rounded-md mt-4"
+            >
+              Delete Income
+            </button>
+          </div>
         )}
 
         {loading ? (
@@ -283,7 +285,7 @@ const IncomePage = () => {
                             </div>
                           </TableCell>
                           <TableCell>
-                              <FormattedAmount amount={item.amount} />
+                            <FormattedAmount amount={item.amount} />
                           </TableCell>
 
                           <TableCell>{item.category?.category_name}</TableCell>

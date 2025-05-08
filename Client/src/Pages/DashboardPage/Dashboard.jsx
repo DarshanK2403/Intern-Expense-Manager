@@ -131,7 +131,6 @@ const Dashboard = () => {
         },
       });
       setSummary(res.data.data.categories);
-      console.log(res.data.data);
     } catch (err) {
       console.error("Error fetching budget summary:", err);
     }

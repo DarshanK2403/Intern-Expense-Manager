@@ -136,7 +136,7 @@ class PDFGenerator {
                 [
                   { text: "Amount", style: "tableHeader" },
                   {
-                    text: `$${expenseData.amount?.toFixed(2) || "0.00"}`,
+                    text: `${expenseData.amount?.toFixed(2) || "0.00"}`,
                     style: "amountHighlight",
                   },
                 ],
@@ -523,179 +523,390 @@ class PDFGenerator {
     });
   }
 
-  generateVendorPDF(vendorData) {
-    const docDefinition = {
-      content: [
-        {
-          text: "Vendor Information",
-          style: "header",
-        },
-        {
-          columns: [
-            [
-              { text: "Vendor Name", style: "subheader" },
-              { text: vendorData.name },
-            ],
-            [
-              { text: "Contact Person", style: "subheader" },
-              { text: vendorData.contactPerson },
-            ],
-            [{ text: "Email", style: "subheader" }, { text: vendorData.email }],
-            [{ text: "Phone", style: "subheader" }, { text: vendorData.phone }],
-          ],
-        },
-      ],
-      styles: {
-        header: {
-          fontSize: 18,
-          bold: true,
-          margin: [0, 0, 0, 10],
-        },
-        subheader: {
-          fontSize: 14,
-          bold: true,
-          margin: [0, 10, 0, 5],
-        },
-      },
-      defaultStyle: {
-        font: "Roboto",
-      },
-    };
-
-    return new Promise((resolve, reject) => {
-      try {
-        const pdfDoc = this.printer.createPdfKitDocument(docDefinition);
-        const chunks = [];
-
-        pdfDoc.on("data", (chunk) => {
-          chunks.push(chunk);
-        });
-
-        pdfDoc.on("end", () => {
-          resolve(Buffer.concat(chunks));
-        });
-
-        pdfDoc.end();
-      } catch (error) {
-        reject(error);
-      }
-    });
-  }
-
   generateReportPDF(reportData, userData, fields = {}) {
-    const docDefinition = {
-      content: [
-        {
-          text: "General Report",
-          style: "header",
-        },
-        {
-          columns: [
-            [
-              { text: "Report Date", style: "subheader" },
-              { text: reportData.date },
-            ],
-            [
-              { text: "Report Type", style: "subheader" },
-              { text: reportData.type },
-            ],
-            [
-              { text: "Total Amount", style: "subheader" },
-              { text: `$${reportData.totalAmount}` },
-            ],
-            [
-              { text: "Description", style: "subheader" },
-              { text: reportData.description },
-            ],
-          ],
-        },
-
-        // ✅ Dashboard Summary Section Starts Here
-        {
-          text: "Summary Overview",
-          style: "sectionHeader",
-          margin: [0, 20, 0, 10],
-        },
-        {
-          table: {
-            widths: ["33%", "33%", "34%"],
-            body: [
-              [
-                { text: "Total Income", style: "tableHeader" },
-                { text: "Total Expense", style: "tableHeader" },
-                { text: "Net Balance", style: "tableHeader" },
-              ],
-              [
-                `$${reportData.totalIncome}`,
-                `$${reportData.totalExpense}`,
-                `$${reportData.balance}`,
-              ],
-            ],
-          },
-          layout: "lightHorizontalLines",
-        },
-        {
-          table: {
-            widths: ["50%", "50%"],
-            body: [
-              [
-                { text: "Total Transactions", style: "tableHeader" },
-                { text: "Top Spending Category", style: "tableHeader" },
-              ],
-              [
-                `${reportData.transactionCount} (${reportData.period})`,
-                `${reportData.topSpendingCategory?.name || "N/A"} - $${
-                  reportData.topSpendingCategory?.amount || 0
-                }`,
-              ],
-              [
-                { text: "Highest Income", style: "tableHeader" },
-                { text: "Highest Expense", style: "tableHeader" },
-              ],
-              [
-                `${reportData.highestIncome?.title || "N/A"} - $${
-                  reportData.highestIncome?.amount || 0
-                }`,
-                `${reportData.highestExpense?.title || "N/A"} - $${
-                  reportData.highestExpense?.amount || 0
-                }`,
-              ],
-            ],
-          },
-          layout: "lightHorizontalLines",
-          margin: [0, 10, 0, 0],
-        },
-      ],
-
-      styles: {
-        header: {
-          fontSize: 18,
-          bold: true,
-          margin: [0, 0, 0, 10],
-        },
-        subheader: {
-          fontSize: 14,
-          bold: true,
-          margin: [0, 10, 0, 5],
-        },
-        sectionHeader: {
-          fontSize: 16,
-          bold: true,
-          color: "#333",
-        },
-        tableHeader: {
-          bold: true,
-          fillColor: "#f3f3f3",
-          color: "#333",
-          fontSize: 12,
-          margin: [0, 5, 0, 5],
-        },
+    console.log(reportData?.expenseChart)
+    // Define styles for the PDF
+    const styles = {
+      header: {
+        fontSize: 18,
+        bold: true,
+        alignment: "center",
+        margin: [0, 0, 0, 10],
       },
-
-      defaultStyle: {
-        font: "Roboto",
+      subheader: {
+        fontSize: 14,
+        bold: true,
+        margin: [0, 10, 0, 5],
+      },
+      tableHeader: {
+        bold: true,
+        fontSize: 10,
+        color: "black",
+        fillColor: "#f2f2f2",
+      },
+      tableRow: {
+        fontSize: 9,
+      },
+      tableRowEven: {
+        fontSize: 9,
+        fillColor: "#f9f9f9",
+      },
+      metaLabel: {
+        bold: true,
+        fontSize: 10,
+      },
+      metaValue: {
+        fontSize: 10,
+      },
+      footer: {
+        fontSize: 8,
+        italic: true,
+        color: "#666666",
       },
     };
+
+    // Format currency helper
+    const formatCurrency = (value) => {
+      return new Intl.NumberFormat("en-IN", {
+        style: "currency",
+        currency: "INR",
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      }).format(value);
+    };
+
+    // Format date helper
+    const formatDate = (dateString) => {
+      const date = new Date(dateString);
+      const day = date.getDate().toString().padStart(2, "0");
+      const month = new Intl.DateTimeFormat("en", { month: "short" }).format(
+        date
+      );
+      const year = date.getFullYear();
+      return `${day} ${month} ${year}`;
+    };
+
+    // Calculate budget total
+    const BudgetTotal = Object.values(reportData.budgetData || {}).reduce(
+      (acc, amount) => acc + amount,
+      0
+    );
+    const remainingBudget = BudgetTotal - reportData?.totalExpense;
+
+    // Build the document content
+    const docDefinition = {
+      defaultStyle: {
+        font: "Roboto",
+        fontSize: 10,
+      },
+      pageSize: "A4",
+      pageMargins: [40, 60, 40, 60],
+      content: [],
+      styles: styles,
+      footer: function (currentPage, pageCount) {
+        return fields.footer
+          ? {
+              columns: [
+                {
+                  text: `Generated on: ${new Date().toLocaleDateString()}`,
+                  style: "footer",
+                  alignment: "left",
+                  margin: [40, 0, 0, 0],
+                },
+                {
+                  text: `Page ${currentPage} of ${pageCount}`,
+                  style: "footer",
+                  alignment: "right",
+                  margin: [0, 0, 40, 0],
+                },
+              ],
+            }
+          : null;
+      },
+    };
+
+    // 1. Add Report Header
+    docDefinition.content.push(
+      { text: "Report", style: "header" },
+      {
+        columns: [
+          {
+            width: "50%",
+            text: [
+              { text: "Date: ", style: "metaLabel" },
+              {
+                text: `${formatDate(reportData.startDate)} to ${formatDate(
+                  reportData.endDate
+                )}`,
+                style: "metaValue",
+              },
+            ],
+          },
+          {
+            width: "50%",
+            text: [
+              { text: "Report Type: ", style: "metaLabel" },
+              {
+                text:
+                  reportData.type.charAt(0).toUpperCase() +
+                  reportData.type.slice(1),
+                style: "metaValue",
+              },
+            ],
+            alignment: "right",
+          },
+        ],
+        margin: [0, 0, 0, 20],
+      }
+    );
+
+    // 2. Add User Information (if overview field is enabled)
+    if (fields.overview) {
+      docDefinition.content.push({
+        table: {
+          widths: ["30%", "70%"],
+          headerRows: 0,
+          body: [
+            [
+              { text: "Name", style: "tableHeader" },
+              { text: `${userData.firstName} ${userData.lastName}` },
+            ],
+            [{ text: "Email", style: "tableHeader" }, { text: userData.email }],
+            [{ text: "Phone", style: "tableHeader" }, { text: userData.phone }],
+          ],
+        },
+        margin: [0, 0, 0, 15],
+      });
+
+      // 3. Add Financial Overview
+      docDefinition.content.push(
+        { text: "Financial Overview", style: "subheader" },
+        {
+          layout: "lightHorizontalLines",
+          table: {
+            widths: ["60%", "40%"],
+            headerRows: 0,
+            body: [
+              [
+                { text: "Top Spending Category:", style: "metaLabel" },
+                {
+                  text: reportData.topSpendingCategory?.name
+                    ? `${reportData.topSpendingCategory.name} (${formatCurrency(
+                        reportData.topSpendingCategory.amount
+                      )})`
+                    : "N/A",
+                  alignment: "right",
+                },
+              ],
+              [
+                { text: "Highest Income:", style: "metaLabel" },
+                {
+                  text: reportData.highestIncome
+                    ? `${reportData.highestIncome.title} (${formatCurrency(
+                        reportData.highestIncome.amount
+                      )})`
+                    : "N/A",
+                  alignment: "right",
+                },
+              ],
+              [
+                { text: "Highest Expense:", style: "metaLabel" },
+                {
+                  text: reportData.highestExpense
+                    ? `${reportData.highestExpense.title} (${formatCurrency(
+                        reportData.highestExpense.amount
+                      )})`
+                    : "N/A",
+                  alignment: "right",
+                },
+              ],
+              [
+                { text: "Total Transactions:", style: "metaLabel" },
+                {
+                  text: `${reportData.transaction?.length || 0}`,
+                  alignment: "right",
+                },
+              ],
+              [
+                { text: "Saving Rate:", style: "metaLabel" },
+                { text: `${reportData.savingRate || 0}%`, alignment: "right" },
+              ],
+            ],
+          },
+          margin: [0, 0, 0, 15],
+        }
+      );
+
+      // 4. Add Budget Status
+      const budgetUsage = Math.min(
+        100,
+        (reportData.totalExpense / BudgetTotal) * 100
+      );
+      docDefinition.content.push({
+        stack: [
+          {
+            columns: [
+              { text: "Budget Status", style: "metaLabel", width: "70%" },
+              {
+                text: reportData.isOverBudget ? "⚠️ Over Budget" : "",
+                width: "30%",
+                alignment: "right",
+              },
+            ],
+          },
+          {
+            columns: [
+              { text: `Budget: ${formatCurrency(BudgetTotal)}`, width: "50%" },
+              {
+                text: `Remaining: ${formatCurrency(remainingBudget)}`,
+                width: "50%",
+                alignment: "right",
+              },
+            ],
+            margin: [0, 5, 0, 5],
+          },
+          {
+            canvas: [
+              {
+                type: "rect",
+                x: 0,
+                y: 0,
+                w: 515,
+                h: 15,
+                r: 3,
+                lineColor: "#E0E0E0",
+                fillColor: "#F5F5F5",
+              },
+              {
+                type: "rect",
+                x: 0,
+                y: 0,
+                w: 515 * (budgetUsage / 100),
+                h: 15,
+                r: 3,
+                lineColor: "#4CAF50",
+                fillColor: "#4CAF50",
+              },
+            ],
+          },
+        ],
+        margin: [0, 0, 0, 20],
+      });
+    }
+
+    if (fields.charts) {
+      docDefinition.content.push({
+        image: "data:image/png;base64," + reportData.chartImg,
+        width: 500,
+        alignment: "center",
+      });
+    }
+
+    if (fields.charts) {
+      docDefinition.content.push({
+        image: "data:image/png;base64," + reportData.chartImg,
+        width: 500,
+        alignment: "center",
+      });
+    }
+
+    // 6. Add Transactions table
+    if (fields.transaction && reportData.transaction?.length > 0) {
+      const transactionRows = [
+        [
+          { text: "Title", style: "tableHeader" },
+          { text: "Amount", style: "tableHeader" },
+          { text: "Date", style: "tableHeader" },
+          { text: "Category", style: "tableHeader" },
+          { text: "Notes", style: "tableHeader" },
+        ],
+      ];
+
+      reportData.transaction.forEach((txn, idx) => {
+        const rowStyle = idx % 2 === 0 ? "tableRow" : "tableRowEven";
+
+        transactionRows.push([
+          { text: txn.title, style: rowStyle },
+          {
+            text: txn.incomeDate ? `+₹${txn.amount}` : `-₹${txn.amount}`,
+            style: rowStyle,
+          },
+          {
+            text: formatDate(txn?.incomeDate || txn?.expenseDate),
+            style: rowStyle,
+          },
+          { text: txn.category?.category_name, style: rowStyle },
+          { text: txn.notes || "-", style: rowStyle },
+        ]);
+      });
+
+      docDefinition.content.push(
+        { text: "Transactions", style: "subheader", pageBreak: "before" },
+        {
+          table: {
+            widths: ["20%", "15%", "20%", "20%", "25%"],
+            headerRows: 1,
+            body: transactionRows,
+          },
+          layout: {
+            fillColor: function (rowIndex) {
+              return rowIndex % 2 === 0 ? null : "#f9f9f9";
+            },
+          },
+        },
+        {
+          text: `Showing ${reportData.transaction.length} transactions`,
+          fontSize: 8,
+          alignment: "right",
+          margin: [0, 5, 0, 15],
+        }
+      );
+    }
+
+    // 7. Add Budget vs Actual table
+    if (fields.budget && reportData.budgetVsActual?.length > 0) {
+      const budgetRows = [
+        [
+          { text: "Category", style: "tableHeader" },
+          { text: "Budgeted", style: "tableHeader" },
+          { text: "Spent", style: "tableHeader" },
+          { text: "Remaining", style: "tableHeader" },
+        ],
+      ];
+
+      reportData.budgetVsActual.forEach((b, idx) => {
+        const rowStyle = idx % 2 === 0 ? "tableRow" : "tableRowEven";
+
+        budgetRows.push([
+          { text: b.category_name, style: rowStyle },
+          { text: `₹${b.budgeted}`, style: rowStyle },
+          { text: `₹${b.spent}`, style: rowStyle },
+          { text: `₹${b.remaining}`, style: rowStyle },
+        ]);
+      });
+
+      docDefinition.content.push(
+        { text: "Budget vs Actual", style: "subheader", pageBreak: "before" },
+        {
+          table: {
+            widths: ["40%", "20%", "20%", "20%"],
+            headerRows: 1,
+            body: budgetRows,
+          },
+          layout: {
+            fillColor: function (rowIndex) {
+              return rowIndex % 2 === 0 ? null : "#f9f9f9";
+            },
+          },
+        },
+        {
+          text: "[Budget vs Actual chart would appear here]",
+          italics: true,
+          alignment: "center",
+          margin: [0, 20, 0, 5],
+        }
+      );
+    }
 
     return new Promise((resolve, reject) => {
       try {

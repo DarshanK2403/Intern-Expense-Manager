@@ -73,21 +73,19 @@ const generateVendorPDF = async (req, res) => {
 
 const generateReportPDF = async (req, res) => {
   try {
-    const reportData = req.body;
+    const { reportData, userData, fields } = req.body;
     const pdfBuffer = await pdfGenerator.generateReportPDF(
       reportData,
       userData,
       fields
     );
 
-    // Set headers to serve the PDF file as download
     res.setHeader(
       "Content-Disposition",
       `attachment; filename=general-report.pdf`
     );
     res.setHeader("Content-Type", "application/pdf");
 
-    // Send the generated PDF buffer
     res.send(pdfBuffer);
   } catch (error) {
     console.error("Error generating general report PDF:", error);

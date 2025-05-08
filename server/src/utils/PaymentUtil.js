@@ -51,10 +51,6 @@ const createDefaultPaymentsForUser = async (userId) => {
         });
       }
     }
-
-    console.log(
-      `✅ Default payment types and methods created for user: ${userId}`
-    );
   } catch (err) {
     console.error("❌ Error in paymentUtil:", err);
   }

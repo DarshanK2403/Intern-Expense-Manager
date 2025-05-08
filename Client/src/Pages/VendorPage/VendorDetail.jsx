@@ -83,10 +83,6 @@ const VendorDetail = () => {
               <Trash2 size={16} className="mr-2" />
               Delete
             </button>
-            <button className="inline-flex items-center px-3 py-2 border border-blue-300 text-sm font-medium rounded-md text-blue-600 bg-white hover:bg-red-50">
-              <Download size={16} className="mr-2" />
-              Export
-            </button>
           </div>
         </div>
 
@@ -199,10 +195,10 @@ const VendorDetail = () => {
                         }).format(expense?.amount)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button className="text-blue-600 hover:text-blue-900 mr-3">
+                        <button className="text-blue-600 hover:text-blue-900 mr-3" onClick={()=>navigate(`/expenses/expense-detail/${expense._id}`)}>
                           View
                         </button>
-                        <button className="text-gray-600 hover:text-gray-900">
+                        <button className="text-gray-600 hover:text-gray-900" onClick={()=>navigate(`/expenses/edit-expense/${expense._id}`)}>
                           Edit
                         </button>
                       </td>

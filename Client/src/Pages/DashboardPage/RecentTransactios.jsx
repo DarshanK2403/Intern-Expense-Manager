@@ -23,7 +23,6 @@ const RecentTransactios = () => {
           Authorization: `Bearer ${token}`,
         },
       });
-      // console.log(res.data);
       setRecentTransaction(res.data);
     } catch (error) {
       console.log(error);
@@ -65,11 +64,12 @@ const RecentTransactios = () => {
         </div>
       ) : recentTransaction.length > 0 ? (
         <table className="w-full rounded-sm overflow-hidden">
-          <thead>
+          <thead className="border border-blue-400">
             <tr className="bg-blue-700 text-white">
+              <th className="px-2 py-3 text-start">Transaction Date</th>
               <th className="px-2 py-3 text-start">Title</th>
               <th className="px-2 py-3 text-end">Amount</th>
-              <th className="px-2 py-3 text-end">Transaction Date</th>
+              <th className="px-2 py-3 text-end">Category</th>
               <th className="px-2 py-3 text-end">Vendor/Notes</th>
             </tr>
           </thead>
@@ -79,34 +79,20 @@ const RecentTransactios = () => {
               const date = isExpense
                 ? transaction.expenseDate
                 : transaction.incomeDate;
-              const notesOrVendor = isExpense
-                ? transaction.vendor
-                : transaction.notes;
 
               return (
                 <tr
                   key={transaction._id}
-                  className={`
-                   transition-colors duration-150 hover:cursor-pointer
-                    ${
-                      isExpense
-                        ? "bg-red-100 hover:bg-red-200"
-                        : "bg-green-100 hover:bg-green-200"
-                    }
-                  `}
+                  className={`transition-colors duration-150 hover:cursor-pointer bg-gray-50 border border-gray-300`}
                 >
+                  <td className="px-4 py-3 text-left text-gray-700">
+                    {formatDate(date)}
+                  </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center">
                       <div>
-                        <div
-                          className={`font-medium ${
-                            isExpense ? "text-red-800" : "text-green-800"
-                          }`}
-                        >
+                        <div className={`font-medium `}>
                           {transaction.title}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          {/* {getRelativeTime(date)} */}
                         </div>
                       </div>
                     </div>
@@ -118,21 +104,25 @@ const RecentTransactios = () => {
                   >
                     <div className="flex items-center justify-end">
                       <IndianRupee className="h-4 w-4" />
-                      {transaction.amount}
+                      {transaction?.amount ?? 0}
                     </div>
                   </td>
                   <td className="px-4 py-3 text-right text-gray-700">
-                    {formatDate(date)}
+                    {transaction?.category?.category_name}
                   </td>
                   <td className="px-4 py-3 text-right text-gray-700">
-                    {notesOrVendor ? (
+                    {transaction?.vendor ? (
                       <div className="flex items-center justify-end">
                         <span className="truncate max-w-xs">
-                          {notesOrVendor}
+                          {transaction?.vendor?.name}
                         </span>
                       </div>
                     ) : (
-                      <span className="text-gray-400 text-sm">—</span>
+                      <div className="flex items-center justify-end">
+                        <span className="truncate max-w-xs">
+                          {transaction?.notes}
+                        </span>
+                      </div>
                     )}
                   </td>
                 </tr>

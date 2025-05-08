@@ -91,10 +91,10 @@ const Signup = async (req, res) => {
     </a>
     </div>`;
 
-    const mail = await mailUtil
+    await mailUtil
       .sendingMail(newUser.email, "Welcome to Expense Tracker", htmlContent)
-      .then(() => console.log(`📩 Email sent successfully to ${newUser.email}`))
-      .catch((error) => console.error("❌ Error sending email:", error));
+      .catch(() => {});
+
     return res
       .status(201)
       .json({ message: "Signup successful", user: newUser });
@@ -219,7 +219,6 @@ const ForgetPassword = async (req, res) => {
 </div>`;
     const mailResponse = mailUtil
       .sendingMail(user.email, "Forget Password", htmlContent)
-      .then(() => console.log(`📩 Email sent successfully to ${user.email}`))
       .catch((error) => console.log("❌ Error sending email:", error));
     res.status(200).json(mailResponse);
   } catch (error) {

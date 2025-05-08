@@ -22,7 +22,6 @@ const AdminSidebar = () => {
   const menuItems = [
     { name: "Dashboard", icon: Home, path: "/admin/dashboard" },
     { name: "Users", icon: FileText, path: "/admin/users" },
-    { name: "Report", icon: BarChart2, path: "/admin/report" },
     { name: "Settings", icon: Settings, path: "/admin/settings" },
   ];
 

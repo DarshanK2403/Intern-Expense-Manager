@@ -175,15 +175,17 @@ const ExpensesPage = () => {
   );
 
   return (
-    <div className="max-w-6xl mx-auto bg-white rounded-lg shadow overflow-hidden mb-5 ">
+    <div className="max-w-6xl mx-auto rounded-lg overflow-hidden mb-5 ">
       <ToastContainer autoClose={1500}></ToastContainer>
       {selected.length > 0 && (
-        <button
-          onClick={() => deleteExpenses(selected)}
-          className="bg-red-500 text-white py-2 px-4 rounded-md mt-4"
-        >
-          Delete Expense
-        </button>
+        <div className="flex mb-2 flex-col sm:flex-row gap-3 justify-end">
+          <button
+            onClick={() => deleteExpenses(selected)}
+            className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-md transition-colors duration-200"
+          >
+            Delete Expense
+          </button>
+        </div>
       )}
       {/* Expenses List */}
       {loading ? (
@@ -194,7 +196,7 @@ const ExpensesPage = () => {
         // Table
         <Paper>
           <TableContainer>
-            <Table>
+            <Table className="border border-gray-300">
               <TableHead>
                 <TableRow>
                   <TableCell padding="checkbox">
@@ -210,12 +212,18 @@ const ExpensesPage = () => {
                     (headCell) => (
                       <TableCell
                         key={headCell}
-                        sortDirection={orderBy === headCell ? order : false}
+                        sortDirection={
+                          orderBy === headCell && headCell !== "Action"
+                            ? order
+                            : false
+                        } // Hide sort icon for "Action"
                       >
                         <TableSortLabel
-                          active={orderBy === headCell}
+                          active={orderBy === headCell && headCell !== "Action"}
                           direction={orderBy === headCell ? order : "asc"}
-                          onClick={() => handleSort(headCell)}
+                          onClick={() =>
+                            headCell !== "Action" && handleSort(headCell)
+                          } // Only apply sort on non-Action columns
                         >
                           {headCell.charAt(0).toUpperCase() + headCell.slice(1)}
                         </TableSortLabel>
@@ -224,6 +232,7 @@ const ExpensesPage = () => {
                   )}
                 </TableRow>
               </TableHead>
+
               <TableBody>
                 {visibleRows.map((item) => {
                   const isSelected = selected.indexOf(item._id) !== -1;
@@ -289,6 +298,7 @@ const ExpensesPage = () => {
             page={page}
             onPageChange={handleChangePage}
             onRowsPerPageChange={handleChangeRowsPerPage}
+            className="border border-gray-300"
           />
         </Paper>
       ) : (
