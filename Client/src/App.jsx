@@ -51,7 +51,8 @@ const AdminLayout = lazy(() => import("./admin/Layout/AdminLayout"));
 const AdminUserPage = lazy(() => import("./admin/Page/AdminUserPage"));
 const AdminSettingPage = lazy(() => import("./admin/Page/AdminSettingPage"));
 
-axios.defaults.baseURL = "http://localhost:3000/";
+axios.defaults.baseURL = import.meta.env.VITE_BACKEND_URI;
+
 function App() {
   return (
     <>
@@ -96,7 +97,6 @@ function App() {
                 <Route path="add" element={<AddVendor />} />
                 <Route path="edit/:id" element={<UpdateVendor />} />
                 <Route path="detail/:id" element={<VendorDetail />} />
-                
               </Route>
 
               <Route path="/settings" element={<SettingLayout />}>
@@ -121,9 +121,8 @@ function App() {
               </Route>
 
               <Route path="/budget" element={<BudgetPagelayout />}>
-                <Route index element={<BudgetPage/>} />
+                <Route index element={<BudgetPage />} />
               </Route>
-
             </Route>
 
             <Route element={<AdminRoute />}>
@@ -132,11 +131,7 @@ function App() {
 
                 <Route path="users" element={<AdminUserPage />} />
 
-                <Route
-                  index
-                  path="settings"
-                  element={<AdminSettingPage />}
-                />
+                <Route index path="settings" element={<AdminSettingPage />} />
               </Route>
             </Route>
           </Routes>
