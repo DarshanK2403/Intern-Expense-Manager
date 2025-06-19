@@ -6,7 +6,7 @@ const QuickLink = ({ to, icon: Icon, title, description, color }) => {
   return (
     <Link
       to={to}
-      className="w-full flex items-center justify-between p-4 bg-white rounded-lg shadow hover:bg-gray-50 transition-colors"
+      className="w-full flex items-center justify-between p-4 bg-white border border-gray-200 hover:bg-gray-50 transition-colors"
     >
       <div className="flex items-center">
         <Icon className={`h-5 w-5 mr-2 ${color}`} />

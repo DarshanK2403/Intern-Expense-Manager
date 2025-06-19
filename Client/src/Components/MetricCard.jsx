@@ -9,7 +9,7 @@ const MetricCard = ({
   bgColor,
   textColor,
 }) => (
-  <div className="bg-white rounded-lg shadow p-4 flex-1">
+  <div className="bg-white border border-gray-200 p-4 flex-1">
     <div className="flex items-center justify-between mb-4">
       <div className="flex items-center">
         <div className={`${bgColor} p-2 rounded-full mr-3`}>{icon}</div>

@@ -94,7 +94,7 @@ const SigninPage = () => {
         <div className="absolute top-1/2 left-1/2 w-80 h-80 bg-blue-100 rounded-full opacity-30 -translate-x-1/2 -translate-y-1/2"></div>
       </div>
 
-      <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-xl relative z-10">
+      <div className="w-full max-w-md p-8 space-y-8 bg-white border border-gray-200 rounded-lg shadow relative z-10">
         {/* Logo and Header */}
         <div className="text-center">
           <div className="mx-auto w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mb-4 shadow-md">
