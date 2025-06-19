@@ -36,7 +36,6 @@ const SavedReport = lazy(() => import("./Pages/ReportsPage/SavedReport"));
 const ReportDetail = lazy(() => import("./Pages/ReportsPage/ReportDetail"));
 const NotFound = lazy(() => import("./Pages/NotFound"));
 const History = lazy(() => import("./Pages/SettingsPage/History"));
-const Home = lazy(() => import("./common/Home"));
 const ReportLayout = lazy(() => import("./Layouts/ReportLayout"));
 const SettingLayout = lazy(() => import("./Layouts/SettingLayout"));
 const Profile = lazy(() => import("./Pages/SettingsPage/Profile"));
@@ -59,7 +58,7 @@ function App() {
       <BrowserRouter>
         <Suspense fallback={<SkeletonLoader />}>
           <Routes>
-            <Route path="/" element={<Home />} />
+            <Route path="/" element={<SigninPage />} />
             <Route path="/*" element={<NotFound />} />
             <Route path="/signin" element={<SigninPage />} />
             <Route path="/signup" element={<SignupPage />} />
