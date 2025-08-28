@@ -25,10 +25,10 @@ db.once('open', () => {
 });
 
 const UserRoute = require('./src/routes/UserRoute');
-app.use(UserRoute);
+app.use('/', UserRoute);
 
 const RoleRoute = require('./src/routes/RoleRoute');
-app.use(RoleRoute);
+app.use('/',RoleRoute);
 
 const ExpenseRoute = require('./src/routes/ExpenseRoute');
 app.use('/',ExpenseRoute);

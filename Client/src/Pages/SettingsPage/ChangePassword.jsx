@@ -13,6 +13,7 @@ const ChangePassword = () => {
     handleSubmit,
     formState: { errors },
   } = useForm();
+
   const onSubmit = async (data) => {
     try {
       const res = await axios.put(
@@ -21,23 +22,27 @@ const ChangePassword = () => {
           oldPassword: data.oldPassword,
           newPassword: data.newPassword,
           confirmPassword: data.confirmPassword,
-        },{
-          headers:{
-            Authorization: `Bearer ${token}`
-          }
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
-      if (res.data.success) {
+
+      if (res.data?.success) {
         toast.success("Password changed successfully");
       } else {
-        toast.error(res.data.message);
+        toast.error(res.data?.message || "Something went wrong");
       }
-      
-
     } catch (error) {
-      toast.error("Failed to change password");
+      // You can show specific error if server sends error response
+      const message =
+        error.response?.data?.message || "Failed to change password";
+      toast.error(message);
     }
   };
+
   return (
     <div className="mt-6 w-full">
       <ToastContainer />

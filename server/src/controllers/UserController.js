@@ -292,7 +292,7 @@ const UpdateProfile = async (req, res) => {
 };
 
 const ChangePassword = async (req, res) => {
-  const { userId } = req.params;
+  const  userId  = req.user.id;
   const { oldPassword, newPassword } = req.body;
 
   try {
